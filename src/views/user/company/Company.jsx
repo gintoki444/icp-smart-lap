@@ -11,12 +11,14 @@ const Company = () => {
       address: '123 ถนนหลัก แขวงหลัก เขตหลัก กรุงเทพฯ',
       phone: '02-123-4567',
       taxId: '1234567890123',
+      tax_address: '123 ถนนหลัก แขวงหลัก เขตหลัก กรุงเทพฯ',
       documents: ['เอกสารตัวอย่าง 1.pdf', 'เอกสารตัวอย่าง 2.pdf'],
       status: 'อนุมัติ',
       user_id: null,
-      full_name: '',
-      email: '',
-      user_phone: ''
+      full_name: 'นายสมชาย ใจดี',
+      credits: 'Advance Invoice',
+      email: 'somchai@example.com',
+      user_phone: '081-234-5678'
     }
     // {
     //   id: 2,
@@ -78,10 +80,12 @@ const Company = () => {
             <thead>
               <tr>
                 <th>#</th>
-                <th>ชื่อบริษัท</th>
                 <th>เลขที่ผู้เสียภาษี</th>
+                <th>ชื่อบริษัท</th>
                 <th>ที่อยู่บริษัท</th>
                 <th>เบอร์โทร</th>
+                <th>ที่อยู่จัดส่งเอกสาร</th>
+                <th>เงื่อนไขพิเศษ</th>
                 <th>เอกสาร</th>
                 <th className="text-center">สถานะการอนุมัติ</th>
                 <th className="text-center">การจัดการ</th>
@@ -95,6 +99,8 @@ const Company = () => {
                   <td>{company.taxId}</td>
                   <td>{company.address}</td>
                   <td>{company.phone}</td>
+                  <td>{company.tax_address}</td>
+                  <td>{company.credits}</td>
                   <td>
                     {company.documents.map((doc, idx) => (
                       <div key={idx}>{doc}</div>

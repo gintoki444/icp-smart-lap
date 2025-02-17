@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, Table, Badge, Row, Col, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
-const UserRequestPage = () => {
+const HistoryRequestPage = () => {
   const navigate = useNavigate();
 
   // ตัวอย่างข้อมูลคำขอรับบริการ
@@ -16,11 +16,11 @@ const UserRequestPage = () => {
       description: 'ธาตุอาหารหลัก, Zn',
       sampleAppearance: 'เม็ดสีแดง',
       requestNo: 'RC24-134',
-      status: 'กำลังดำเนินการ',
-      create_date: '21/01/2025',
-      start_date: '-',
-      end_date: '-',
-      currentStep: 'ตรวจสอบความถูกต้อง'
+      status: 'เสร็จสิ้น',
+      create_date: '21/12/2024',
+      start_date: '31/12/2024',
+      end_date: '03/02/2025',
+      currentStep: 'เสร็จสิ้น'
     },
     {
       customerCode: '111',
@@ -31,11 +31,11 @@ const UserRequestPage = () => {
       description: 'ธาตุอาหารเสริม, Zn',
       sampleAppearance: 'เม็ดสีขาว',
       requestNo: 'RC24-136',
-      status: 'รอการดำเนินการ',
-      create_date: '21/01/2025',
-      start_date: '-',
-      end_date: '-',
-      currentStep: 'รอส่งตัวอย่าง'
+      status: 'เสร็จสิ้น',
+      create_date: '21/12/2024',
+      start_date: '31/12/2024',
+      end_date: '03/02/2025',
+      currentStep: 'เสร็จสิ้น'
     },
     {
       customerCode: '110',
@@ -60,13 +60,7 @@ const UserRequestPage = () => {
         <Card.Header>
           <Row>
             <Col>
-              <Card.Title as="h5">รายการคำขอรับบริการ</Card.Title>
-            </Col>
-            <Col className="text-end">
-              <Button variant="success" onClick={() => navigate('/user/request/add')}>
-                <i className="feather icon-plus-circle" />
-                เพิ่ม
-              </Button>
+              <Card.Title as="h5">ประวัติคำขอรับบริการ</Card.Title>
             </Col>
           </Row>
         </Card.Header>
@@ -108,7 +102,7 @@ const UserRequestPage = () => {
                       {request.currentStep}
                     </Badge>
                   </td>
-                  <td className="">
+                  <td className="text-center">
                     <Button
                       variant="primary"
                       size="sm"
@@ -140,4 +134,4 @@ const UserRequestPage = () => {
   );
 };
 
-export default UserRequestPage;
+export default HistoryRequestPage;

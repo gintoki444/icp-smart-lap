@@ -43,7 +43,7 @@ const TestResultsDashboard = () => {
   ];
 
   const chartOptions = {
-    title: 'Test Results Summary',
+    title: 'ผลการทดสอบ',
     hAxis: {
       title: 'Sample No'
     },
@@ -61,7 +61,7 @@ const TestResultsDashboard = () => {
     <div className="">
       <Card>
         <Card.Header>
-          <h5>Dashboard สำหรับผู้ใช้งาน</h5>
+          <h5>ตารางสรุปผลการทดสอบ</h5>
         </Card.Header>
         <Card.Body>
           {/* <Row className="mb-4">

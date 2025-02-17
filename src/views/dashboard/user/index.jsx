@@ -1,6 +1,8 @@
 import React from 'react';
 import { Row, Col, Card, Table, Tabs, Tab } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { TbTestPipe, TbTestPipeOff } from 'react-icons/tb';
+import { GrDocumentTest } from 'react-icons/gr';
 
 import avatar1 from '../../../assets/images/user/avatar-1.jpg';
 import avatar2 from '../../../assets/images/user/avatar-2.jpg';
@@ -8,9 +10,33 @@ import avatar3 from '../../../assets/images/user/avatar-3.jpg';
 import TestResultsDashboard from './TestResults';
 
 const dashSalesData = [
-  { title: 'Daily Sales', amount: '$249.95', icon: 'icon-arrow-up text-c-green', value: 50, class: 'progress-c-theme' },
-  { title: 'Monthly Sales', amount: '$2.942.32', icon: 'icon-arrow-down text-c-red', value: 36, class: 'progress-c-theme2' },
-  { title: 'Yearly Sales', amount: '$8.638.32', icon: 'icon-arrow-up text-c-green', value: 70, color: 'progress-c-theme' }
+  {
+    title: 'จำวนคำขอใช้บริการทั้งหมด',
+    amount: '3',
+    unit: 'รายการ',
+    icon: '',
+    iconNew: <GrDocumentTest className="text-c-green" style={{ marginRight: 12 }} />,
+    value: 100,
+    class: 'progress-c-theme'
+  },
+  {
+    title: 'จำนวนการทดสอบกำลังทดสอบ',
+    amount: '1',
+    unit: 'รายการ',
+    icon: '',
+    iconNew: <TbTestPipe className="text-c-blue" style={{ marginRight: 12 }} />,
+    value: 30,
+    class: 'progress-c-theme2'
+  },
+  {
+    title: 'จำนวนการทดสอบที่ยังไม่ทดสอบ',
+    amount: '2',
+    unit: 'รายการ',
+    icon: '',
+    iconNew: <TbTestPipeOff className="text-c-red" style={{ marginRight: 12 }} />,
+    value: 70,
+    color: 'progress-c-theme'
+  }
 ];
 
 const UserDashDefault = () => {
@@ -105,7 +131,7 @@ const UserDashDefault = () => {
   return (
     <React.Fragment>
       <Row>
-        {/* {dashSalesData.map((data, index) => {
+        {dashSalesData.map((data, index) => {
           return (
             <Col key={index} xl={6} xxl={4}>
               <Card>
@@ -114,7 +140,9 @@ const UserDashDefault = () => {
                   <div className="row d-flex align-items-center">
                     <div className="col-9">
                       <h3 className="f-w-300 d-flex align-items-center m-b-0">
-                        <i className={`feather ${data.icon} f-30 m-r-5`} /> $249.95
+                        {data.icon && <i className={`feather ${data.icon} f-30 m-r-5`} />}
+                        {data.iconNew && data.iconNew}
+                        {data.amount} {data.unit}
                       </h3>
                     </div>
                     <div className="col-3 text-end">
@@ -135,11 +163,11 @@ const UserDashDefault = () => {
               </Card>
             </Col>
           );
-        })} */}
+        })}
         <Col md={12} xl={12}>
           <TestResultsDashboard />
         </Col>
-        <Col md={6} xl={8}>
+        {/* <Col md={6} xl={8}>
           <Card className="Recent-Users widget-focus-lg">
             <Card.Header>
               <Card.Title as="h5">Recent Users</Card.Title>
@@ -583,7 +611,7 @@ const UserDashDefault = () => {
               </Tab>
             </Tabs>
           </Card>
-        </Col>
+        </Col> */}
       </Row>
     </React.Fragment>
   );

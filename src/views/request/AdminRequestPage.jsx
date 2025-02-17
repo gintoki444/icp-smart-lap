@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, Table, Badge, Row, Col, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
-const UserRequestPage = () => {
+const AdminRequestPage = () => {
   const navigate = useNavigate();
 
   // ตัวอย่างข้อมูลคำขอรับบริการ
@@ -62,12 +62,12 @@ const UserRequestPage = () => {
             <Col>
               <Card.Title as="h5">รายการคำขอรับบริการ</Card.Title>
             </Col>
-            <Col className="text-end">
+            {/* <Col className="text-end">
               <Button variant="success" onClick={() => navigate('/user/request/add')}>
                 <i className="feather icon-plus-circle" />
                 เพิ่ม
               </Button>
-            </Col>
+            </Col> */}
           </Row>
         </Card.Header>
         <Card.Body>
@@ -124,11 +124,11 @@ const UserRequestPage = () => {
                         <i className="feather icon-edit m-0" />
                       </Button>
                     )}
-                    {request.status !== 'เสร็จสิ้น' && (
+                    {/* {request.status !== 'เสร็จสิ้น' && (
                       <Button variant="danger" size="sm" onClick={() => {}}>
                         <i className="feather icon-trash-2 m-0" />
                       </Button>
-                    )}
+                    )} */}
                   </td>
                 </tr>
               ))}
@@ -140,4 +140,4 @@ const UserRequestPage = () => {
   );
 };
 
-export default UserRequestPage;
+export default AdminRequestPage;

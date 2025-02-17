@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Row, Col, Card, Table, Button, Modal, Form } from 'react-bootstrap';
+import { useDropzone } from 'react-dropzone';
 
 function AddCompany() {
   const navigate = useNavigate();
@@ -39,6 +40,23 @@ function AddCompany() {
     status: 'รออนุมัติ'
   });
 
+  const [files, setFiles] = useState([]);
+  const onDrop = useCallback((acceptedFiles) => {
+    // เก็บไฟล์ที่อัปโหลดใน state
+    setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: 'image/*,application/pdf', // กำหนดประเภทไฟล์ที่ยอมรับ
+    maxSize: 5 * 1024 * 1024 // จำกัดขนาดไฟล์ 5MB
+  });
+
+  const handleUpload = () => {
+    alert(`Uploading ${files.length} file(s)!`);
+    // สามารถนำไฟล์ใน `files` ไปส่งต่อ API ได้
+  };
+
   const handleAddCompany = () => {
     setCompanies([...companies, { id: Date.now(), ...newCompany, documents: newCompany.documents.split(', ') }]);
     setShowModal(false);
@@ -70,7 +88,7 @@ function AddCompany() {
         <Card.Body>
           <Form>
             <Form.Group className="mb-3">
-              <Form.Label>ชื่อบริษัท</Form.Label>
+              <Form.Label>ชื่อบริษัท :</Form.Label>
               <Form.Control
                 type="text"
                 placeholder="กรอกชื่อบริษัท"
@@ -79,7 +97,7 @@ function AddCompany() {
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>เลขที่ผู้เสียภาษี</Form.Label>
+              <Form.Label>เลขที่ผู้เสียภาษี :</Form.Label>
               <Form.Control
                 type="text"
                 placeholder="กรอกเลขที่ผู้เสียภาษี"
@@ -88,7 +106,7 @@ function AddCompany() {
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>ที่อยู่บริษัท</Form.Label>
+              <Form.Label>ที่อยู่บริษัท :</Form.Label>
               <Form.Control
                 type="text"
                 placeholder="กรอกที่อยู่บริษัท"
@@ -106,7 +124,15 @@ function AddCompany() {
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>เอกสาร (คั่นด้วย ", ")</Form.Label>
+              <Form.Label>เงื่อนไขพิเศษ :</Form.Label>
+              <Form.Control as="select" className="mb-3">
+                <option>เลือกเงื่อนไข</option>
+                <option>Credit</option>
+                <option>ขอ Advance Invoice</option>
+              </Form.Control>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>เอกสาร</Form.Label>
               <Form.Control
                 type="text"
                 placeholder="กรอกชื่อเอกสาร"
@@ -114,6 +140,34 @@ function AddCompany() {
                 onChange={(e) => setNewCompany({ ...newCompany, documents: e.target.value })}
               />
             </Form.Group>
+            <Form.Group className="mb-4">
+              <Form.Label>อัพโหลดเอกสาร :</Form.Label>
+              <div
+                {...getRootProps()}
+                style={{
+                  border: '2px dashed #04a9f5',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  textAlign: 'center',
+                  backgroundColor: isDragActive ? '#e6f7ff' : '#f8f9fa'
+                }}
+              >
+                <input {...getInputProps()} />
+                {isDragActive ? (
+                  <p style={{ marginBottom: 0 }}>Drop your files here...</p>
+                ) : (
+                  <p style={{ marginBottom: 0 }}>Drag and drop files here, or click to select files</p>
+                )}
+              </div>
+            </Form.Group>
+            <ul className="mt-3">
+              {files.map((file, index) => (
+                <li key={index}>
+                  <i className="feather icon-file" style={{ marginRight: 12 }} />
+                  {file.name}
+                </li>
+              ))}
+            </ul>
           </Form>
           <Row>
             <Col>

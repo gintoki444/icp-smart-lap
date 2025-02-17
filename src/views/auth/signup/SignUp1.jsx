@@ -33,24 +33,18 @@ const SignUp1 = () => {
                       email: '',
                       phone: '',
                       password: '',
-                      confirmPassword: '',
+                      confirmPassword: ''
                     }}
                     validationSchema={Yup.object({
-                      fullName: Yup.string()
-                        .min(3, 'ชื่อ-นามสกุลต้องมีอย่างน้อย 3 ตัวอักษร')
-                        .required('กรุณากรอกชื่อ-นามสกุล'),
-                      email: Yup.string()
-                        .email('รูปแบบอีเมล์ไม่ถูกต้อง')
-                        .required('กรุณากรอกอีเมล์'),
+                      fullName: Yup.string().min(3, 'ชื่อ-นามสกุลต้องมีอย่างน้อย 3 ตัวอักษร').required('กรุณากรอกชื่อ-นามสกุล'),
+                      email: Yup.string().email('รูปแบบอีเมล์ไม่ถูกต้อง').required('กรุณากรอกอีเมล์'),
                       phone: Yup.string()
                         .matches(/^[0-9]{10}$/, 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (10 หลัก)')
                         .required('กรุณากรอกเบอร์โทรศัพท์'),
-                      password: Yup.string()
-                        .min(6, 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร')
-                        .required('กรุณากรอกรหัสผ่าน'),
+                      password: Yup.string().min(6, 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร').required('กรุณากรอกรหัสผ่าน'),
                       confirmPassword: Yup.string()
                         .oneOf([Yup.ref('password'), null], 'รหัสผ่านไม่ตรงกัน')
-                        .required('กรุณายืนยันรหัสผ่าน'),
+                        .required('กรุณายืนยันรหัสผ่าน')
                     })}
                     onSubmit={(values) => {
                       console.log(values);
@@ -70,9 +64,7 @@ const SignUp1 = () => {
                             onChange={handleChange}
                             onBlur={handleBlur}
                           />
-                          {touched.fullName && errors.fullName && (
-                            <small className="text-danger">{errors.fullName}</small>
-                          )}
+                          {touched.fullName && errors.fullName && <small className="text-danger">{errors.fullName}</small>}
                         </div>
                         <div className="form-group mb-3 text-start">
                           <input
@@ -84,9 +76,7 @@ const SignUp1 = () => {
                             onChange={handleChange}
                             onBlur={handleBlur}
                           />
-                          {touched.email && errors.email && (
-                            <small className="text-danger">{errors.email}</small>
-                          )}
+                          {touched.email && errors.email && <small className="text-danger">{errors.email}</small>}
                         </div>
                         <div className="form-group mb-3 text-start">
                           <input
@@ -98,9 +88,7 @@ const SignUp1 = () => {
                             onChange={handleChange}
                             onBlur={handleBlur}
                           />
-                          {touched.phone && errors.phone && (
-                            <small className="text-danger">{errors.phone}</small>
-                          )}
+                          {touched.phone && errors.phone && <small className="text-danger">{errors.phone}</small>}
                         </div>
                         <div className="form-group mb-3 text-start">
                           <input
@@ -112,9 +100,7 @@ const SignUp1 = () => {
                             onChange={handleChange}
                             onBlur={handleBlur}
                           />
-                          {touched.password && errors.password && (
-                            <small className="text-danger">{errors.password}</small>
-                          )}
+                          {touched.password && errors.password && <small className="text-danger">{errors.password}</small>}
                         </div>
                         <div className="form-group mb-3 text-start">
                           <input

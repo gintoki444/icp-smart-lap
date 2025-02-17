@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Row, Col, Button, Card, Collapse } from 'react-bootstrap';
+import { Row, Col, Button, Card, Collabse } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
 const BasicCollapse = () => {
@@ -28,17 +28,17 @@ const BasicCollapse = () => {
     <React.Fragment>
       <Row className="btn-page">
         <Col sm={12}>
-          <h5>Basic Collapse</h5>
+          <h5>Basic Collabse</h5>
           <hr />
           <Card>
             <Card.Header>
-              <Button onClick={() => setIsBasic(!isBasic)} aria-controls="basic-collapse" aria-expanded={isBasic}>
-                Collapse Link
+              <Button onClick={() => setIsBasic(!isBasic)} aria-controls="basic-collabse" aria-expanded={isBasic}>
+                Collabse Link
               </Button>
-              <Button onClick={() => setIsBasic(!isBasic)}>Collapse Button</Button>
+              <Button onClick={() => setIsBasic(!isBasic)}>Collabse Button</Button>
             </Card.Header>
-            <Collapse in={isBasic}>
-              <div id="basic-collapse">
+            <Collabse in={isBasic}>
+              <div id="basic-collabse">
                 <Card.Body>
                   <Card.Text>
                     Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh
@@ -46,7 +46,7 @@ const BasicCollapse = () => {
                   </Card.Text>
                 </Card.Body>
               </div>
-            </Collapse>
+            </Collabse>
           </Card>
         </Col>
         <Col sm={12}>
@@ -70,7 +70,7 @@ const BasicCollapse = () => {
           <Row>
             <Col>
               <Card className="mt-2">
-                <Collapse in={isMultiTarget.some((target) => target === 'target1')}>
+                <Collabse in={isMultiTarget.some((target) => target === 'target1')}>
                   <div id="target1">
                     <Card.Header>
                       <Card.Title as="h5">First Element</Card.Title>
@@ -82,12 +82,12 @@ const BasicCollapse = () => {
                       </Card.Text>
                     </Card.Body>
                   </div>
-                </Collapse>
+                </Collabse>
               </Card>
             </Col>
             <Col>
               <Card className="mt-2">
-                <Collapse in={isMultiTarget.some((target) => target === 'target2')}>
+                <Collabse in={isMultiTarget.some((target) => target === 'target2')}>
                   <div id="target2">
                     <Card.Header>
                       <Card.Title as="h5">Second Element</Card.Title>
@@ -99,7 +99,7 @@ const BasicCollapse = () => {
                       </Card.Text>
                     </Card.Body>
                   </div>
-                </Collapse>
+                </Collabse>
               </Card>
             </Col>
           </Row>
@@ -116,11 +116,11 @@ const BasicCollapse = () => {
                   aria-controls="accordion1"
                   aria-expanded={accordionKey === 1}
                 >
-                  Collapsible Group Item #1
+                  Collabsible Group Item #1
                 </Link>
               </Card.Title>
             </Card.Header>
-            <Collapse in={accordionKey === 1}>
+            <Collabse in={accordionKey === 1}>
               <div id="accordion1">
                 <Card.Body>
                   <Card.Text>
@@ -133,7 +133,7 @@ const BasicCollapse = () => {
                   </Card.Text>
                 </Card.Body>
               </div>
-            </Collapse>
+            </Collabse>
           </Card>
           <Card className="mt-2">
             <Card.Header>
@@ -144,11 +144,11 @@ const BasicCollapse = () => {
                   aria-controls="accordion2"
                   aria-expanded={accordionKey === 2}
                 >
-                  Collapsible Group Item #2
+                  Collabsible Group Item #2
                 </Link>
               </Card.Title>
             </Card.Header>
-            <Collapse in={accordionKey === 2}>
+            <Collabse in={accordionKey === 2}>
               <div id="accordion2">
                 <Card.Body>
                   <Card.Text>
@@ -161,7 +161,7 @@ const BasicCollapse = () => {
                   </Card.Text>
                 </Card.Body>
               </div>
-            </Collapse>
+            </Collabse>
           </Card>
           <Card className="mt-2">
             <Card.Header>
@@ -172,11 +172,11 @@ const BasicCollapse = () => {
                   aria-controls="accordion3"
                   aria-expanded={accordionKey === 3}
                 >
-                  Collapsible Group Item #3
+                  Collabsible Group Item #3
                 </Link>
               </Card.Title>
             </Card.Header>
-            <Collapse in={accordionKey === 3}>
+            <Collabse in={accordionKey === 3}>
               <div id="accordion3">
                 <Card.Body>
                   <Card.Text>
@@ -189,7 +189,7 @@ const BasicCollapse = () => {
                   </Card.Text>
                 </Card.Body>
               </div>
-            </Collapse>
+            </Collabse>
           </Card>
         </Col>
       </Row>

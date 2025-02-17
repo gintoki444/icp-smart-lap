@@ -44,36 +44,47 @@ const menuUserItems = {
       icon: 'icon-group',
       children: [
         {
-          id: 'service-request-list',
-          title: 'รายการการขอรับบริการ',
+          id: 'request-list',
+          title: 'รายการขอรับบริการ',
           type: 'item',
           icon: 'feather icon-file-text',
+          badge: {
+            title: '1',
+            type: 'label-danger'
+          },
           url: '/user/request'
-        }
-      ]
-    },
-    {
-      id: 'ui-forms',
-      title: 'FORMS & TABLES',
-      type: 'group',
-      icon: 'icon-group',
-      children: [
-        {
-          id: 'forms',
-          title: 'Form Elements',
-          type: 'item',
-          icon: 'feather icon-file-text',
-          url: '/user/forms/form-basic'
         },
         {
-          id: 'table',
-          title: 'Table',
+          id: 'request-history',
+          title: 'ประวัติการขอรับบริการ',
           type: 'item',
-          icon: 'feather icon-server',
-          url: '/user/tables/bootstrap'
+          icon: 'feather icon-clock',
+          url: '/user/request/history'
         }
       ]
     }
+    // {
+    //   id: 'ui-forms',
+    //   title: 'FORMS & TABLES',
+    //   type: 'group',
+    //   icon: 'icon-group',
+    //   children: [
+    //     {
+    //       id: 'forms',
+    //       title: 'Form Elements',
+    //       type: 'item',
+    //       icon: 'feather icon-file-text',
+    //       url: '/user/forms/form-basic'
+    //     },
+    //     {
+    //       id: 'table',
+    //       title: 'Table',
+    //       type: 'item',
+    //       icon: 'feather icon-server',
+    //       url: '/user/tables/bootstrap'
+    //     }
+    //   ]
+    // }
     // {
     //   id: 'chart-maps',
     //   title: 'Chart & Maps',
@@ -105,7 +116,7 @@ const menuUserItems = {
     //     {
     //       id: 'auth',
     //       title: 'Authentication',
-    //       type: 'collapse',
+    //       type: 'collabse',
     //       icon: 'feather icon-lock',
     //       badge: {
     //         title: 'New',
@@ -151,7 +162,7 @@ const menuUserItems = {
     //     {
     //       id: 'menu-level',
     //       title: 'Menu Levels',
-    //       type: 'collapse',
+    //       type: 'collabse',
     //       icon: 'feather icon-menu',
     //       children: [
     //         {
@@ -163,7 +174,7 @@ const menuUserItems = {
     //         {
     //           id: 'menu-level-1.2',
     //           title: 'Menu Level 2.2',
-    //           type: 'collapse',
+    //           type: 'collabse',
     //           children: [
     //             {
     //               id: 'menu-level-2.1',
@@ -174,7 +185,7 @@ const menuUserItems = {
     //             {
     //               id: 'menu-level-2.2',
     //               title: 'Menu Level 2.2',
-    //               type: 'collapse',
+    //               type: 'collabse',
     //               children: [
     //                 {
     //                   id: 'menu-level-3.1',

@@ -1,10 +1,12 @@
 // TestResultsDashboard.jsx
 import React from 'react';
-import { Card, Table } from 'react-bootstrap';
+import { Card, Table, Button } from 'react-bootstrap';
 import { testResults } from 'services/TestData/resultsTestData';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
-const TestResultsAdminDashboard = () => {
+const labList = () => {
+  const navigate = useNavigate();
   const dateNow = format(new Date(), 'dd/MM/yyyy');
 
   // ตัวอย่างข้อมูลบริษัท
@@ -23,7 +25,7 @@ const TestResultsAdminDashboard = () => {
     <div className="">
       <Card>
         <Card.Header>
-          <h5>สรุปข้อมูลผลรวมการทดสอบประจำวัน : {dateNow}</h5>
+          <h5>รายการทดสอบตัวอย่าง</h5>
         </Card.Header>
         <Card.Body className="p-0">
           <Table striped bordered hover responsive className="mb-0">
@@ -32,6 +34,7 @@ const TestResultsAdminDashboard = () => {
                 {headers.map((header, index) => (
                   <th key={index}>{header}</th>
                 ))}
+                <th className="text-center">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -48,6 +51,28 @@ const TestResultsAdminDashboard = () => {
                     .map((header) => (
                       <td key={header}>{result.testItems[header] !== null ? result.testItems[header] : '-'}</td>
                     ))}
+                  <td className="">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => {
+                        navigate('/user/request/detial');
+                      }}
+                    >
+                      <i className="feather icon-file-text m-0" />
+                    </Button>
+                    {result.status !== 'เสร็จสิ้น' && (
+                      <Button variant="info" size="sm" className="me-2" onClick={() => {}}>
+                        <i className="feather icon-edit m-0" />
+                      </Button>
+                    )}
+                    {/* {request.status !== 'เสร็จสิ้น' && (
+                      <Button variant="danger" size="sm" onClick={() => {}}>
+                        <i className="feather icon-trash-2 m-0" />
+                      </Button>
+                    )} */}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -58,4 +83,4 @@ const TestResultsAdminDashboard = () => {
   );
 };
 
-export default TestResultsAdminDashboard;
+export default LabList;

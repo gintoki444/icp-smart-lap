@@ -3,8 +3,11 @@ import { Card, Button, Form, Modal, Row, Col } from 'react-bootstrap';
 import Select from 'react-select';
 import { ChemicalFertilizerForm } from './ChemicalFertilizerForm';
 import { OrganicFertilizerForm } from './OrganicFertilizerForm';
+import { useNavigate } from 'react-router-dom';
+import { GiFertilizerBag, GiChemicalTank } from 'react-icons/gi';
 
 const RegistrationForm = () => {
+  const navagate = useNavigate();
   const [selectedForm, setSelectedForm] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const optionsColor = [
@@ -91,18 +94,28 @@ const RegistrationForm = () => {
           </Card.Header>
           <Card.Body>
             <div className="d-flex justify-content-center">
-              <Button variant="info" onClick={() => handleFormSelection('organic')}>
+              <Button
+                variant="info"
+                className="w-50 py-4 d-flex align-items-center justify-content-center flex-column"
+                onClick={() => handleFormSelection('organic')}
+              >
+                <GiFertilizerBag size={45} className="mb-2" />
                 แบบฟอร์มนำส่งตัวอย่างปุ๋ยอินทรีย์
               </Button>
-              <Button variant="success" onClick={() => handleFormSelection('chemical')}>
+              <Button
+                variant="success"
+                className="w-50  py-4 d-flex align-items-center justify-content-center flex-column"
+                onClick={() => handleFormSelection('chemical')}
+              >
+                <GiChemicalTank size={45} className="mb-2" />
                 แบบฟอร์มนำส่งตัวอย่างปุ๋ยเคมีเพื่อขึ้นทะเบียนปุ๋ย
               </Button>
             </div>
           </Card.Body>
         </Card>
       )}
-      {selectedForm === 'organic' && <OrganicFertilizerForm />}
-      {selectedForm === 'chemical' && <ChemicalFertilizerForm />}
+      {selectedForm === 'organic' && <OrganicFertilizerForm onHandleSave={setShowSuccessModal} />}
+      {selectedForm === 'chemical' && <ChemicalFertilizerForm onHandleSave={setShowSuccessModal} />}
 
       <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered>
         <Modal.Body className="text-center">
@@ -113,7 +126,7 @@ const RegistrationForm = () => {
           <p>กรุณารอผลการตรวจสอบคำขอใช้บริการ</p>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="success" onClick={() => setShowSuccessModal(false)}>
+          <Button variant="success" onClick={() => navagate('/user/request/')}>
             ปิด
           </Button>
         </Modal.Footer>

@@ -58,7 +58,7 @@ export const renderRoutes = (routes = []) => (
 const routes = [
   {
     exact: 'true',
-    path: '/',
+    path: '/*',
     element: lazy(() => import('./views/auth/signin/SignIn1'))
   },
   {
@@ -92,6 +92,11 @@ const routes = [
     element: lazy(() => import('./views/auth/reset-password/ResetPassword'))
   },
   {
+    exact: 'true',
+    path: 'user/request/detial/quotation',
+    element: lazy(() => import('./views/quotatios/QuotationPage'))
+  },
+  {
     path: '/admin/*',
     guard: (props) => <ProtectedRoute role="admin" {...props} />, // ตรวจสอบว่า Role ต้องเป็น Admin
     layout: AdminLayout,
@@ -105,6 +110,81 @@ const routes = [
         exact: 'true',
         path: '/dashboard',
         element: lazy(() => import('./views/dashboard'))
+      },
+      {
+        exact: 'true',
+        path: '/request',
+        element: lazy(() => import('./views/request/AdminRequestPage'))
+      },
+      {
+        exact: 'true',
+        path: 'request/add',
+        element: lazy(() => import('./views/request/forms/AddRequest'))
+      },
+      {
+        exact: 'true',
+        path: 'request/detial',
+        element: lazy(() => import('./views/request/details/RequestDetails'))
+      },
+      {
+        exact: 'true',
+        path: 'request/edit',
+        element: lazy(() => import('./views/request/forms/EditRequest'))
+      },
+      {
+        exact: 'true',
+        path: '/lab-list',
+        element: lazy(() => import('./views/labs/LabsList'))
+      },
+      {
+        exact: 'true',
+        path: '/lab-test',
+        element: lazy(() => import('./views/labs/TestList'))
+      },
+      {
+        exact: 'true',
+        path: '/lab-test/cip-wp',
+        element: lazy(() => import('./views/labs/TestCIP2OWP2O5'))
+      },
+      {
+        exact: 'true',
+        path: '/lab-test/water-soluble-potassium',
+        element: lazy(() => import('./views/labs/TestWaterSoluble'))
+      },
+      {
+        exact: 'true',
+        path: '/lab-test/test-oes',
+        element: lazy(() => import('./views/labs/TestOES'))
+      },
+      {
+        exact: 'true',
+        path: '/lab-test/phosphorus',
+        element: lazy(() => import('./views/labs/TestPhosphorus'))
+      },
+      {
+        exact: 'true',
+        path: 'company',
+        element: lazy(() => import('./views/user/company/company'))
+      },
+      {
+        exact: 'true',
+        path: 'company/select',
+        element: lazy(() => import('./views/user/company/SelectCompany'))
+      },
+      {
+        exact: 'true',
+        path: 'company/search',
+        element: lazy(() => import('./views/user/company/forms/SearchCompany'))
+      },
+      {
+        exact: 'true',
+        path: 'company/add',
+        element: lazy(() => import('./views/user/company/forms/AddCompany'))
+      },
+      {
+        exact: 'true',
+        path: 'company/edit',
+        element: lazy(() => import('./views/user/company/forms/EditCompany'))
       },
       {
         exact: 'true',
@@ -123,7 +203,7 @@ const routes = [
       },
       {
         exact: 'true',
-        path: '/basic/collapse',
+        path: '/basic/collabse',
         element: lazy(() => import('./views/ui-elements/basic/BasicCollapse'))
       },
       {
@@ -225,8 +305,18 @@ const routes = [
       },
       {
         exact: 'true',
+        path: 'request/detial',
+        element: lazy(() => import('./views/request/details/RequestDetails'))
+      },
+      {
+        exact: 'true',
         path: 'request/edit',
         element: lazy(() => import('./views/request/forms/EditRequest'))
+      },
+      {
+        exact: 'true',
+        path: 'request/history',
+        element: lazy(() => import('./views/request/HistoryRequestPage'))
       },
       {
         exact: 'true',
@@ -240,7 +330,7 @@ const routes = [
       },
       {
         exact: 'true',
-        path: '/basic/collapse',
+        path: '/basic/collabse',
         element: lazy(() => import('./views/ui-elements/basic/BasicCollapse'))
       },
       {
