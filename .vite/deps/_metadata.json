@@ -1,0 +1,91 @@
+{
+  "hash": "e2be5ccf",
+  "configHash": "65826d0d",
+  "lockfileHash": "e55745a4",
+  "browserHash": "915ad545",
+  "optimized": {
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "bd956f7b",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "aa67cb2e",
+      "needsInterop": true
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/react-router-dom/dist/index.js",
+      "file": "react-router-dom.js",
+      "fileHash": "bb87bb95",
+      "needsInterop": false
+    },
+    "web-vitals": {
+      "src": "../../node_modules/web-vitals/dist/web-vitals.js",
+      "file": "web-vitals.js",
+      "fileHash": "b325586e",
+      "needsInterop": false
+    },
+    "prop-types": {
+      "src": "../../node_modules/prop-types/index.js",
+      "file": "prop-types.js",
+      "fileHash": "5a79e60f",
+      "needsInterop": true
+    },
+    "react-bootstrap": {
+      "src": "../../node_modules/react-bootstrap/esm/index.js",
+      "file": "react-bootstrap.js",
+      "fileHash": "6190bad8",
+      "needsInterop": false
+    },
+    "@tanem/react-nprogress": {
+      "src": "../../node_modules/@tanem/react-nprogress/dist/react-nprogress.esm.js",
+      "file": "@tanem_react-nprogress.js",
+      "fileHash": "abf37f47",
+      "needsInterop": false
+    },
+    "react-perfect-scrollbar": {
+      "src": "../../node_modules/react-perfect-scrollbar/lib/index.js",
+      "file": "react-perfect-scrollbar.js",
+      "fileHash": "78e3675f",
+      "needsInterop": true
+    },
+    "react-icons/fi": {
+      "src": "../../node_modules/react-icons/fi/index.mjs",
+      "file": "react-icons_fi.js",
+      "fileHash": "6880e422",
+      "needsInterop": false
+    },
+    "react-icons/lu": {
+      "src": "../../node_modules/react-icons/lu/index.mjs",
+      "file": "react-icons_lu.js",
+      "fileHash": "efdedbf2",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-2CVX3UOB": {
+      "file": "chunk-2CVX3UOB.js"
+    },
+    "chunk-ZIYUGMGG": {
+      "file": "chunk-ZIYUGMGG.js"
+    },
+    "chunk-H3QGJKSP": {
+      "file": "chunk-H3QGJKSP.js"
+    },
+    "chunk-MQBRFNOA": {
+      "file": "chunk-MQBRFNOA.js"
+    },
+    "chunk-65KY755N": {
+      "file": "chunk-65KY755N.js"
+    },
+    "chunk-K7E3GE6C": {
+      "file": "chunk-K7E3GE6C.js"
+    },
+    "chunk-V4OQ3NZ2": {
+      "file": "chunk-V4OQ3NZ2.js"
+    }
+  }
+}
