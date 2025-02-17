@@ -2,14 +2,14 @@ import React from 'react';
 import { Card, Button, Alert } from 'react-bootstrap';
 import { NavLink, Link } from 'react-router-dom';
 
-import Breadcrumb from '../../../layouts/AdminLayout/Breadcrumb';
+// import Breadcrumb from '../../../layouts/AdminLayout/Breadcrumb';
 
-import { CopyToClipboard } from 'react-copy-to-clipboard';
+// import { CopyToClipboard } from 'react-copy-to-clipboard';
 
 import AuthLogin from './JWTLogin';
 import logo from '../../../assets/images/logo/logo.png';
 
-const Signin1 = () => {
+const Signin = () => {
   return (
     <React.Fragment>
       {/* <Breadcrumb /> */}
@@ -69,4 +69,4 @@ const Signin1 = () => {
   );
 };
 
-export default Signin1;
+export default Signin;

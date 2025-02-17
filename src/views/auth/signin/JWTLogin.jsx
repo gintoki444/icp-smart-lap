@@ -1,9 +1,9 @@
-import React,{useEffect} from 'react';
+import React, { useEffect } from 'react';
 import { Row, Col, Alert, Button } from 'react-bootstrap';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
 import { useNavigate } from 'react-router-dom';
-import { authenticateUser } from '../../../services/TestData/mockAuth'; // Mock Authentication Data
+import { signIn } from 'services/_api/authentication';
 
 const JWTLogin = () => {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ const JWTLogin = () => {
   useEffect(() => {
     const authToken = localStorage.getItem('authToken');
     const userRole = localStorage.getItem('userRole');
-    
+
     if (authToken) {
       // Redirect ไปหน้า Dashboard ตาม Role
       if (userRole === 'admin') {
@@ -23,40 +23,42 @@ const JWTLogin = () => {
     }
   }, [navigate]);
 
+  const initialValue = {
+    email: '',
+    password: '',
+    submit: null
+  };
+
+  const validations = () =>
+    Yup.object().shape({
+      email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
+      password: Yup.string().max(255).required('Password is required')
+    });
+
+  const handleSubmit = async (values, { setErrors, setSubmitting }) => {
+    // const { email, password } = values;
+    const response = await signIn(values);
+
+    if (response.token) {
+      // Save user data to Local Storage
+      localStorage.setItem('authToken', response.token); // Mock Token
+      localStorage.setItem('userRole', response.user.role); // Save Role
+
+      // Redirect based on role
+      if (response.user.role === 'admin') {
+        navigate('/admin/'); // Redirect to Admin Dashboard
+      } else if (response.user.role === 'user') {
+        navigate('/user/'); // Redirect to User Dashboard
+      }
+    } else {
+      setErrors({ submit: response.message });
+    }
+
+    setSubmitting(false);
+  };
 
   return (
-    <Formik
-      initialValues={{
-        email: '',
-        password: '',
-        submit: null
-      }}
-      validationSchema={Yup.object().shape({
-        email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
-        password: Yup.string().max(255).required('Password is required')
-      })}
-      onSubmit={(values, { setErrors, setSubmitting }) => {
-        const { email, password } = values;
-        const response = authenticateUser(email, password);
-
-        if (response.success) {
-          // Save user data to Local Storage
-          localStorage.setItem('authToken', 'mock-token'); // Mock Token
-          localStorage.setItem('userRole', response.user.role); // Save Role
-
-          // Redirect based on role
-          if (response.user.role === 'admin') {
-            navigate('/admin/'); // Redirect to Admin Dashboard
-          } else if (response.user.role === 'user') {
-            navigate('/user/'); // Redirect to User Dashboard
-          }
-        } else {
-          setErrors({ submit: response.message });
-        }
-
-        setSubmitting(false);
-      }}
-    >
+    <Formik initialValues={initialValue} validationSchema={validations} onSubmit={handleSubmit}>
       {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => (
         <form noValidate onSubmit={handleSubmit}>
           <div className="form-group mb-3 text-start">
@@ -99,14 +101,7 @@ const JWTLogin = () => {
 
           <Row>
             <Col mt={2}>
-              <Button
-                className="btn-block mb-4"
-                color="primary"
-                disabled={isSubmitting}
-                size="large"
-                type="submit"
-                variant="primary"
-              >
+              <Button className="btn-block mb-4" color="primary" disabled={isSubmitting} size="large" type="submit" variant="primary">
                 Signin
               </Button>
             </Col>

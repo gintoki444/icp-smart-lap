@@ -59,22 +59,22 @@ const routes = [
   {
     exact: 'true',
     path: '/*',
-    element: lazy(() => import('./views/auth/signin/SignIn1'))
+    element: lazy(() => import('./views/auth/signin/Signin'))
   },
   {
     exact: 'true',
     path: '/login',
-    element: lazy(() => import('./views/auth/signin/SignIn1'))
+    element: lazy(() => import('./views/auth/signin/Signin'))
   },
   {
     exact: 'true',
     path: '/auth/signin',
-    element: lazy(() => import('./views/auth/signin/SignIn1'))
+    element: lazy(() => import('./views/auth/signin/Signin'))
   },
   {
     exact: 'true',
     path: '/auth/signup-1',
-    element: lazy(() => import('./views/auth/signup/SignUp1'))
+    element: lazy(() => import('./views/auth/signup/SignUp'))
   },
   {
     exact: 'true',
