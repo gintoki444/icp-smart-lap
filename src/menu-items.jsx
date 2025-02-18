@@ -28,7 +28,7 @@ const menuItems = {
           url: '/admin/request'
         },
         {
-          id: 'requestsList',
+          id: 'requestscharts',
           title: 'ทบทวนคำขอรับบริการ',
           type: 'item',
           icon: 'feather icon-box',
@@ -43,18 +43,26 @@ const menuItems = {
         }
       ]
     },
+
     {
-      id: 'lab',
+      id: 'labs-element',
       title: 'การทดสอบ',
       type: 'group',
       icon: 'icon-ui',
       children: [
         {
-          id: 'labList',
+          id: 'component',
           title: 'ทดสอบตัวอย่าง',
-          type: 'collabse',
-          icon: 'gi test-tubes',
+          type: 'collapse',
+          icon: 'feather icon-box',
           children: [
+            {
+              id: 'testconnect',
+              title: 'ทดสอบ connect',
+              // icon: 'gi test-tubes',
+              type: 'item',
+              url: '/admin/lab-test/connect'
+            },
             {
               id: 'CIP₂O&WP₂O₅',
               title: 'CIP₂O & WP₂O₅',
@@ -83,41 +91,10 @@ const menuItems = {
               type: 'item',
               url: '/admin/lab-test/phosphorus'
             }
-            // {
-            //   id: 'phosphorus',
-            //   title: 'Phosphorus',
-            //   // icon: 'gi test-tubes',
-            //   type: 'item',
-            //   url: '/admin/lab-test/phosphorus'
-            // }
           ]
-          // badge: {
-          //   title: '7',
-          //   type: 'label-danger'
-          // },
-          // url: '/admin/lab-list'
         }
       ]
     },
-    // {
-    //   id: 'payment',
-    //   title: 'ข้อมูลการชำระเงิน&บัญชี',
-    //   type: 'group',
-    //   icon: 'icon-ui',
-    //   children: [
-    //     {
-    //       id: 'requestsList',
-    //       title: 'รายการทดสอบ',
-    //       type: 'item',
-    //       icon: 'icon-gi-test-tubes',
-    //       badge: {
-    //         title: '1',
-    //         type: 'label-danger'
-    //       },
-    //       url: '/admin/test/list'
-    //     }
-    //   ]
-    // },
     {
       id: 'report',
       title: 'รายงาน',
@@ -138,13 +115,6 @@ const menuItems = {
           icon: 'tb report-analytics',
           url: '/admin/charts/nvd3'
         }
-        // {
-        //   id: 'report2',
-        //   title: 'ออกผลรายงาน',
-        //   type: 'item',
-        //   icon: 'tb report-analytics',
-        //   url: '/admin/charts/nvd3'
-        // }
       ]
     },
     {
@@ -158,14 +128,10 @@ const menuItems = {
           title: 'ข้อมูลผู้ใช้งาน',
           type: 'item',
           icon: 'feather icon-user',
-          // badge: {
-          //   title: '1',
-          //   type: 'label-danger'
-          // },
           url: '/admin/user'
         },
         {
-          id: 'user',
+          id: 'customer',
           title: 'ข้อมูลลูกค้า',
           type: 'item',
           icon: 'feather icon-users',
@@ -184,102 +150,6 @@ const menuItems = {
         }
       ]
     }
-    // {
-    //   id: 'ui-element',
-    //   title: 'UI ELEMENT',
-    //   type: 'group',
-    //   icon: 'icon-ui',
-    //   children: [
-    //     {
-    //       id: 'component',
-    //       title: 'Component',
-    //       type: 'collabse',
-    //       icon: 'feather icon-box',
-    //       children: [
-    //         {
-    //           id: 'button',
-    //           title: 'Button',
-    //           type: 'item',
-    //           url: '/admin/basic/button'
-    //         },
-    //         {
-    //           id: 'badges',
-    //           title: 'Badges',
-    //           type: 'item',
-    //           url: '/admin/basic/badges'
-    //         },
-    //         {
-    //           id: 'breadcrumb',
-    //           title: 'Breadcrumb & Pagination',
-    //           type: 'item',
-    //           url: '/admin/basic/breadcrumb-paging'
-    //         },
-    //         {
-    //           id: 'collabse',
-    //           title: 'Collabse',
-    //           type: 'item',
-    //           url: '/admin/basic/collabse'
-    //         },
-    //         {
-    //           id: 'tabs-pills',
-    //           title: 'Tabs & Pills',
-    //           type: 'item',
-    //           url: '/admin/basic/tabs-pills'
-    //         },
-    //         {
-    //           id: 'typography',
-    //           title: 'Typography',
-    //           type: 'item',
-    //           url: '/admin/basic/typography'
-    //         }
-    //       ]
-    //     }
-    //   ]
-    // },
-    // {
-    //   id: 'ui-forms',
-    //   title: 'FORMS & TABLES',
-    //   type: 'group',
-    //   icon: 'icon-group',
-    //   children: [
-    //     {
-    //       id: 'forms',
-    //       title: 'Form Elements',
-    //       type: 'item',
-    //       icon: 'feather icon-file-text',
-    //       url: '/admin/forms/form-basic'
-    //     },
-    //     {
-    //       id: 'table',
-    //       title: 'Table',
-    //       type: 'item',
-    //       icon: 'feather icon-server',
-    //       url: '/admin/tables/bootstrap'
-    //     }
-    //   ]
-    // },
-    // {
-    //   id: 'chart-maps',
-    //   title: 'Chart & Maps',
-    //   type: 'group',
-    //   icon: 'icon-charts',
-    //   children: [
-    //     {
-    //       id: 'charts',
-    //       title: 'Charts',
-    //       type: 'item',
-    //       icon: 'feather icon-pie-chart',
-    //       url: '/admin/charts/nvd3'
-    //     },
-    //     {
-    //       id: 'maps',
-    //       title: 'Maps',
-    //       type: 'item',
-    //       icon: 'feather icon-map',
-    //       url: '/admin/maps/google-map'
-    //     }
-    //   ]
-    // },
     // {
     //   id: 'pages',
     //   title: 'Pages',

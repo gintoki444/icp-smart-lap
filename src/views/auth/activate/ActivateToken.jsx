@@ -5,6 +5,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import logo from '../../../assets/images/logo/logo.png';
+import { activateEmail } from 'services/_api/authentication';
 
 const ActivateToken = () => {
   const navigate = useNavigate();
@@ -14,14 +15,18 @@ const ActivateToken = () => {
       token: ''
     },
     validationSchema: Yup.object({
-      token: Yup.string()
-        .length(4, 'Token ต้องมี 4 ตัวอักษร')
-        .required('กรุณากรอก Token')
+      token: Yup.string().length(4, 'Token ต้องมี 4 ตัวอักษร').required('กรุณากรอก Token')
     }),
     onSubmit: (values) => {
-      console.log('Token:', values.token);
-      alert('ยืนยันอีเมล์สำเร็จ!');
-      navigate('/auth/activate-success');
+      try {
+        console.log('Token:', values.token);
+        activateEmail(values.token).then((response) => {
+          if (response.message === 'Account activated successfully. You can now log in.') {
+            alert('ยืนยันอีเมล์สำเร็จ!');
+            navigate('/auth/activate-success');
+          }
+        });
+      } catch (errror) {}
     }
   });
 
@@ -32,10 +37,9 @@ const ActivateToken = () => {
           <Card className="borderless">
             <Card.Body>
               <Row className="justify-content-center">
-                
-                                  <div className="mb-0">
-                                    <img className="img-fluid" src={logo} alt="logo" width={120} />
-                                  </div>
+                <div className="mb-0">
+                  <img className="img-fluid" src={logo} alt="logo" width={120} />
+                </div>
                 <Col md={12}>
                   <h3 className="mb-4">Activate E-mail</h3>
                   <p className="mb-4">กรอก Token ที่คุณได้รับจากอีเมล์เพื่อยืนยันตัวตน</p>
@@ -50,9 +54,7 @@ const ActivateToken = () => {
                         onBlur={formik.handleBlur}
                         isInvalid={!!formik.errors.token && formik.touched.token}
                       />
-                      <Form.Control.Feedback type="invalid">
-                        {formik.errors.token}
-                      </Form.Control.Feedback>
+                      <Form.Control.Feedback type="invalid">{formik.errors.token}</Form.Control.Feedback>
                     </Form.Group>
                     <Button variant="primary" type="submit" className="btn-block mb-4">
                       Activate

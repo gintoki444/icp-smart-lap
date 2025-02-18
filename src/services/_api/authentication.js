@@ -10,7 +10,8 @@ export const signIn = async (data) => {
       body: JSON.stringify(data)
     };
     const response = await fetch(url, requestOptions);
-    if (!response.ok) throw new Error('Failed to save user');
+    // console.log('response:', response.json());
+    // if (!response.ok) throw new Error('Login Failed :' + response);
     return await response.json();
   } catch (error) {
     console.error('Error saving user:', error);
@@ -32,25 +33,7 @@ export const Signup = async (data) => {
   };
 
   const response = await fetch(API_BASE_URL + '/register', requestOptions);
-
   return await response.json();
-  //   console.log(data);
-
-  //   try {
-  //     const url = `${API_BASE_URL}/register`;
-  //     console.log(url);
-  //     const requestOptions = {
-  //       method: 'POST',
-  //       headers: { 'Content-Type': 'application/json' },
-  //       body: JSON.stringify(data)
-  //     };
-  //     const response = await fetch(url, requestOptions);
-  //     if (!response.ok) throw new Error('Failed to save register');
-  //     return await response.json();
-  //   } catch (error) {
-  //     console.error('Error saving register:', error);
-  //     throw error;
-  //   }
 };
 
 //  ✅ Authen User
@@ -71,3 +54,34 @@ export const authenUser = async (token) => {
     throw error;
   }
 };
+
+//  ✅ Activate token
+export const activateEmail = async (token) => {
+  try {
+    const url = `${API_BASE_URL}/activate?token=${token}`;
+    const requestOptions = {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    };
+    const response = await fetch(url, requestOptions);
+    if (!response.ok) throw new Error('Failed to activate email');
+    return await response.json();
+  } catch (error) {
+    console.error('Error activate email:', error);
+    return error;
+  }
+};
+//   try {
+//     const url = `${API_BASE_URL}/activate?token=${token}`;
+//     const requestOptions = {
+//       method: 'GET',
+//       headers: { 'Content-Type': 'application/json' }
+//     };
+//     const response = await fetch(url, requestOptions);
+//     if (!response.ok) throw new Error('Failed to authen user');
+//     return await response.json();
+//   } catch (error) {
+//     console.error('Failed to authen user:', error);
+//     throw error;
+//   }
+// };

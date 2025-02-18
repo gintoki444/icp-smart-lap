@@ -143,6 +143,11 @@ const routes = [
       },
       {
         exact: 'true',
+        path: '/lab-test/connect',
+        element: lazy(() => import('./views/labs/TestConnect'))
+      },
+      {
+        exact: 'true',
         path: '/lab-test/cip-wp',
         element: lazy(() => import('./views/labs/TestCIP2OWP2O5'))
       },
@@ -161,6 +166,12 @@ const routes = [
         path: '/lab-test/phosphorus',
         element: lazy(() => import('./views/labs/TestPhosphorus'))
       },
+      {
+        exact: 'true',
+        path: '/user',
+        element: lazy(() => import('./views/user/UserList'))
+      },
+
       {
         exact: 'true',
         path: 'company',
