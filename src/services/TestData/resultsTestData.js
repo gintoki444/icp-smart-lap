@@ -6,6 +6,7 @@ export const testResults = [
     description: 'ธาตุอาหารหลัก, Zn',
     sampleAppearance: 'เม็ดสีแดง',
     requestNo: 'RC24-134',
+    status: 'complete',
     testItems: {
       pH: 7.7,
       MC: 1.0,
@@ -29,6 +30,7 @@ export const testResults = [
     description: '14-8-35, 0.03 B',
     sampleAppearance: 'เม็ดสีขาว',
     requestNo: 'C24-4444',
+    status: 'pending',
     testItems: {
       pH: 6.5,
       MC: 0.8,
@@ -52,6 +54,7 @@ export const testResults = [
     description: 'ธาตุอาหารรอง, Fe',
     sampleAppearance: 'ผงละเอียด',
     requestNo: 'RC24-567',
+    status: 'complete',
     testItems: {
       pH: 7.0,
       MC: 0.9,
@@ -75,6 +78,7 @@ export const testResults = [
     description: '16-16-16',
     sampleAppearance: 'เม็ดสีฟ้า',
     requestNo: 'RC24-888',
+    status: 'pending',
     testItems: {
       pH: 5.5,
       MC: 0.7,
@@ -121,6 +125,7 @@ export const testResults = [
     description: 'ธาตุอาหารรอง, Mn',
     sampleAppearance: 'ผงละเอียดสีชมพู',
     requestNo: 'RC24-333',
+    status: 'pending',
     testItems: {
       pH: 6.2,
       MC: 0.9,
@@ -144,6 +149,7 @@ export const testResults = [
     description: '12-24-12',
     sampleAppearance: 'เม็ดสีส้ม',
     requestNo: 'RC24-222',
+    status: 'pending',
     testItems: {
       pH: 6.9,
       MC: 0.8,
@@ -167,6 +173,7 @@ export const testResults = [
     description: 'ธาตุอาหารเสริม, Zn',
     sampleAppearance: 'ผงละเอียดสีขาว',
     requestNo: 'RC24-111',
+    status: 'pending',
     testItems: {
       pH: 6.7,
       MC: 0.6,
@@ -190,6 +197,7 @@ export const testResults = [
     description: 'ธาตุอาหารหลัก, P',
     sampleAppearance: 'เม็ดสีเหลือง',
     requestNo: 'RC24-444',
+    status: 'pending',
     testItems: {
       pH: 5.8,
       MC: 0.7,
@@ -213,6 +221,7 @@ export const testResults = [
     description: 'ธาตุอาหารรอง, Cu',
     sampleAppearance: 'ผงละเอียดสีเทา',
     requestNo: 'RC24-555',
+    status: 'pending',
     testItems: {
       pH: 6.4,
       MC: 0.9,

@@ -1,0 +1,1 @@
+import{r as t,e as i,f as d}from"./index-BHSqYlV9.js";import{g as m}from"./TransitionWrapper-CjfbmhfF.js";function g({children:r,in:e,onExited:c,mountOnEnter:o,unmountOnExit:l}){const n=t.useRef(null),s=t.useRef(e),f=i(c);t.useEffect(()=>{e?s.current=!0:f(n.current)},[e,f]);const a=d(n,m(r)),u=t.cloneElement(r,{ref:a});return e?u:l||!s.current&&o?null:u}export{g as N};

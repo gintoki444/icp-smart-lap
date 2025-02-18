@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Row, Col, Button, Card, Collabse } from 'react-bootstrap';
+import { Row, Col, Button, Card, Collapse } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
 const BasicCollapse = () => {
@@ -28,17 +28,17 @@ const BasicCollapse = () => {
     <React.Fragment>
       <Row className="btn-page">
         <Col sm={12}>
-          <h5>Basic Collabse</h5>
+          <h5>Basic Collapse</h5>
           <hr />
           <Card>
             <Card.Header>
-              <Button onClick={() => setIsBasic(!isBasic)} aria-controls="basic-collabse" aria-expanded={isBasic}>
-                Collabse Link
+              <Button onClick={() => setIsBasic(!isBasic)} aria-controls="basic-Collapse" aria-expanded={isBasic}>
+                Collapse Link
               </Button>
-              <Button onClick={() => setIsBasic(!isBasic)}>Collabse Button</Button>
+              <Button onClick={() => setIsBasic(!isBasic)}>Collapse Button</Button>
             </Card.Header>
-            <Collabse in={isBasic}>
-              <div id="basic-collabse">
+            <Collapse in={isBasic}>
+              <div id="basic-Collapse">
                 <Card.Body>
                   <Card.Text>
                     Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh
@@ -46,7 +46,7 @@ const BasicCollapse = () => {
                   </Card.Text>
                 </Card.Body>
               </div>
-            </Collabse>
+            </Collapse>
           </Card>
         </Col>
         <Col sm={12}>
@@ -70,7 +70,7 @@ const BasicCollapse = () => {
           <Row>
             <Col>
               <Card className="mt-2">
-                <Collabse in={isMultiTarget.some((target) => target === 'target1')}>
+                <Collapse in={isMultiTarget.some((target) => target === 'target1')}>
                   <div id="target1">
                     <Card.Header>
                       <Card.Title as="h5">First Element</Card.Title>
@@ -82,12 +82,12 @@ const BasicCollapse = () => {
                       </Card.Text>
                     </Card.Body>
                   </div>
-                </Collabse>
+                </Collapse>
               </Card>
             </Col>
             <Col>
               <Card className="mt-2">
-                <Collabse in={isMultiTarget.some((target) => target === 'target2')}>
+                <Collapse in={isMultiTarget.some((target) => target === 'target2')}>
                   <div id="target2">
                     <Card.Header>
                       <Card.Title as="h5">Second Element</Card.Title>
@@ -99,7 +99,7 @@ const BasicCollapse = () => {
                       </Card.Text>
                     </Card.Body>
                   </div>
-                </Collabse>
+                </Collapse>
               </Card>
             </Col>
           </Row>
@@ -120,7 +120,7 @@ const BasicCollapse = () => {
                 </Link>
               </Card.Title>
             </Card.Header>
-            <Collabse in={accordionKey === 1}>
+            <Collapse in={accordionKey === 1}>
               <div id="accordion1">
                 <Card.Body>
                   <Card.Text>
@@ -133,7 +133,7 @@ const BasicCollapse = () => {
                   </Card.Text>
                 </Card.Body>
               </div>
-            </Collabse>
+            </Collapse>
           </Card>
           <Card className="mt-2">
             <Card.Header>
@@ -148,7 +148,7 @@ const BasicCollapse = () => {
                 </Link>
               </Card.Title>
             </Card.Header>
-            <Collabse in={accordionKey === 2}>
+            <Collapse in={accordionKey === 2}>
               <div id="accordion2">
                 <Card.Body>
                   <Card.Text>
@@ -161,7 +161,7 @@ const BasicCollapse = () => {
                   </Card.Text>
                 </Card.Body>
               </div>
-            </Collabse>
+            </Collapse>
           </Card>
           <Card className="mt-2">
             <Card.Header>
@@ -176,7 +176,7 @@ const BasicCollapse = () => {
                 </Link>
               </Card.Title>
             </Card.Header>
-            <Collabse in={accordionKey === 3}>
+            <Collapse in={accordionKey === 3}>
               <div id="accordion3">
                 <Card.Body>
                   <Card.Text>
@@ -189,7 +189,7 @@ const BasicCollapse = () => {
                   </Card.Text>
                 </Card.Body>
               </div>
-            </Collabse>
+            </Collapse>
           </Card>
         </Col>
       </Row>
