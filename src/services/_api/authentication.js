@@ -23,8 +23,8 @@ export const signIn = async (data) => {
 export const Signup = async (data) => {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
-  const raw = JSON.stringify(data);
 
+  const raw = JSON.stringify(data);
   const requestOptions = {
     method: 'POST',
     headers: myHeaders,
@@ -32,17 +32,29 @@ export const Signup = async (data) => {
     redirect: 'follow'
   };
 
-  const response = await fetch(API_BASE_URL + '/register', requestOptions);
-  return await response.json();
+  try {
+    const response = await fetch(API_BASE_URL + '/register', requestOptions);
+
+    // ตรวจสอบว่าการร้องขอสำเร็จหรือไม่ (status 200-299)
+    if (!response.ok) {
+      const errorData = await response.json(); // ดึง error message จากเซิร์ฟเวอร์
+      throw new Error(errorData.message || `HTTP Error: ${response.status}`);
+    }
+
+    return await response.json(); // ถ้า status 200-299 ส่ง JSON กลับ
+  } catch (error) {
+    console.error('Signup Error:', error);
+    throw error; // โยน Error ออกไปเพื่อให้ handle ที่ `handleSubmit`
+  }
 };
 
 //  ✅ Authen User
 export const authenUser = async (token) => {
   try {
-    const url = `${API_BASE_URL}/users/authen`;
+    const url = `${API_BASE_URL}/authen`;
     console.log(token);
     const requestOptions = {
-      method: 'GET',
+      method: 'POST',
       headers: { Authorization: `Bearer ${token}` }
       // body: JSON.stringify(login),
     };

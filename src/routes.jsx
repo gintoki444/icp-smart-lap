@@ -168,8 +168,48 @@ const routes = [
       },
       {
         exact: 'true',
+        path: '/roles-list',
+        element: lazy(() => import('./views/roles/Roles'))
+      },
+      {
+        exact: 'true',
+        path: '/roles-list/add',
+        element: lazy(() => import('./views/roles/AddRoles'))
+      },
+      {
+        exact: 'true',
+        path: '/roles-list/edit',
+        element: lazy(() => import('./views/roles/EditRoles'))
+      },
+      {
+        exact: 'true',
+        path: '/menus',
+        element: lazy(() => import('./views/menus/Menus'))
+      },
+      {
+        exact: 'true',
+        path: '/menus/add',
+        element: lazy(() => import('./views/menus/AddMenu'))
+      },
+      {
+        exact: 'true',
+        path: '/menus/edit',
+        element: lazy(() => import('./views/menus/EditMenu'))
+      },
+      {
+        exact: 'true',
         path: '/user',
         element: lazy(() => import('./views/user/UserList'))
+      },
+      {
+        exact: 'true',
+        path: '/user/add',
+        element: lazy(() => import('./views/user/AddUser'))
+      },
+      {
+        exact: 'true',
+        path: '/user/edit',
+        element: lazy(() => import('./views/user/EditUser'))
       },
 
       {

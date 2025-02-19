@@ -3,7 +3,7 @@ import { Row, Col, Alert, Button } from 'react-bootstrap';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
 import { useNavigate } from 'react-router-dom';
-import { signIn } from 'services/_api/authentication';
+import { authenUser, signIn } from 'services/_api/authentication';
 
 const JWTLogin = () => {
   const navigate = useNavigate();
@@ -40,9 +40,8 @@ const JWTLogin = () => {
     const response = await signIn(values);
 
     if (response.token) {
-      // Save user data to Local Storage
-      localStorage.setItem('authToken', response.token); // Mock Token
-      localStorage.setItem('userRole', response.user.role); // Save Role
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('userRole', response.user.role);
 
       // Redirect based on role
       if (response.user.role === 'admin') {

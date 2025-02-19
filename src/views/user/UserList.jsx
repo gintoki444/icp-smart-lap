@@ -1,18 +1,15 @@
 // TestResultsDashboard.jsx
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Table, Button, Modal, Form, ButtonGroup } from 'react-bootstrap';
+import { Card, Button, Form, ButtonGroup } from 'react-bootstrap';
 
 import { DataGrid } from '@mui/x-data-grid';
-import { TextField, Box, Stack } from '@mui/material';
-// import { testResults } from 'services/TestData/resultsTestData';
-// import { format } from 'date-fns';
-// import { BsQrCodeScan } from 'react-icons/bs';
-import * as userRequest from 'services/_api/usersRequest';
-import Loader from 'components/Loader/Loader';
+import { Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { IoReload } from 'react-icons/io5';
 import { FiEdit } from 'react-icons/fi';
 import { RiDeleteBin5Line } from 'react-icons/ri';
+
+import * as userRequest from 'services/_api/usersRequest';
 
 const UsersList = () => {
   const [user, setUser] = useState([]);
@@ -20,7 +17,7 @@ const UsersList = () => {
   // โหลด filter จาก localStorage
   const [filterText, setFilterText] = useState(() => localStorage.getItem('filterText') || '');
   const [rows, setRows] = useState(user);
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   //   const [open, setOpen] = useState(false);
@@ -28,38 +25,37 @@ const UsersList = () => {
     getUsers();
   }, []);
 
-  useEffect(() => {
-    console.log(rows.length);
-    console.log(columns.length);
-    console.log(rows);
-    console.log(columns);
-  }, [rows]);
+  useEffect(() => {}, [rows]);
   const getUsers = () => {
-    setLoading(true);
     userRequest.getAllUser().then((result) => {
       if (result) {
         const rows = result.map((user, index) => ({
-          id: index + 1,
+          id: user.user_id,
+          No: index + 1,
+          first_name: user.first_name,
+          last_name: user.last_name,
           fullName: `${user.first_name} ${user.last_name}`,
           email: user.email,
           phone: user.phone,
-          role: user.role_name,
+          role_id: user.role_id,
+          role_name: user.role_name,
+          dept_id: user.dept_id,
+          dept_name: user.dept_name,
           createdAt: new Date(user.created_at).toLocaleString(),
           status: user.status
         }));
         setUser(rows);
         setRows(rows);
       }
-      setLoading(false);
     });
   };
 
   const columns = [
-    { field: 'id', headerName: 'No.', width: 90, headerAlign: 'center', align: 'center' },
+    { field: 'No', headerName: 'No.', width: 90, headerAlign: 'center', align: 'center' },
     { field: 'fullName', headerName: 'ชื่อ-นามสกุล', flex: 1 },
     { field: 'email', headerName: 'E-mail', flex: 1 },
     { field: 'phone', headerName: 'เบอร์โทรศัพท์', flex: 1 },
-    { field: 'role', headerName: 'Roles', width: 120, headerAlign: 'center', align: 'center' },
+    { field: 'role_name', headerName: 'Roles', width: 120, headerAlign: 'center', align: 'center' },
     { field: 'createdAt', headerName: 'วันที่สร้าง', flex: 1 },
     { field: 'status', headerName: 'สถานะ', width: 120, headerAlign: 'center', align: 'center' },
     {
@@ -97,16 +93,24 @@ const UsersList = () => {
     localStorage.removeItem('filterText');
   };
 
-  const handleEdit = (row) => {
-    alert(`คุณกำลังแก้ไขข้อมูล: ${row.fullName}`);
+  const handleEdit = (users) => {
+    navigate('/admin/user/edit', { state: { users } });
+    // alert(`คุณกำลังแก้ไขข้อมูล: ${row.fullName}`);
     // คุณสามารถใส่การนำทางไปหน้าแก้ไขหรือแสดง Modal แก้ไขที่นี่
   };
 
   const handleDelete = (id) => {
     const confirmDelete = window.confirm(`คุณต้องการลบข้อมูลผู้ใช้หมายเลข ${id} หรือไม่?`);
     if (confirmDelete) {
-      alert(`ลบข้อมูลสำเร็จ (ID: ${id})`);
+      // alert(`ลบข้อมูลสำเร็จ (ID: ${id})`);
       // ที่นี่สามารถเพิ่มฟังก์ชันลบจากฐานข้อมูล
+      try {
+        userRequest.deleteUser(id).then(() => {
+          getUsers();
+        });
+      } catch (error) {
+        alert(`ลบข้อมูลไม่สำเร็จ:`, error);
+      }
     }
   };
   return (
@@ -116,12 +120,14 @@ const UsersList = () => {
           <h5>ข้อมูลรายการตัวอย่าง</h5>
         </Card.Header>
         <Card.Body className="p-10">
-          {loading && <Loader />}
-
-          <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+          <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
             <Form.Control type="text" placeholder="Search" value={filterText} onChange={(e) => setFilterText(e.target.value)} />
-            <Button variant="primary" color="secondary" onClick={handleClearFilter} disabled={!filterText}>
+            <Button variant="primary" size="sm" color="secondary" onClick={handleClearFilter} disabled={!filterText}>
               <IoReload style={{ fontSize: 20 }} />
+            </Button>
+            <Button variant="success" size="sm" onClick={() => navigate('/admin/user/add')}>
+              <i className="feather icon-plus-circle" />
+              เพิ่ม
             </Button>
           </Stack>
 
