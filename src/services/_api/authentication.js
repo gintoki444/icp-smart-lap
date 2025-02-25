@@ -52,7 +52,6 @@ export const Signup = async (data) => {
 export const authenUser = async (token) => {
   try {
     const url = `${API_BASE_URL}/authen`;
-    console.log(token);
     const requestOptions = {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` }

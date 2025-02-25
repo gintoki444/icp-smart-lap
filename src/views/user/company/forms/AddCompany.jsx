@@ -1,191 +1,320 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Row, Col, Card, Table, Button, Modal, Form } from 'react-bootstrap';
+import { Formik } from 'formik';
 import { useDropzone } from 'react-dropzone';
+import * as Yup from 'yup';
+
+// api request
+import { toast } from 'react-toastify';
+import * as customerRequest from 'services/_api/customerRequest';
+import { getAllSpecialConditions, postCustomerSpecialConditions } from 'services/_api/specialConditionsRequest';
+import { postUserCustomerLinks } from 'services/_api/usersRequest';
+import { authenUser } from 'services/_api/authentication';
 
 function AddCompany() {
-  const navigate = useNavigate();
-  const [companies, setCompanies] = useState([
-    {
-      id: 1,
-      name: 'บริษัท เอ บี ซี จำกัด',
-      address: '123 ถนนหลัก แขวงหลัก เขตหลัก กรุงเทพฯ',
-      phone: '02-123-4567',
-      taxId: '1234567890123',
-      documents: ['เอกสารตัวอย่าง 1.pdf', 'เอกสารตัวอย่าง 2.pdf'],
-      status: 'อนุมัติ',
-      user_id: null,
-      full_name: '',
-      email: '',
-      user_phone: ''
+  const [user, setUser] = useState([]);
+  const [specialConditions, setSpecialConditions] = useState([]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      authenUser(token).then((response) => {
+        setUser(response.user);
+      });
     }
-    // {
-    //   id: 2,
-    //   name: 'บริษัท ดี อี เอฟ จำกัด',
-    //   address: '456 ถนนรอง แขวงรอง เขตรอง กรุงเทพฯ',
-    //   phone: '02-987-6543',
-    //   taxId: '9876543210987',
-    //   documents: ['เอกสารตัวอย่าง A.pdf', 'เอกสารตัวอย่าง B.pdf'],
-    //   status: 'รออนุมัติ'
-    // }
-  ]);
+  }, []);
 
-  const [showModal, setShowModal] = useState(false);
-  const [newCompany, setNewCompany] = useState({
-    name: '',
-    address: '',
+  useEffect(() => {
+    getSpecialConditions();
+  }, []);
+
+  const getSpecialConditions = () => {
+    getAllSpecialConditions().then((result) => {
+      if (result) {
+        setSpecialConditions(result);
+      }
+    });
+  };
+
+  const initialValue = {
+    company_code: '',
+    company_name: '',
+    company_address: '',
+    document_address: '',
+    tax_id: '',
+    email: '',
     phone: '',
-    taxId: '',
-    documents: [],
-    status: 'รออนุมัติ'
-  });
+    condition_id: '',
+    special_conditions: ''
+  };
 
+  const validateValue = () =>
+    Yup.object({
+      company_code: Yup.string().min(3, 'รหัสบริษัทต้องมีอย่างน้อย 3 ตัวอักษร').required('กรุณากรอกรหัสบริษัท'),
+      company_name: Yup.string().required('กรุณากรอกชื่อบริษัท'),
+      tax_id: Yup.string()
+        .matches(/^[0-9]{10,13}$/, 'เลขที่ผู้เสียภาษีต้องมี 10 ถึง 13 หลัก')
+        .required('กรุณากรอกเลขที่ผู้เสียภาษี'),
+      company_address: Yup.string().required('กรุณากรอกที่อยู่บริษัท'),
+      document_address: Yup.string().min(3, 'ที่อยู่จัดส่งเอกสารต้องมีอย่างน้อย 3 ตัวอักษร').required('กรุณากรอกที่อยู่จัดส่งเอกสาร'),
+      email: Yup.string().email('รูปแบบอีเมล์ไม่ถูกต้อง').required('กรุณากรอกอีเมล์'),
+      phone: Yup.string()
+        .matches(/^[0-9]{10}$/, 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (10 หลัก)')
+        .required('กรุณากรอกเบอร์โทรศัพท์'),
+      condition_id: Yup.string().required('กรุณาเลือกเงื่อนไขพิเศษ')
+    });
+
+  const handleSubmit = async (values, { setErrors, setStatus, setSubmitting }) => {
+    try {
+      values.special_conditions = specialConditions.find((x) => x.condition_id === Number(values.condition_id))?.description;
+      const response = await customerRequest.postCustomer(values);
+      if (response.company_id) {
+        await postCustomerSpecialConditions({
+          company_id: response.company_id,
+          condition_id: values.condition_id
+        });
+
+        const data = {
+          user_id: user.user_id,
+          company_id: response.company_id,
+          approved_by: null,
+          status: 'pending'
+        };
+        postUserCustomerLinks(data).then(() => {
+          toast.success('เพิ่มข้อมูลบริษัทสำเร็จ!', { autoClose: 3000 });
+          navigate('/user/company');
+        });
+      }
+    } catch (err) {
+      toast.error(`เพิ่มข้อมูลไม่สำเร็จ: ${err.message}`, { autoClose: 3000 });
+      setStatus({ success: false });
+      setErrors({ submit: err.message });
+      setSubmitting(false);
+    }
+  };
+
+  const navigate = useNavigate();
   const [files, setFiles] = useState([]);
   const onDrop = useCallback((acceptedFiles) => {
-    // เก็บไฟล์ที่อัปโหลดใน state
     setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: 'image/*,application/pdf', // กำหนดประเภทไฟล์ที่ยอมรับ
-    maxSize: 5 * 1024 * 1024 // จำกัดขนาดไฟล์ 5MB
+    accept: 'image/*,application/pdf',
+    maxSize: 5 * 1024 * 1024
   });
-
-  const handleUpload = () => {
-    alert(`Uploading ${files.length} file(s)!`);
-    // สามารถนำไฟล์ใน `files` ไปส่งต่อ API ได้
-  };
-
-  const handleAddCompany = () => {
-    setCompanies([...companies, { id: Date.now(), ...newCompany, documents: newCompany.documents.split(', ') }]);
-    setShowModal(false);
-    setNewCompany({ name: '', address: '', phone: '', taxId: '', documents: [], status: 'รออนุมัติ' });
-  };
-
-  const handleDeleteCompany = (id) => {
-    setCompanies(companies.filter((company) => company.id !== id));
-  };
-
-  const handleEditCompany = (id) => {
-    alert('แก้ไขข้อมูลบริษัท ID: ' + id);
-  };
-
   return (
     <Row className="">
       <Card>
         <Card.Header>
           <Row>
             <Col>
-              <Card.Title as="h5">รายการข้อมูลบริษัท</Card.Title>
-              <span className="d-block m-t-5">
-                เพิ่มข้อมูลบริษัท
-                {/* <code>Table</code> component */}
-              </span>
+              <Card.Title as="h5">เพิ่มข้อมูลบริษัท</Card.Title>
             </Col>
           </Row>
         </Card.Header>
         <Card.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>ชื่อบริษัท :</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="กรอกชื่อบริษัท"
-                value={newCompany.name}
-                onChange={(e) => setNewCompany({ ...newCompany, name: e.target.value })}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>เลขที่ผู้เสียภาษี :</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="กรอกเลขที่ผู้เสียภาษี"
-                value={newCompany.taxId}
-                onChange={(e) => setNewCompany({ ...newCompany, taxId: e.target.value })}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>ที่อยู่บริษัท :</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="กรอกที่อยู่บริษัท"
-                value={newCompany.address}
-                onChange={(e) => setNewCompany({ ...newCompany, address: e.target.value })}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>เบอร์โทร</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="กรอกเบอร์โทร"
-                value={newCompany.phone}
-                onChange={(e) => setNewCompany({ ...newCompany, phone: e.target.value })}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>เงื่อนไขพิเศษ :</Form.Label>
-              <Form.Control as="select" className="mb-3">
-                <option>เลือกเงื่อนไข</option>
-                <option>Credit</option>
-                <option>ขอ Advance Invoice</option>
-              </Form.Control>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>เอกสาร</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="กรอกชื่อเอกสาร"
-                value={newCompany.documents}
-                onChange={(e) => setNewCompany({ ...newCompany, documents: e.target.value })}
-              />
-            </Form.Group>
-            <Form.Group className="mb-4">
-              <Form.Label>อัพโหลดเอกสาร :</Form.Label>
-              <div
-                {...getRootProps()}
-                style={{
-                  border: '2px dashed #04a9f5',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  textAlign: 'center',
-                  backgroundColor: isDragActive ? '#e6f7ff' : '#f8f9fa'
-                }}
-              >
-                <input {...getInputProps()} />
-                {isDragActive ? (
-                  <p style={{ marginBottom: 0 }}>Drop your files here...</p>
-                ) : (
-                  <p style={{ marginBottom: 0 }}>Drag and drop files here, or click to select files</p>
-                )}
-              </div>
-            </Form.Group>
-            <ul className="mt-3">
-              {files.map((file, index) => (
-                <li key={index}>
-                  <i className="feather icon-file" style={{ marginRight: 12 }} />
-                  {file.name}
-                </li>
-              ))}
-            </ul>
-          </Form>
-          <Row>
-            <Col>
-              <Button variant="primary" onClick={handleAddCompany}>
-                <i className="feather icon-save" />
-                บันทึก
-              </Button>
-              <Button
-                variant="danger"
-                onClick={() => {
-                  navigate('/user/company/select');
-                }}
-              >
-                <i className="feather icon-corner-up-left" />
-                ย้อนกลับ
-              </Button>
-            </Col>
-          </Row>
+          <Formik initialValues={initialValue} validationSchema={validateValue} onSubmit={handleSubmit}>
+            {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+              <Form onSubmit={handleSubmit}>
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-2">
+                      <Form.Label>รหัสบริษัท:</Form.Label>
+                      <Form.Control
+                        type="text"
+                        className="form-control"
+                        placeholder="รหัสบริษัท"
+                        name="company_code"
+                        value={values.company_code}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        isInvalid={touched.company_code && !!errors.company_code}
+                      />
+                      {touched.company_code && errors.company_code && (
+                        <Form.Control.Feedback type="invalid">{errors.company_code}</Form.Control.Feedback>
+                      )}
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-2">
+                      <Form.Label>ชื่อบริษัท :</Form.Label>
+                      <Form.Control
+                        type="text"
+                        className="form-control"
+                        placeholder="ชื่อบริษัท"
+                        name="company_name"
+                        value={values.company_name}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        isInvalid={touched.company_name && !!errors.company_name}
+                      />
+                      {touched.company_name && errors.company_name && (
+                        <Form.Control.Feedback type="invalid">{errors.company_name}</Form.Control.Feedback>
+                      )}
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-2">
+                      <Form.Label>เลขที่ผู้เสียภาษี :</Form.Label>
+                      <Form.Control
+                        type="text"
+                        className="form-control"
+                        placeholder="เลขที่ผู้เสียภาษี"
+                        name="tax_id"
+                        value={values.tax_id}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        isInvalid={touched.tax_id && !!errors.tax_id}
+                      />
+                      {touched.tax_id && errors.tax_id && <Form.Control.Feedback type="invalid">{errors.tax_id}</Form.Control.Feedback>}
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-2">
+                      <Form.Label>ที่อยู่บริษัท :</Form.Label>
+                      <Form.Control
+                        type="text"
+                        className="form-control"
+                        placeholder="ที่อยู่บริษัท"
+                        name="company_address"
+                        value={values.company_address}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        isInvalid={touched.company_address && !!errors.company_address}
+                      />
+                      {touched.company_address && errors.company_address && (
+                        <Form.Control.Feedback type="invalid">{errors.company_address}</Form.Control.Feedback>
+                      )}
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-2">
+                      <Form.Label>ที่อยู่จัดส่งเอกสาร :</Form.Label>
+                      <Form.Control
+                        type="text"
+                        className="form-control"
+                        placeholder="ที่อยู่จัดส่งเอกสาร"
+                        name="document_address"
+                        value={values.document_address}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        isInvalid={touched.document_address && !!errors.document_address}
+                      />
+                      {touched.document_address && errors.document_address && (
+                        <Form.Control.Feedback type="invalid">{errors.document_address}</Form.Control.Feedback>
+                      )}
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-2">
+                      <Form.Label>อีเมล์ :</Form.Label>
+                      <Form.Control
+                        type="email"
+                        className="form-control"
+                        placeholder="อีเมล์"
+                        name="email"
+                        value={values.email}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        isInvalid={touched.email && !!errors.email}
+                      />
+                      {touched.email && errors.email && <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>}
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-2">
+                      <Form.Label>เบอร์โทรศัพท์ :</Form.Label>
+                      <Form.Control
+                        type="text"
+                        className="form-control"
+                        placeholder="เบอร์โทรศัพท์"
+                        name="phone"
+                        value={values.phone}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        isInvalid={touched.phone && !!errors.phone}
+                      />
+                      {touched.phone && errors.phone && <Form.Control.Feedback type="invalid">{errors.phone}</Form.Control.Feedback>}
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-2">
+                      <Form.Label>เงื่อนไขพิเศษ :</Form.Label>
+                      <Form.Select
+                        name="condition_id"
+                        style={{ padding: '10px 20px' }}
+                        value={values.condition_id}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        isInvalid={touched.condition_id && !!errors.condition_id}
+                      >
+                        <option value="">เลือกเงื่อนไขพิเศษ</option>
+                        {specialConditions.map((role) => (
+                          <option key={role.condition_id} value={role.condition_id}>
+                            {role.description}
+                          </option>
+                        ))}
+                      </Form.Select>
+                      {touched.condition_id && errors.condition_id && (
+                        <Form.Control.Feedback type="invalid">{errors.condition_id}</Form.Control.Feedback>
+                      )}
+                    </Form.Group>
+                  </Col>
+                  <Col md={12}>
+                    <Form.Group className="mb-4">
+                      <Form.Label>อัพโหลดเอกสาร :</Form.Label>
+                      <div
+                        {...getRootProps()}
+                        style={{
+                          border: '2px dashed #04a9f5',
+                          borderRadius: '8px',
+                          padding: '50px 20px',
+                          textAlign: 'center',
+                          backgroundColor: isDragActive ? '#e6f7ff' : '#f8f9fa'
+                        }}
+                      >
+                        <input {...getInputProps()} />
+                        {isDragActive ? (
+                          <p style={{ marginBottom: 0 }}>Drop your files here...</p>
+                        ) : (
+                          <p style={{ marginBottom: 0 }}>Drag and drop files here, or click to select files</p>
+                        )}
+                      </div>
+                    </Form.Group>
+                    <ul className="mt-3">
+                      {files.map((file, index) => (
+                        <li key={index}>
+                          <i className="feather icon-file" style={{ marginRight: 12 }} />
+                          {file.name}
+                        </li>
+                      ))}
+                    </ul>
+                  </Col>
+                </Row>
+
+                <Row className="mt-3">
+                  <Col>
+                    <Button variant="primary" type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      ) : (
+                        <>
+                          <i className="feather icon-save" /> บันทึก
+                        </>
+                      )}
+                    </Button>
+
+                    <Button variant="danger" onClick={() => navigate('/user/company/select')} className="ms-2">
+                      <i className="feather icon-corner-up-left" /> ย้อนกลับ
+                    </Button>
+                  </Col>
+                </Row>
+              </Form>
+            )}
+          </Formik>
         </Card.Body>
       </Card>
     </Row>

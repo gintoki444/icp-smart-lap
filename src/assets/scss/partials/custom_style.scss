@@ -163,3 +163,34 @@ ul.form-stepper li a .form-stepper-circle {
 .form-stepper a {
   cursor: default;
 }
+
+// ********** css Data Table **********
+.MuiDataGrid-columnHeaderTitle {
+  font-weight: bold;
+}
+.MuiDataGrid-cell,
+.MuiDataGrid-columnHeaderTitle {
+  font-family: 'Sarabun', sans-serif !important;
+}
+.MuiDataGrid-columnHeaderTitle {
+  line-height: 2 !important;
+}
+.MuiFormControl-root .MuiInputBase-input {
+  padding: 10px 20px !important;
+}
+.MuiDataGrid-cell .btn-group-sm > .btn,
+.btn-sm {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px !important;
+}
+nav.pcoded-navbar .pcoded-inner-navbar li.pcoded-hasmenu .pcoded-submenu li > a {
+  padding: 7px 7px 7px 32px;
+}
+
+.css-hlgwow {
+  padding: 4.7px 8px !important;
+}
+.css-13cymwt-control {
+  background: #f4f7fa !important;
+}

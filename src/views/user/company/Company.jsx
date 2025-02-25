@@ -1,60 +1,139 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Row, Col, Card, Table, Button, Modal, Form } from 'react-bootstrap';
+import { Row, Col, Card, Table, Button, Modal, Form, ButtonGroup, Badge } from 'react-bootstrap';
+// TestResultsDashboard.jsx
+
+import { DataGrid } from '@mui/x-data-grid';
+import { Stack } from '@mui/material';
+import { IoReload } from 'react-icons/io5';
+import { FiEdit } from 'react-icons/fi';
+import { RiDeleteBin5Line } from 'react-icons/ri';
+
+import * as customerRequest from '../../../services/_api/customerRequest';
+import { authenUser } from 'services/_api/authentication';
+import { getCustomerByUserID } from 'services/_api/usersRequest';
 
 const Company = () => {
+  const [customer, setcustomer] = useState([]);
+
+  // โหลด filter จาก localStorage
+  const [filterText, setFilterText] = useState(() => localStorage.getItem('filterText') || '');
+  const [rows, setRows] = useState(customer);
+  // const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const [companies, setCompanies] = useState([
-    {
-      id: 1,
-      name: 'บริษัท เอ บี ซี จำกัด',
-      address: '123 ถนนหลัก แขวงหลัก เขตหลัก กรุงเทพฯ',
-      phone: '02-123-4567',
-      taxId: '1234567890123',
-      tax_address: '123 ถนนหลัก แขวงหลัก เขตหลัก กรุงเทพฯ',
-      documents: ['เอกสารตัวอย่าง 1.pdf', 'เอกสารตัวอย่าง 2.pdf'],
-      status: 'อนุมัติ',
-      user_id: null,
-      full_name: 'นายสมชาย ใจดี',
-      credits: 'Advance Invoice',
-      email: 'somchai@example.com',
-      user_phone: '081-234-5678'
+
+  //   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      authenUser(token).then((response) => {
+        if (response.user.user_id) {
+          getcustomers(response.user.user_id);
+        }
+      });
     }
-    // {
-    //   id: 2,
-    //   name: 'บริษัท ดี อี เอฟ จำกัด',
-    //   address: '456 ถนนรอง แขวงรอง เขตรอง กรุงเทพฯ',
-    //   phone: '02-987-6543',
-    //   taxId: '9876543210987',
-    //   documents: ['เอกสารตัวอย่าง A.pdf', 'เอกสารตัวอย่าง B.pdf'],
-    //   status: 'รออนุมัติ'
-    // }
-  ]);
+  }, []);
 
-  const [showModal, setShowModal] = useState(false);
-  const [newCompany, setNewCompany] = useState({
-    name: '',
-    address: '',
-    phone: '',
-    taxId: '',
-    documents: [],
-    status: 'รออนุมัติ'
-  });
-
-  const handleAddCompany = () => {
-    setCompanies([...companies, { id: Date.now(), ...newCompany, documents: newCompany.documents.split(', ') }]);
-    setShowModal(false);
-    setNewCompany({ name: '', address: '', phone: '', taxId: '', documents: [], status: 'รออนุมัติ' });
+  useEffect(() => {}, [rows]);
+  const getcustomers = (id) => {
+    getCustomerByUserID(id).then((result) => {
+      if (result) {
+        const rows = result.map((customer, index) => ({
+          id: customer.company_id,
+          No: index + 1,
+          company_name: customer.company_name,
+          company_code: customer.company_code,
+          company_address: customer.company_address,
+          document_address: customer.document_address,
+          tax_id: customer.tax_id,
+          company_email: customer.company_email,
+          company_phone: customer.company_phone,
+          special_conditions: customer.special_conditions,
+          created_at: new Date(customer.created_at).toLocaleString(),
+          status: customer.status
+        }));
+        setcustomer(rows);
+        setRows(rows);
+      }
+    });
   };
 
-  const handleDeleteCompany = (id) => {
-    setCompanies(companies.filter((company) => company.id !== id));
+  const columns = [
+    { field: 'No', headerName: 'No.', width: 90, headerAlign: 'center', align: 'center' },
+    // { field: 'company_code', headerName: 'รหัสบริษัท', flex: 0.7 },
+    { field: 'company_name', headerName: 'ชื่อบริษัท', flex: 1.2 },
+    // { field: 'tax_id', headerName: 'เลขที่ผู้เสียภาษี', flex: 1 },
+    { field: 'company_address', headerName: 'ที่อยู่บริษัท', flex: 1 },
+    // { field: 'document_address', headerName: 'ที่อยู่จัดส่งเอกสาร', flex: 1 },
+    { field: 'company_email', headerName: 'อีเมล์', flex: 1 },
+    { field: 'company_phone', headerName: 'เบอร์โทรศัพท์', flex: 1 },
+    // { field: 'special_conditions', headerName: 'Roles', flex: 0.7 },
+    { field: 'created_at', headerName: 'วันที่สร้าง', flex: 1 },
+    {
+      field: 'status',
+      headerName: 'สถานะ',
+      width: 120,
+      headerAlign: 'center',
+      align: 'center',
+      renderCell: (params) => (
+        <Badge pill style={{}} bg={params.row.status === 'pending' ? 'warning' : 'success'}>
+          {params.row.status === 'pending' ? 'รออนุมัติ' : 'อนุมัติ'}
+        </Badge>
+      )
+    },
+    {
+      field: 'actions',
+      headerName: 'การจัดการ',
+      width: 200,
+      headerAlign: 'center',
+      align: 'center',
+      renderCell: (params) => (
+        <ButtonGroup>
+          <Button variant="info" size="sm" onClick={() => handleEdit(params.row)}>
+            <FiEdit />
+          </Button>
+          <Button variant="outline-danger" size="sm" onClick={() => handleDelete(params.row.id)}>
+            <RiDeleteBin5Line />
+          </Button>
+        </ButtonGroup>
+      )
+    }
+  ];
+
+  // ฟังก์ชันค้นหา (Search & Filter)
+  const filteredRows = rows.filter((row) =>
+    Object.values(row).some((value) => value && value.toString().toLowerCase().includes(filterText.toLowerCase()))
+  );
+
+  // บันทึก Filter ลง localStorage
+  useEffect(() => {
+    localStorage.setItem('filterText', filterText);
+  }, [filterText]);
+
+  // เคลียร์การค้นหา
+  const handleClearFilter = () => {
+    setFilterText('');
+    localStorage.removeItem('filterText');
   };
 
-  const handleEditCompany = (id) => {
-    alert('แก้ไขข้อมูลบริษัท ID: ' + id);
+  const handleEdit = (company) => {
+    navigate('/user/company/edit', { state: { company } });
+    // alert(`คุณกำลังแก้ไขข้อมูล: ${row.fullName}`);
+    // คุณสามารถใส่การนำทางไปหน้าแก้ไขหรือแสดง Modal แก้ไขที่นี่
   };
 
+  const handleDelete = (id) => {
+    const confirmDelete = window.confirm(`คุณต้องการลบข้อมูลบริษัทหรือไม่?`);
+    if (confirmDelete) {
+      try {
+        customerRequest.deleteCustomer(id).then(() => {
+          getcustomers();
+        });
+      } catch (error) {
+        alert(`ลบข้อมูลไม่สำเร็จ:`, error);
+      }
+    }
+  };
   return (
     <Row className="">
       <Card>
@@ -67,64 +146,39 @@ const Company = () => {
                 {/* <code>Table</code> component */}
               </span>
             </Col>
-            <Col className="text-end">
+            {/* <Col className="text-end">
               <Button variant="primary" onClick={() => navigate('/user/company/select')}>
                 <i className="feather icon-plus-circle" />
                 เพิ่ม
               </Button>
-            </Col>
+            </Col> */}
           </Row>
         </Card.Header>
         <Card.Body>
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>เลขที่ผู้เสียภาษี</th>
-                <th>ชื่อบริษัท</th>
-                <th>ที่อยู่บริษัท</th>
-                <th>เบอร์โทร</th>
-                <th>ที่อยู่จัดส่งเอกสาร</th>
-                <th>เงื่อนไขพิเศษ</th>
-                <th>เอกสาร</th>
-                <th className="text-center">สถานะการอนุมัติ</th>
-                <th className="text-center">การจัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {companies.map((company, index) => (
-                <tr key={company.id}>
-                  <td>{index + 1}</td>
-                  <td>{company.name}</td>
-                  <td>{company.taxId}</td>
-                  <td>{company.address}</td>
-                  <td>{company.phone}</td>
-                  <td>{company.tax_address}</td>
-                  <td>{company.credits}</td>
-                  <td>
-                    {company.documents.map((doc, idx) => (
-                      <div key={idx}>{doc}</div>
-                    ))}
-                  </td>
-                  <td className="text-center">{company.status}</td>
-                  <td className="text-center">
-                    <Button variant="info" size="sm" className="me-2" onClick={() => handleEditCompany(company.id)}>
-                      <i className="feather icon-edit" />
-                      แก้ไข
-                    </Button>
-                    <Button variant="danger" size="sm" onClick={() => handleDeleteCompany(company.id)}>
-                      <i className="feather icon-trash-2" />
-                      ลบ
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
+          <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+            <Form.Control type="text" placeholder="Search" value={filterText} onChange={(e) => setFilterText(e.target.value)} />
+            <Button variant="primary" size="sm" color="secondary" onClick={handleClearFilter} disabled={!filterText}>
+              <IoReload style={{ fontSize: 20 }} />
+            </Button>
+            <Button variant="success" size="sm" onClick={() => navigate('/user/company/select')}>
+              <i className="feather icon-plus-circle" />
+              เพิ่ม
+            </Button>
+          </Stack>
+          <DataGrid
+            rows={filteredRows}
+            columns={columns}
+            pageSize={5}
+            rowsPerPageOptions={[5, 10, 20]}
+            pagination
+            disableSelectionOnClick
+            hideFooterSelectedRowCount
+            style={{ fontSize: 16 }}
+          />
         </Card.Body>
       </Card>
 
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
+      {/* <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>เพิ่มบริษัทใหม่</Modal.Title>
         </Modal.Header>
@@ -185,7 +239,7 @@ const Company = () => {
             บันทึก
           </Button>
         </Modal.Footer>
-      </Modal>
+      </Modal> */}
     </Row>
   );
 };

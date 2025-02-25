@@ -28,7 +28,7 @@ export const getDepartmentsByID = async (id) => {
     redirect: 'follow'
   };
 
-  const response = await fetch(API_BASE_URL + '/departments' + id, requestOptions);
+  const response = await fetch(API_BASE_URL + '/departments/' + id, requestOptions);
   return await response.json();
 };
 

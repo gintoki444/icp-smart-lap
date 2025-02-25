@@ -28,7 +28,7 @@ export const getMenusByID = async (id) => {
     redirect: 'follow'
   };
 
-  const response = await fetch(API_BASE_URL + '/menus' + id, requestOptions);
+  const response = await fetch(API_BASE_URL + '/menus/' + id, requestOptions);
   return await response.json();
 };
 

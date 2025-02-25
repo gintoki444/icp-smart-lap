@@ -1,17 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Row, Col, Spinner, Badge } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AiOutlineFileText } from 'react-icons/ai';
 import AddTestTracking from './AddTestTracking';
 import AddBilling from './AddBilling';
+import { getServiceRequestsByID } from 'services/_api/serviceRequest';
+import { getAllTestItems } from 'services/_api/testItemsRequest';
+import { getAllPackagingType } from 'services/_api/packageingTypeRequest';
+import { getAllFertilicerType } from 'services/_api/fertilizerTypes';
+import { Divider } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
 
 const FertilizerDetails = ({ data, title }) => {
+  // const { id } = useLocation().state;
+  const location = useLocation();
+  const id = location.state?.id || null;
+  console.log('id', id);
   const navigate = useNavigate();
   const [step, setStep] = useState(2);
   const [quotation, setQuotation] = useState(false);
   const [confirmRequest, setConfirmRequest] = useState(false);
   const [tracking, setTracking] = useState(false);
   const [billing, setBilling] = useState(false);
+  const fertilizerCategoryOptions = [
+    { value: 'is_single_fertilizer', label: 'เชิงเดี่ยว' },
+    { value: 'is_compound_fertilizer', label: 'เชิงประกอบ' },
+    { value: 'is_mixed_fertilizer', label: 'เชิงผสม' },
+    { value: 'is_secondary_nutrient_fertilizer', label: 'ธาตุอาหารรอง-อาหารเสริม' }
+  ];
+  const reportMethodOptions = [
+    { value: 'is_self_pickup', label: 'รับด้วยตนเอง' },
+    { value: 'pdf_email', label: 'ต้องการไฟล์ pdf เพิ่มเติมทาง E-mail' },
+    { value: 'is_mail_delivery', label: 'ส่งทางไปรษณีย์' }
+  ];
+  const sampleDisposalOptions = [
+    { value: 'is_lab_dispose_sample', label: 'ให้ห้องปฏิบัติการจำหน่ายตัวอย่าง' },
+    { value: 'is_collect_within_3_months', label: 'มารับตัวอย่างคืนภายใน 3 เดือน' },
+    { value: 'is_return_sample', label: 'ให้ห้องปฏิบัติการจัดส่งตัวอย่างคืน' }
+  ];
+  useEffect(() => {
+    if (id) {
+      getServiceRequest(id);
+    } else {
+      navigate('/user/request/');
+    }
+  }, []);
+
+  const [serviceData, setServiceData] = useState({});
+  const [sampleList, setSampleList] = useState([]);
+  const getServiceRequest = async (id) => {
+    const response = await getServiceRequestsByID(id);
+    console.log('response', response);
+    console.log('sample_submissions', response.sample_submissions);
+    setSampleList(response.sample_submissions);
+    setServiceData(response);
+  };
 
   const nextStep = () => {
     setStep(step + 1);
@@ -44,9 +87,107 @@ const FertilizerDetails = ({ data, title }) => {
     }, 3000); // กำหนดเวลาโหลด 3 วินาที
   };
 
+  const [packagingTypes, setPackagingTypes] = useState([]);
+  const [testItems, setTestItems] = useState([]);
+
+  useEffect(() => {
+    handleGetPackageType();
+    handleGetTestItems();
+    getFertilizerTypes();
+  }, []);
+
+  const handleGetPackageType = async () => {
+    const response = await getAllPackagingType();
+    setPackagingTypes(response);
+  };
+
+  const handleGetTestItems = async () => {
+    try {
+      const response = await getAllTestItems();
+      setTestItems(response);
+    } catch (error) {
+      console.error('Error fetching test items:', error);
+      setTestItems([]);
+    }
+  };
+
+  const [fertilizerTypes, setFertilizerTypes] = useState([]);
+  const getFertilizerTypes = async () => {
+    try {
+      const response = await getAllFertilicerType();
+      setFertilizerTypes(response);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const handleOpenNewTab = () => {
     const url = '/user/request/detial/quotation';
     window.open(url, '_blank'); // เปิด URL ในแท็บใหม่
+  };
+
+  const getFertilizerCategoryLabel = (sampleList, fertilizerCategoryOptions) => {
+    // ค้นหาคีย์แรกที่มีค่า 1
+    const selectedKey = Object.keys(sampleList).find((key) => sampleList[key] === 1);
+    // ค้นหาข้อมูล option ที่ตรงกับคีย์ที่เลือก
+    const selectedOption = fertilizerCategoryOptions.find((option) => option.value === selectedKey);
+    return selectedOption ? selectedOption.label : null;
+  };
+
+  // กำหนดคอลัมน์สำหรับ DataGrid
+  const columns = [
+    { field: 'no', headerName: '#', width: 90, headerAlign: 'center', align: 'center' },
+    {
+      field: 'test_code',
+      headerName: 'ทดสอบ',
+      flex: 1,
+      renderCell: (params) => {
+        // ตรวจสอบ params และ params.row ก่อนใช้งาน
+        if (!params || !params.row) return '-';
+        const { test_code, test_percentage } = params.row;
+        return `${test_code || ''}${test_percentage ? ` (${test_percentage})` : ''}`.trim();
+      }
+      // valueGetter: (params) => {
+      //   // ตรวจสอบ params และ params.row ก่อนใช้งาน
+      //   if (!params || !params.row) return '-';
+      //   const { test_code, test_percentage } = params.row;
+      //   return `${test_code || ''}${test_percentage ? ` (${test_percentage} %)` : ''}`.trim();
+      // }
+    },
+    {
+      field: 'status',
+      headerName: 'สถานะ',
+      headerAlign: 'center',
+      align: 'center',
+      flex: 1,
+      renderCell: (params) => (
+        <Badge pill style={{}} bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
+          {params.row.status === 'pending' ? 'รออนุมัติ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
+        </Badge>
+      )
+    },
+    {
+      field: 'test_value',
+      headerName: 'ผลที่ได้',
+      flex: 1,
+      renderCell: (params) => params?.row?.test_value || '-'
+    },
+    {
+      field: 'test_date',
+      headerName: 'วันที่ทดสอบ',
+      flex: 1,
+      valueGetter: (params) => params?.row?.created_at || '-' // เปลี่ยนจาก test_date เป็น created_at ตาม API
+    }
+  ];
+
+  const handleSetDataGrid = (data) => {
+    const setData = data.map((test, idx) => ({
+      id: test.detail_id, // หรือเปลี่ยนเป็น key ที่เหมาะสม
+      no: idx + 1,
+      ...test
+    }));
+    console.log('setData', setData);
+    return setData;
   };
   return (
     <div>
@@ -135,199 +276,139 @@ const FertilizerDetails = ({ data, title }) => {
             </ul>
           </div>
           {/* ข้อมูลบริษัท */}
-          <Row className="container ">
-            {/* {confirmRequest && ( */}
-            <Col md={12}>
-              <h5 className="mb-3">
-                เลขที่คำขอบริการ : <span style={{ fontSize: 18 }}>{data.request_no}</span>
-              </h5>
-            </Col>
-            {/* )} */}
-            <Col md={12}>
-              <h5 className="mb-3">ข้อมูลบริษัท</h5>
-            </Col>
-            <Col md={6} className="mb-2">
-              <p className="mb-0">
-                บริษัท : <strong className="text-dark">{data.company}</strong>
-              </p>
-            </Col>
-            <Col md={6} className="mb-2">
-              <p className="mb-0">
-                ประเภทคำขอ : <strong className="text-dark">{data.typeRequest.join(', ')}</strong>
-              </p>
-            </Col>
-            <Col md={12} className="mt-4">
-              <h5 className="mb-3">ข้อมูลการรับรายงานผล</h5>
-            </Col>
-            <Col md={6} className="mb-1">
-              <p className="mb-0">
-                วิธีการรับรายงานผล : <strong className="text-dark">{data.reportMethod.join(', ')}</strong>
-              </p>
-              {data.email && (
-                <p className="mb-0">
-                  Email : <strong className="text-dark">{data.email || '-'}</strong>
-                </p>
-              )}
-            </Col>
-            {data.sameAddress && (
-              <>
-                <Col md={6}>
-                  <p className="mb-0">
-                    ที่อยู่จัดส่ง :{' '}
-                    <strong className="text-dark">
-                      {data.sameAddress
-                        ? 'ที่อยู่เดียวกับบริษัทที่ลงทะเบียน'
-                        : `${data.address}, ${data.subDistrict}, ${data.district}, ${data.province}, ${data.postalCode}`}
-                    </strong>
-                  </p>
-                </Col>
-
-                <Col md={6}>
-                  <p className="mb-0">
-                    เบอร์โทรศัพท์ : <strong className="text-dark">{data.phone}</strong>
-                  </p>
-                </Col>
-              </>
+          <Row>
+            {serviceData.request_no && (
+              <Col md={12}>
+                <h5 className="mb-4">
+                  เลขที่คำขอบริการ : <span style={{ fontSize: 18 }}>{data.request_no}</span>
+                </h5>
+              </Col>
             )}
-            <Col md={6}>
+            <Col md={12}>
+              <h6 className="mb-3">ข้อมูลผู้ขอขึ้นทะเบียน</h6>
+            </Col>
+            <Col md={6} className="mb-2">
               <p className="mb-0">
-                การจำหน่ายตัวอย่าง : <strong className="text-dark">{data.sampleDisposal || '-'}</strong>
+                บริษัท : <strong className="text-dark">{serviceData.customer_name}</strong>
               </p>
             </Col>
-            <Col md={6}>
+            <Col md={6} className="mb-2">
               <p className="mb-0">
-                ข้อกำหนดเพิ่มเติม : <strong className="text-dark">{data.otherRequirements || '-'}</strong>
+                ประเภทคำขอ :
+                <strong className="text-dark">
+                  {serviceData.is_quality_check_analysis === 1 ? 'วิเคราะห์เพื่อตรวจสอบคุณภาพ' : 'วิเคราะห์ขึ้นทะเบียน'}
+                </strong>
               </p>
             </Col>
-            <Col md={12} className="mt-4 mb-3">
-              <h5>สถานะปัจจุบัน</h5>
-              <div style={{ paddingLeft: 12 }}>
-                {step === 2 && (
-                  <p style={{ marginBottom: 5 }}>
-                    สถานะ :
-                    <Badge bg={'warning'} style={{ marginLeft: 12 }}>
-                      กำลังตรวจสอบข้อมูล
-                    </Badge>
-                  </p>
-                )}
-                {step >= 3 && (
-                  <p style={{ marginBottom: 5 }}>
-                    {!confirmRequest ? 'สถานะการตรวจสอบ' : 'สถานะการขอบริการ'} :
-                    <Badge bg={'success'} style={{ marginLeft: 12 }}>
-                      {!confirmRequest ? ' สำเร็จ' : ' ยืนยันการรับบริการ'}
-                    </Badge>
-                  </p>
-                )}
-                {step >= 3 && confirmRequest && (
-                  <p style={{ marginBottom: 5 }}>
-                    สถานะตัวอย่าง :{' '}
-                    {!tracking ? (
-                      <Badge bg={'warning'} style={{ marginLeft: 12 }}>
-                        รอรับตัวอย่าง
-                      </Badge>
-                    ) : (
-                      <Badge bg={'success'} style={{ marginLeft: 12 }}>
-                        สำเร็จ
-                      </Badge>
-                    )}
-                  </p>
-                )}
-                {step >= 3 && confirmRequest && (
-                  <p style={{ marginBottom: 5 }}>
-                    สถานะการชำระเงิน :{' '}
-                    {!billing ? (
-                      <Badge bg={'warning'} style={{ marginLeft: 12 }}>
-                        รอชำระเงิน
-                      </Badge>
-                    ) : (
-                      <Badge bg={'success'} style={{ marginLeft: 12 }}>
-                        ชำระเงินสำเร็จ
-                      </Badge>
-                    )}
-                  </p>
-                )}
-                {step >= 3 && confirmRequest && tracking && (
-                  <p style={{ marginBottom: 5 }}>
-                    สถานะการทดสอบ :{' '}
-                    {confirmRequest && tracking ? (
-                      <Badge bg={'warning'} style={{ marginLeft: 12 }}>
-                        กำลังทดสอบ
-                      </Badge>
-                    ) : (
-                      <Badge bg={'success'} style={{ marginLeft: 12 }}>
-                        ทดสอบสำเร็จ
-                      </Badge>
-                    )}
-                  </p>
-                )}
-              </div>
+            <Col md={6} className="mb-2">
+              <p className="mb-0">
+                คำขอเพิ่มเติม : <strong className="text-dark">{serviceData.sample_type_name}</strong>
+              </p>
             </Col>
 
+            <Col md={12} className="mb-0">
+              <p className="mb-0">
+                สถานะ :
+                <Badge
+                  bg={serviceData.status === 'pending' ? 'warning' : serviceData.status === 'approved' ? 'success' : 'danger'}
+                  style={{ marginLeft: 12 }}
+                >
+                  {serviceData.status === 'pending' ? ' รออนุมัติ' : serviceData.status === 'approved' ? 'อนุมัติ' : ' ไม่อนุมัติ'}
+                </Badge>
+                <span
+                  style={{
+                    marginLeft: 12,
+                    color: serviceData.status === 'pending' ? '#ffc107' : serviceData.status === 'approved' ? '#198754' : '#f44236',
+                    fontWeight: 'bold'
+                  }}
+                >{` ( ${serviceData.notes} )`}</span>
+              </p>
+            </Col>
             {/* ข้อมูลปุ๋ย */}
-            <h5 className="mt-3">ข้อมูลตัวอย่างปุ๋ย</h5>
-            <Col md={12} className="mb-2">
-              <Table bordered>
-                <thead>
-                  <tr>
-                    <th>หมวดหมู่ปุ๋ย</th>
-                    <th>ลักษณะปุ๋ย</th>
-                    <th>สี</th>
-                    <th>ภาชนะบรรจุ</th>
-                    <th>ชื่อการค้า</th>
-                    <th>เครื่องหมายการค้า</th>
-                    <th>สูตร</th>
-                    <th>ผู้ผลิต</th>
-                    <th>ประเทศ</th>
-                    <th>รายการทดสอบ</th>
-                    {confirmRequest && (
-                      <>
-                        <th className="text-center">สถานะ</th>
-                        <th className="text-center">action</th>
-                      </>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.fertilizers.map((fertilizer, index) => (
-                    <tr key={index}>
-                      <td>{fertilizer.fertilizerCategory.join(', ')}</td>
-                      <td>{fertilizer.fertilizerType.join(', ')}</td>
-                      <td>{fertilizer.color.join(', ')}</td>
-                      <td>{fertilizer.container}</td>
-                      <td>{fertilizer.tradeName}</td>
-                      <td>{fertilizer.trademark}</td>
-                      <td>{fertilizer.formula || '-'}</td>
-                      <td>{fertilizer.manufacturer}</td>
-                      <td>{fertilizer.country}</td>
-                      <td>{fertilizer.tests.join(', ')}</td>
+            <h6 className="mt-3 mb-2">ข้อมูลตัวอย่างปุ๋ย</h6>
+            {sampleList.map((sample, index) => (
+              <Col md={12} key={index} className="mb-2 p-4 pt-0 pb-0">
+                <Row>
+                  <h6>
+                    ตัวอย่างที่ {index + 1} สูตรปุ๋ย : <strong className="text-dark">{sample.fertilizer_formula || '-'}</strong> ( ชื่อสามัญ
+                    : <strong className="text-dark">{sample.common_name || '-'}</strong>)
+                  </h6>
+                  {/* <Col md={6} className="mb-2">
+                    <p className="mb-0">
+                      สูตรปุ๋ย : <strong className="text-dark">{sample.fertilizer_formula || '-'}</strong>
+                    </p>
+                  </Col>
+                  <Col md={6} className="mb-2">
+                    <p className="mb-0">
+                      ชื่อสามัญ : <strong className="text-dark">{sample.common_name || '-'}</strong>
+                    </p>
+                  </Col> */}
+                  <Col md={6} className="mb-2">
+                    <p className="mb-0">
+                      ประเภทของปุ๋ย : <strong className="text-dark">{getFertilizerCategoryLabel(sample, fertilizerCategoryOptions)}</strong>
+                    </p>
+                  </Col>
+                  <Col md={6} className="mb-2">
+                    <p className="mb-0">
+                      ลักษณะปุ๋ย :{' '}
+                      <strong className="text-dark">
+                        {fertilizerTypes.find((type) => type.fertilizer_type_id === sample.fertilizer_type_id)?.fertilizer_type_name || '-'}
+                      </strong>
+                    </p>
+                  </Col>
+                  <Col md={6} className="mb-2">
+                    <p className="mb-0">
+                      สี : <strong className="text-dark">{sample.color || '-'}</strong>
+                    </p>
+                  </Col>
+                  <Col md={6} className="mb-2">
+                    <p className="mb-0">
+                      ภาชนะบรรจุ :{' '}
+                      <strong className="text-dark">
+                        {packagingTypes.find((type) => type.packaging_type_id === sample.packaging_id)?.packaging_type_name || '-'}
+                      </strong>
+                    </p>
+                  </Col>
 
-                      {confirmRequest && (
-                        <>
-                          <td className="text-center">
-                            {!tracking ? (
-                              '-'
-                            ) : tracking && step > 3 ? (
-                              <strong className="text-warning">กำลังทดสอบ</strong>
-                            ) : (
-                              <strong className="text-success">สำเร็จ</strong>
-                            )}
-                          </td>
-                          <td className="text-center">
-                            {!tracking ? (
-                              '-'
-                            ) : (
-                              <Button variant="outline-info" style={{ padding: 10, paddingTop: 5, paddingBottom: 5 }} onClick={() => {}}>
-                                <i className="feather icon-file-text" style={{ marginRight: 0 }} />
-                              </Button>
-                            )}
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </Col>
+                  <Col md={6} className="mb-2">
+                    <p className="mb-0">
+                      ชื่อการค้า : <strong className="text-dark">{sample.trade_name || '-'}</strong>
+                    </p>
+                  </Col>
+                  <Col md={6} className="mb-2">
+                    <p className="mb-0">
+                      ผู้ผลิต (บริษัท/ห้าง/ร้าน) : <strong className="text-dark">{sample.manufacturer || '-'}</strong>
+                      ประเทศ : <strong className="text-dark">{sample.manufacturer_country || '-'}</strong>
+                    </p>
+                  </Col>
+                  <Col md={6} className="mb-2">
+                    <p className="mb-0">
+                      สั่งจาก (บริษัท/ห้าง/ร้าน) : <strong className="text-dark">{sample.supplier || '-'}</strong>
+                      ประเทศ : <strong className="text-dark">{sample.supplier_country || '-'}</strong>
+                    </p>
+                  </Col>
+
+                  <Col md={12} className="mb-2">
+                    <h6 className="mb-3">ข้อมูลการทดสอบ</h6>
+                    <div style={{ height: 400, width: '100%' }}>
+                      <DataGrid
+                        rows={handleSetDataGrid(sample.sample_submission_details)}
+                        columns={columns}
+                        initialState={{
+                          pagination: {
+                            paginationModel: { pageSize: 5 }
+                          }
+                        }}
+                        pageSizeOptions={[5, 10, 20]}
+                        checkboxSelection={false}
+                        disableRowSelectionOnClick
+                      />
+                    </div>
+                  </Col>
+                </Row>
+                {index < sampleList.length - 1 && <hr className="mt-4 mb-2" />}
+              </Col>
+            ))}
 
             {quotation && !billing && (
               <>
@@ -380,49 +461,13 @@ const FertilizerDetails = ({ data, title }) => {
                 </Col>
               </>
             )}
-            <Col>
-              {confirmRequest && quotation && <AddTestTracking handleTracking={setTracking} />}
-              {confirmRequest && <AddBilling AddBilling={setBilling} />}
-              <Col md={12} className="mt-3">
-                {step === 3 && !quotation && (
-                  <Button variant="outline-info" onClick={() => setQuotation(true)}>
-                    <i>
-                      <AiOutlineFileText />
-                    </i>
-                    ขอใบเสนอราคา
-                  </Button>
-                )}
-                {quotation && !confirmRequest && (
-                  <>
-                    <Button variant="outline-success" onClick={() => setConfirmRequest(true)}>
-                      <i>
-                        <AiOutlineFileText />
-                      </i>
-                      ยืนยันการขอรับบริการ
-                    </Button>
-                    <Button variant="warning" onClick={() => resetStep()}>
-                      <i className="feather icon-edit" />
-                      แก้ไขการขอรับบริการ
-                    </Button>
-                  </>
-                )}
-              </Col>
-            </Col>
           </Row>
         </Card.Body>
         <Card.Footer className="text-start">
-          {step > 1 && (
-            <Button variant="secondary" onClick={prevStep}>
-              <i className="feather icon-arrow-left" />
-              ย้อนกลับ
-            </Button>
-          )}
-          {step <= 6 && (
-            <Button variant="primary" onClick={nextStep}>
-              ถัดไป
-              <i className="feather icon-arrow-right" style={{ marginLeft: 12, marginRight: 0 }} />
-            </Button>
-          )}
+          <Button variant="primary" onClick={() => navigate('/user/request/edite', { state: { services: serviceData } })}>
+            <i className="feather icon-corner-up-left" />
+            แก้ไขข้อมูล
+          </Button>
           <Button variant="danger" onClick={() => navigate('/user/request/')}>
             <i className="feather icon-corner-up-left" />
             กลับหน้าหลัก

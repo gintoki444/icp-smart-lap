@@ -4,24 +4,22 @@ import * as Yup from 'yup';
 import { Formik } from 'formik';
 import { useNavigate } from 'react-router-dom';
 import { authenUser, signIn } from 'services/_api/authentication';
+import { getAllMenusRolesByID } from 'services/_api/permissionRequest';
 
 const JWTLogin = () => {
   const navigate = useNavigate();
+  const authToken = localStorage.getItem('authToken');
+  const userRole = localStorage.getItem('userRole');
 
   // ตรวจสอบ authToken และ Redirect ถ้ามี
   useEffect(() => {
-    const authToken = localStorage.getItem('authToken');
-    const userRole = localStorage.getItem('userRole');
-
-    if (authToken) {
-      // Redirect ไปหน้า Dashboard ตาม Role
-      if (userRole === 'admin') {
-        navigate('/admin/dashboard');
-      } else if (userRole === 'user') {
-        navigate('/user/dashboard');
-      }
+    if (authToken && userRole) {
+      console.log('✅ Redirecting to dashboard...');
+      console.log('✅ authToken', authToken);
+      console.log('✅ userRole', userRole);
+      navigate(userRole === 'admin' ? '/admin/dashboard' : '/user/dashboard', { replace: true });
     }
-  }, [navigate]);
+  }, []);
 
   const initialValue = {
     email: '',
@@ -36,26 +34,40 @@ const JWTLogin = () => {
     });
 
   const handleSubmit = async (values, { setErrors, setSubmitting }) => {
-    // const { email, password } = values;
-    const response = await signIn(values);
+    setSubmitting(true);
 
-    if (response.token) {
-      localStorage.setItem('authToken', response.token);
-      localStorage.setItem('userRole', response.user.role);
+    try {
+      const response = await signIn(values);
 
-      // Redirect based on role
-      if (response.user.role === 'admin') {
-        navigate('/admin/'); // Redirect to Admin Dashboard
-      } else if (response.user.role === 'user') {
-        navigate('/user/'); // Redirect to User Dashboard
+      if (response && response.token) {
+        console.log('✅ Login successful, saving to localStorage...');
+        localStorage.setItem('authToken', response.token);
+        localStorage.setItem('userRole', response.user.role);
+
+        await fetchUserPermissions(response.user.role_id);
+
+        // ✅ Redirect ไปหน้า Dashboard ตาม Role
+        navigate(response.user.role === 'user' ? '/user/dashboard' : '/admin/dashboard', { replace: true });
+      } else {
+        console.warn('🔴 Login failed:', response.message);
+        setErrors({ submit: response.message });
       }
-    } else {
-      setErrors({ submit: response.message });
+    } catch (error) {
+      console.error('🔴 Error logging in:', error);
+      setErrors({ submit: 'An error occurred. Please try again.' });
+    } finally {
+      setSubmitting(false);
     }
-
-    setSubmitting(false);
   };
 
+  const fetchUserPermissions = async (role_id) => {
+    try {
+      const data = await getAllMenusRolesByID(role_id);
+      localStorage.setItem('permissions', JSON.stringify(data));
+    } catch (error) {
+      console.error('Error fetching permissions:', error);
+    }
+  };
   return (
     <Formik initialValues={initialValue} validationSchema={validations} onSubmit={handleSubmit}>
       {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => (

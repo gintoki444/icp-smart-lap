@@ -28,7 +28,7 @@ export const getRolesByID = async (id) => {
     redirect: 'follow'
   };
 
-  const response = await fetch(API_BASE_URL + '/roles' + id, requestOptions);
+  const response = await fetch(API_BASE_URL + '/roles/' + id, requestOptions);
   return await response.json();
 };
 

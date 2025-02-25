@@ -1,27 +1,34 @@
 // TestResultsDashboard.jsx
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Form, ButtonGroup } from 'react-bootstrap';
+import { Card, Button, Form, ButtonGroup, Badge } from 'react-bootstrap';
 
 import { DataGrid } from '@mui/x-data-grid';
 import { Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { IoReload } from 'react-icons/io5';
-import { FiEdit } from 'react-icons/fi';
+import { IoWarningOutline, IoReload } from 'react-icons/io5';
+import { FiCheck, FiEdit } from 'react-icons/fi';
 import { RiDeleteBin5Line } from 'react-icons/ri';
 
 import * as userRequest from 'services/_api/usersRequest';
+import { AiFillCloseCircle } from 'react-icons/ai';
+import { toast } from 'react-toastify';
+import { authenUser } from 'services/_api/authentication';
 
 const UsersList = () => {
   const [user, setUser] = useState([]);
-
-  // โหลด filter จาก localStorage
+  const [data, setData] = useState([]);
   const [filterText, setFilterText] = useState(() => localStorage.getItem('filterText') || '');
-  const [rows, setRows] = useState(user);
-  // const [loading, setLoading] = useState(true);
+  const [rows, setRows] = useState(data);
   const navigate = useNavigate();
 
   //   const [open, setOpen] = useState(false);
   useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      authenUser(token).then((response) => {
+        setUser(response.user);
+      });
+    }
     getUsers();
   }, []);
 
@@ -44,7 +51,7 @@ const UsersList = () => {
           createdAt: new Date(user.created_at).toLocaleString(),
           status: user.status
         }));
-        setUser(rows);
+        setData(rows);
         setRows(rows);
       }
     });
@@ -57,7 +64,18 @@ const UsersList = () => {
     { field: 'phone', headerName: 'เบอร์โทรศัพท์', flex: 1 },
     { field: 'role_name', headerName: 'Roles', width: 120, headerAlign: 'center', align: 'center' },
     { field: 'createdAt', headerName: 'วันที่สร้าง', flex: 1 },
-    { field: 'status', headerName: 'สถานะ', width: 120, headerAlign: 'center', align: 'center' },
+    {
+      field: 'status',
+      headerName: 'สถานะ',
+      width: 120,
+      headerAlign: 'center',
+      align: 'center',
+      renderCell: (params) => (
+        <Badge pill style={{}} bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
+          {params.row.status === 'pending' ? 'รออนุมัติ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
+        </Badge>
+      )
+    },
     {
       field: 'actions',
       headerName: 'การจัดการ',
@@ -66,6 +84,13 @@ const UsersList = () => {
       align: 'center',
       renderCell: (params) => (
         <ButtonGroup>
+          <Button
+            variant={params.row.status === 'pending' || params.row.status === 'rejected' ? 'outline-success' : 'outline-warning'}
+            size="sm"
+            onClick={() => handleApprove(params.row.id, params.row.status === 'pending' || params.row.status === 'rejected' ? 'Y' : 'N')}
+          >
+            {params.row.status === 'pending' || params.row.status === 'rejected' ? <FiCheck /> : <IoWarningOutline />}
+          </Button>
           <Button variant="info" size="sm" onClick={() => handleEdit(params.row)}>
             <FiEdit />
           </Button>
@@ -99,6 +124,23 @@ const UsersList = () => {
     // คุณสามารถใส่การนำทางไปหน้าแก้ไขหรือแสดง Modal แก้ไขที่นี่
   };
 
+  const handleApprove = (id, status) => {
+    const confirmApprove = window.confirm(`คุณต้องการอนุมัติผู้ใช้ หรือไม่?`);
+    if (confirmApprove) {
+      const data = {
+        approver_id: user.user_id,
+        is_approved_user: status === 'Y' ? true : false
+      };
+      try {
+        userRequest.putApproveUser(data, id).then(() => {
+          toast.success('อนุมัติสำเร็จ!', { autoClose: 3000 });
+          getUsers();
+        });
+      } catch (error) {
+        toast.error(`อนุมัติไม่สำเร็จ: ${error}`, { autoClose: 3000 });
+      }
+    }
+  };
   const handleDelete = (id) => {
     const confirmDelete = window.confirm(`คุณต้องการลบข้อมูลผู้ใช้หมายเลข ${id} หรือไม่?`);
     if (confirmDelete) {

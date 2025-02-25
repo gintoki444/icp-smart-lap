@@ -31,7 +31,7 @@ h4,
 h5,
 h6 {
   color: $theme-heading-color;
-  font-weight: 400;
+  font-weight: 'bold';
 }
 
 h1 {
@@ -55,11 +55,11 @@ h5 {
 }
 
 h6 {
-  font-size: 14px;
+  font-size: 16px;
 }
 
 p {
-  font-size: 14px;
+  font-size: 16px;
 }
 
 strong {

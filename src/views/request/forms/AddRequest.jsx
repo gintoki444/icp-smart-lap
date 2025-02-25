@@ -1,90 +1,140 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Form, Modal, Row, Col } from 'react-bootstrap';
-import Select from 'react-select';
 import { ChemicalFertilizerForm } from './ChemicalFertilizerForm';
 import { OrganicFertilizerForm } from './OrganicFertilizerForm';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { GiFertilizerBag, GiChemicalTank } from 'react-icons/gi';
+import { postServiceRequests, postServiceRequestDocuments } from 'services/_api/serviceRequest';
+import { postSampleSubmisDetail, postSampleSubmissions } from 'services/_api/SampleSubmissionsRequest';
+import { handleUploadFiles } from 'services/_api/uploadFileRequest';
+import SampleRequestForm from './SampleRequestForm';
 
 const RegistrationForm = () => {
   const navagate = useNavigate();
   const [selectedForm, setSelectedForm] = useState(null);
+  const [samepleSelected, setSamepleSelected] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const optionsColor = [
-    { value: 'dark', label: 'ดำ' },
-    { value: 'white', label: 'ขาว' },
-    { value: 'red', label: 'แดง' },
-    { value: 'blue', label: 'น้ำเงิน' },
-    { value: 'green', label: 'เขียว' },
-    { value: 'yellow', label: 'เหลือง' },
-    { value: 'purple', label: 'ม่วง' }
-  ];
 
-  // Organic Fertilizer Form States
-  const [company, setCompany] = useState('');
-  const [purpose, setPurpose] = useState([]);
-  const [fertilizerType, setFertilizerType] = useState([]);
-  const [color, setColor] = useState([]);
-  const [container, setContainer] = useState('');
-  const [otherContainer, setOtherContainer] = useState('');
-  const [tradeName, setTradeName] = useState('');
-  const [trademark, setTrademark] = useState('');
-  const [manufacturer, setManufacturer] = useState('');
-  const [country, setCountry] = useState('');
-  const [orderedFrom, setOrderedFrom] = useState('');
-  const [tests, setTests] = useState([]);
-  const [otherTest, setOtherTest] = useState('');
-  const [reportMethod, setReportMethod] = useState([]);
-  const [email, setEmail] = useState('');
-  const [sameAddress, setSameAddress] = useState(true);
-  const [address, setAddress] = useState('');
-  const [province, setProvince] = useState('');
-  const [district, setDistrict] = useState('');
-  const [subDistrict, setSubDistrict] = useState('');
-  const [postalCode, setPostalCode] = useState('');
-  const [phone, setPhone] = useState('');
+  const location = useLocation();
+  const usersFromState = location.state?.user || null;
 
-  // Chemical Fertilizer Form States
-  const [chemicalCompany, setChemicalCompany] = useState('');
-  const [fertilizerCategory, setFertilizerCategory] = useState([]);
-  const [chemicalFertilizerType, setChemicalFertilizerType] = useState('');
-  const [chemicalColor, setChemicalColor] = useState([]);
-  const [formula, setFormula] = useState('');
-  const [chemicalContainer, setChemicalContainer] = useState('');
-  const [otherChemicalContainer, setOtherChemicalContainer] = useState('');
-  const [chemicalTradeName, setChemicalTradeName] = useState('');
-  const [chemicalTrademark, setChemicalTrademark] = useState('');
-  const [chemicalManufacturer, setChemicalManufacturer] = useState('');
-  const [chemicalCountry, setChemicalCountry] = useState('');
-  const [chemicalOrderedFrom, setChemicalOrderedFrom] = useState('');
-  const [chemicalComponents, setChemicalComponents] = useState([]);
-  const [chemicalTests, setChemicalTests] = useState([]);
-  const [otherChemicalTest, setOtherChemicalTest] = useState('');
-  const [chemicalReportMethod, setChemicalReportMethod] = useState([]);
-  const [chemicalEmail, setChemicalEmail] = useState('');
-  const [chemicalSameAddress, setChemicalSameAddress] = useState(true);
-  const [chemicalAddress, setChemicalAddress] = useState('');
-  const [chemicalProvince, setChemicalProvince] = useState('');
-  const [chemicalDistrict, setChemicalDistrict] = useState('');
-  const [chemicalSubDistrict, setChemicalSubDistrict] = useState('');
-  const [chemicalPostalCode, setChemicalPostalCode] = useState('');
-  const [chemicalPhone, setChemicalPhone] = useState('');
-  const [sampleDisposal, setSampleDisposal] = useState('');
-  const [otherRequirements, setOtherRequirements] = useState('');
-
+  console.log(usersFromState);
   const handleFormSelection = (formType) => {
     setSelectedForm(formType);
+    if (formType === 'chemical') {
+      setSamepleSelected(1);
+    } else if (formType === 'organic') {
+      setSamepleSelected(2);
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setShowSuccessModal(true);
-  };
+  useEffect(() => {
+    if (usersFromState === null) {
+      navagate('/user/request/');
+    }
+  }, []);
+  const handleSave = async (data) => {
+    // ข้อมูลจาก Step 1
+    const step1 = {
+      user_id: usersFromState.user_id,
+      customer_id: data.company_id,
+      is_registration_analysis: data.analysisMethod === 'is_registration_analysis' ? 1 : 0,
+      is_quality_check_analysis: data.analysisMethod === 'is_quality_check_analysis' ? 1 : 0,
+      sample_type_id: data.sample_type_id,
+      notes: data.notes
+    };
 
-  const handleChange = (selected) => {
-    setChemicalColor(selected);
-  };
+    let sampleSubmissionsData = [];
+    data.fertilizerRecords.forEach((record) => {
+      console.log(record.reportMethod);
+      const step2 = {
+        request_id: null,
+        is_single_fertilizer: record.fertilizerCategory === 'is_single_fertilizer' ? 1 : 0,
+        is_compound_fertilizer: record.fertilizerCategory === 'is_compound_fertilizer' ? 1 : 0,
+        is_mixed_fertilizer: record.fertilizerCategory === 'is_mixed_fertilizer' ? 1 : 0,
+        is_secondary_nutrient_fertilizer: record.fertilizerCategory === 'is_secondary_nutrient_fertilizer' ? 1 : 0,
+        fertilizer_type_id: record.fertilizer_type_id,
+        color: record.color,
+        fertilizer_formula: record.fertilizer_formula,
+        packaging_other: record.packaging_other,
+        common_name: record.common_name,
+        trade_name: record.trade_name,
+        trademark: record.trademark,
+        manufacturer: record.manufacturer,
+        manufacturer_country: record.manufacturer_country,
+        supplier: record.supplier,
+        supplier_country: record.supplier_country,
+        composition: record.composition,
+        sample_weight: record.sample_weight,
+        sample_weight_unit: record.sample_weight_unit,
+        packaging_id: record.packaging_id,
+        test_all_items: data.test_all_items,
+        is_self_pickup: data.reportMethod === 'is_self_pickup' ? 1 : 0,
+        pdf_email: data.reportMethod === 'pdf_email' ? data.email : '',
+        is_mail_delivery: data.reportMethod === 'is_self_pickup' ? 1 : 0,
+        is_lab_dispose_sample: data.sampleDisposal === 'is_lab_dispose_sample' ? 1 : 0,
+        is_collect_within_3_months: data.sampleDisposal === 'is_collect_within_3_months' ? 1 : 0,
+        is_return_sample: data.sampleDisposal === 'is_return_sample' ? 1 : 0,
+        submitted_by: data.submitted_by,
+        phone: data.submitted_phone,
+        test_items: record.test_items
+      };
+      console.log('Step 2 data for record:', step2);
+      sampleSubmissionsData.push(step2);
+    });
 
+    console.log('sampleSubmissionsData:', sampleSubmissionsData);
+    // ข้อมูลไฟล์จาก Step ที่เก็บใน data.files
+    const fileData = data.files;
+    // if (usersFromState.user_id === 99999) {
+    try {
+      const responseService = await postServiceRequests(step1);
+
+      if (responseService.request_id) {
+        // ทำการส่งข้อมูล sampleSubmissionsData
+        for (const record of sampleSubmissionsData) {
+          record.request_id = responseService.request_id;
+          const responseSample = await postSampleSubmissions(record);
+          console.log('responseSample:', responseSample);
+          if (responseSample.submission_id) {
+            const sampleDataDetail = {
+              submission_id: responseSample.submission_id,
+              test_items: record.test_items
+            };
+            const responseTestItem = await postSampleSubmisDetail(sampleDataDetail);
+            console.log('responseTestItem:', responseTestItem);
+          }
+        }
+
+        // อัปโหลดไฟล์ทั้งหมด และรับผลลัพธ์
+        const uploadResults = await handleUploadFiles(fileData);
+        console.log('ผลลัพธ์การอัปโหลด:', uploadResults);
+
+        // สำหรับแต่ละไฟล์ที่อัปโหลด ให้ส่งข้อมูลไปยัง /service-request-documents
+        for (const fileResult of uploadResults) {
+          // ดึงเฉพาะชื่อไฟล์ (ส่วนหลังสุดหลังจาก /)
+          const extractedFileName = fileResult.fileName.split('/').pop();
+          const documentData = {
+            request_id: responseService.request_id,
+            uploaded_by: usersFromState.user_id,
+            file_name: extractedFileName,
+            // สมมุติว่า file_path ต้องการเป็น path ของไฟล์ใน Storage (เพิ่ม / นำหน้า)
+            file_path: `/${fileResult.fileName}`
+          };
+
+          // เรียก API เพิ่มข้อมูลเอกสาร
+          const responseDoc = await postServiceRequestDocuments(documentData);
+          console.log('Response from service-request-documents:', responseDoc);
+        }
+
+        setShowSuccessModal(true);
+      }
+    } catch (error) {
+      console.log('Error:', error);
+      alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล:', error);
+    }
+    // }
+  };
   return (
     <>
       {selectedForm === null && (
@@ -114,9 +164,12 @@ const RegistrationForm = () => {
           </Card.Body>
         </Card>
       )}
-      {selectedForm === 'organic' && <OrganicFertilizerForm onHandleSave={setShowSuccessModal} />}
-      {selectedForm === 'chemical' && <ChemicalFertilizerForm onHandleSave={setShowSuccessModal} />}
+      {/* {selectedForm === 'organic' && <OrganicFertilizerForm onHandleSave={setShowSuccessModal} />}
+      {selectedForm === 'chemical' && <ChemicalFertilizerForm onHandleSave={handleSave} userId={usersFromState.user_id} />} */}
 
+      {selectedForm !== null && (
+        <SampleRequestForm userId={usersFromState.user_id} onHandleSave={handleSave} sampleType={samepleSelected} />
+      )}
       <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered>
         <Modal.Body className="text-center">
           <i className="text-success" style={{ fontSize: '3rem' }}>

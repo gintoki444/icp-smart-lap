@@ -586,24 +586,6 @@ export const OrganicFertilizerForm = ({ onHandleSave }) => {
                     value={formData.main_ingredients}
                     onChange={(selected) => setFormData({ ...formData, main_ingredients: selected })}
                   />
-                  {/* {['ammonia', 'nitric acid', 'ammonium ', 'phosphate', 'sulfuric acid'].map((type, index) => (
-                    <Form.Check
-                      inline
-                      type="checkbox"
-                      id={index}
-                      label={type}
-                      key={index}
-                      checked={formData.main_ingredients.includes(type)}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          main_ingredients: e.target.checked
-                            ? [...formData.main_ingredients, type]
-                            : formData.main_ingredients.filter((item) => item !== type)
-                        })
-                      }
-                    />
-                  ))} */}
                 </div>
               </Form.Group>
               <Form.Group className="mb-3">
