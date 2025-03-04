@@ -45,6 +45,36 @@ const routes = [
     element: lazy(() => import('./views/auth/signin/Signin'))
   },
   {
+    exact: 'true',
+    path: '/auth/signup-1',
+    element: lazy(() => import('./views/auth/signup/SignUp'))
+  },
+  {
+    exact: 'true',
+    path: '/auth/resend-token',
+    element: lazy(() => import('./views/auth/activate/ResendActivateToken'))
+  },
+  {
+    exact: 'true',
+    path: '/auth/activate-token',
+    element: lazy(() => import('./views/auth/activate/ActivateToken'))
+  },
+  {
+    exact: 'true',
+    path: '/auth/activate-success',
+    element: lazy(() => import('./views/auth/activate/ActivateSuccess'))
+  },
+  {
+    exact: 'true',
+    path: '/auth/reset-password',
+    element: lazy(() => import('./views/auth/reset-password/ResetPassword'))
+  },
+  {
+    exact: 'true',
+    path: '/auth/new-password',
+    element: lazy(() => import('./views/auth/reset-password/NewPassword'))
+  },
+  {
     path: '/admin/*',
     guard: (props) => <ProtectedRoute role="admin" path="/admin/*" {...props} />, // ✅ ตรวจสอบ permission
     layout: AdminLayout,
@@ -62,7 +92,7 @@ const routes = [
       {
         exact: 'true',
         path: '/request',
-        element: lazy(() => import('./views/request/AdminRequestPage'))
+        element: lazy(() => import('./views/admin/request/AdminRequestPage'))
       },
       {
         exact: 'true',
@@ -73,6 +103,21 @@ const routes = [
         exact: 'true',
         path: 'request/detial',
         element: lazy(() => import('./views/request/details/RequestDetails'))
+      },
+      {
+        exact: 'true',
+        path: 'request/verify',
+        element: lazy(() => import('./views/admin/request/ServiceRequestDetail'))
+      },
+      {
+        exact: 'true',
+        path: 'test-items',
+        element: lazy(() => import('./views/admin/test-items/TestItems'))
+      },
+      {
+        exact: 'true',
+        path: 'test-items/add',
+        element: lazy(() => import('./views/admin/test-items/AddTestItem'))
       },
       // {
       //   exact: 'true',
@@ -266,6 +311,11 @@ const routes = [
         exact: 'true',
         path: 'request/add',
         element: lazy(() => import('./views/request/forms/AddRequest'))
+      },
+      {
+        exact: 'true',
+        path: 'request/edit/',
+        element: lazy(() => import('./views/request/forms/EditSampleRequestForm'))
       },
       {
         exact: 'true',

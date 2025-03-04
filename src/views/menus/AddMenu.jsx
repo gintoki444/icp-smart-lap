@@ -33,7 +33,7 @@ function AddMenu() {
     parent_id: null,
     route: '',
     icon: '',
-    sort_order: 3,
+    sort_order: 1,
     is_active: 1
   };
 
@@ -185,6 +185,24 @@ function AddMenu() {
                         isInvalid={touched.icon && !!errors.icon}
                       />
                       {touched.icon && errors.icon && <Form.Control.Feedback type="invalid">{errors.icon}</Form.Control.Feedback>}
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-2">
+                      <Form.Label>ลำดับเมนู:</Form.Label>
+                      <Form.Control
+                        type="text"
+                        className="form-control"
+                        placeholder="ชื่อเมนู"
+                        name="sort_order"
+                        value={values.sort_order}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        isInvalid={touched.sort_order && !!errors.sort_order}
+                      />
+                      {touched.sort_order && errors.sort_order && (
+                        <Form.Control.Feedback type="invalid">{errors.sort_order}</Form.Control.Feedback>
+                      )}
                     </Form.Group>
                   </Col>
                 </Row>

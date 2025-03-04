@@ -1,35 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react'; // เพิ่ม useState
 import { Card, Button, Form } from 'react-bootstrap';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { useNavigate, NavLink } from 'react-router-dom'; // เพิ่ม NavLink ที่นี่
+import { useNavigate, NavLink } from 'react-router-dom';
 
 import logo from '../../../assets/images/logo/logo.png';
+import { IoEyeOffOutline, IoEyeOutline } from 'react-icons/io5';
+import { postResetPassRequest } from 'services/_api/authentication';
 
 const ResetPassword = () => {
   const navigate = useNavigate();
 
   const formik = useFormik({
     initialValues: {
-      email: '',
-      password: '',
-      confirmPassword: ''
+      email: ''
     },
     validationSchema: Yup.object({
-      email: Yup.string()
-        .email('รูปแบบอีเมล์ไม่ถูกต้อง')
-        .required('กรุณากรอกอีเมล์'),
-      password: Yup.string()
-        .min(6, 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร')
-        .required('กรุณากรอกรหัสผ่าน'),
-      confirmPassword: Yup.string()
-        .oneOf([Yup.ref('password'), null], 'รหัสผ่านไม่ตรงกัน')
-        .required('กรุณายืนยันรหัสผ่าน')
+      email: Yup.string().email('รูปแบบอีเมล์ไม่ถูกต้อง').required('กรุณากรอกอีเมล์')
     }),
     onSubmit: (values) => {
       console.log('Reset Password:', values);
-      alert('รีเซ็ตรหัสผ่านสำเร็จ! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่');
-      navigate('/auth/signin');
+      try {
+        postResetPassRequest(values).then((response) => {
+          if (response.message === 'รหัสรีเซ็ตรหัสผ่านถูกส่งไปยังอีเมลของคุณแล้ว') {
+            alert('รหัสรีเซ็ตรหัสผ่านถูกส่งไปยังอีเมลของคุณแล้ว');
+            navigate('/auth/new-password');
+          }
+        });
+      } catch (error) {
+        alert(error);
+      }
     }
   });
 
@@ -48,7 +48,11 @@ const ResetPassword = () => {
               <div className="mb-4">
                 <img className="img-fluid" src={logo} alt="logo" width={120} />
               </div>
-              <h3 className="mb-4">Reset Password</h3>
+              <h3 className="mb-4">Verify e-mail</h3>
+              <p className="mb-4">
+                กรอกอีเมล์ที่สมัครสมาชิกเพื่อรับ <br />
+                token สำหรับรีเซตรหัสผ่าน
+              </p>
               <Form onSubmit={formik.handleSubmit}>
                 <Form.Group className="mb-3">
                   <Form.Control
@@ -60,43 +64,19 @@ const ResetPassword = () => {
                     onBlur={formik.handleBlur}
                     isInvalid={!!formik.errors.email && formik.touched.email}
                   />
-                  <Form.Control.Feedback type="invalid">
-                    {formik.errors.email}
-                  </Form.Control.Feedback>
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Control
-                    type="password"
-                    placeholder="Enter new password"
-                    name="password"
-                    value={formik.values.password}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    isInvalid={!!formik.errors.password && formik.touched.password}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {formik.errors.password}
-                  </Form.Control.Feedback>
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Control
-                    type="password"
-                    placeholder="Confirm new password"
-                    name="confirmPassword"
-                    value={formik.values.confirmPassword}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    isInvalid={!!formik.errors.confirmPassword && formik.touched.confirmPassword}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {formik.errors.confirmPassword}
-                  </Form.Control.Feedback>
+                  <Form.Control.Feedback type="invalid">{formik.errors.email}</Form.Control.Feedback>
                 </Form.Group>
                 <Button variant="primary" type="submit" className="btn-block mb-4">
-                  Reset Password
+                  Verify e-mail
                 </Button>
               </Form>
-              <p className="mb-2">
+              <p className="mb-1 text-muted">
+                have token of{' '}
+                <NavLink to="/auth/new-password" className="f-w-400">
+                  reset password?
+                </NavLink>
+              </p>
+              <p className="mb-1 text-muted">
                 Remember your password?{' '}
                 <NavLink to="/auth/signin" className="f-w-400">
                   Login

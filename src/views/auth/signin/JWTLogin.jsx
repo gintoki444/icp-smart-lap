@@ -1,25 +1,24 @@
-import React, { useEffect } from 'react';
-import { Row, Col, Alert, Button } from 'react-bootstrap';
+import React, { useEffect, useState } from 'react';
+import { Row, Col, Alert, Button, Form } from 'react-bootstrap';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
 import { useNavigate } from 'react-router-dom';
 import { authenUser, signIn } from 'services/_api/authentication';
 import { getAllMenusRolesByID } from 'services/_api/permissionRequest';
+import { IoEyeOffOutline, IoEyeOutline } from 'react-icons/io5';
 
 const JWTLogin = () => {
   const navigate = useNavigate();
   const authToken = localStorage.getItem('authToken');
   const userRole = localStorage.getItem('userRole');
+  const [showPassword, setShowPassword] = useState(false);
 
   // ตรวจสอบ authToken และ Redirect ถ้ามี
   useEffect(() => {
     if (authToken && userRole) {
-      console.log('✅ Redirecting to dashboard...');
-      console.log('✅ authToken', authToken);
-      console.log('✅ userRole', userRole);
       navigate(userRole === 'admin' ? '/admin/dashboard' : '/user/dashboard', { replace: true });
     }
-  }, []);
+  }, [authToken, userRole, navigate]);
 
   const initialValue = {
     email: '',
@@ -40,7 +39,6 @@ const JWTLogin = () => {
       const response = await signIn(values);
 
       if (response && response.token) {
-        console.log('✅ Login successful, saving to localStorage...');
         localStorage.setItem('authToken', response.token);
         localStorage.setItem('userRole', response.user.role);
 
@@ -68,41 +66,48 @@ const JWTLogin = () => {
       console.error('Error fetching permissions:', error);
     }
   };
+
   return (
     <Formik initialValues={initialValue} validationSchema={validations} onSubmit={handleSubmit}>
       {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => (
-        <form noValidate onSubmit={handleSubmit}>
-          <div className="form-group mb-3 text-start">
-            <input
-              className="form-control"
+        <Form noValidate onSubmit={handleSubmit}>
+          <Form.Group className="mb-3 text-start" controlId="email">
+            <Form.Control
               placeholder="Email Address / Username"
               name="email"
               onBlur={handleBlur}
               onChange={handleChange}
               type="email"
               value={values.email}
+              isInvalid={touched.email && !!errors.email} // แก้ไขเงื่อนไขให้ถูกต้อง
             />
-            {touched.email && errors.email && <small className="text-danger form-text">{errors.email}</small>}
-          </div>
-          <div className="form-group mb-4 text-start">
-            <input
-              className="form-control"
+            <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
+          </Form.Group>
+
+          <Form.Group className="mb-4 text-start position-relative" controlId="password">
+            <Form.Control
               placeholder="Password"
               name="password"
               onBlur={handleBlur}
               onChange={handleChange}
-              type="password"
+              type={showPassword ? 'text' : 'password'} // เปลี่ยน type ตาม state
               value={values.password}
+              isInvalid={touched.password && !!errors.password}
             />
-            {touched.password && errors.password && <small className="text-danger form-text">{errors.password}</small>}
-          </div>
-
-          {/* <div className="custom-control custom-checkbox  text-start mb-4 mt-2">
-            <input type="checkbox" className="custom-control-input mx-2" id="customCheck1" />
-            <label className="custom-control-label" htmlFor="customCheck1">
-              Save credentials.
-            </label>
-          </div> */}
+            <span
+              className="position-absolute"
+              style={{
+                right: errors.password ? 30 : '10px',
+                top: errors.password ? '30%' : '50%',
+                transform: 'translateY(-50%)',
+                cursor: 'pointer'
+              }}
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <IoEyeOffOutline size={20} /> : <IoEyeOutline size={20} />}
+            </span>
+            <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
+          </Form.Group>
 
           {errors.submit && (
             <Col sm={12}>
@@ -112,12 +117,12 @@ const JWTLogin = () => {
 
           <Row>
             <Col mt={2}>
-              <Button className="btn-block mb-4" color="primary" disabled={isSubmitting} size="large" type="submit" variant="primary">
+              <Button className="btn-block mb-4" variant="primary" disabled={isSubmitting} type="submit">
                 Signin
               </Button>
             </Col>
           </Row>
-        </form>
+        </Form>
       )}
     </Formik>
   );

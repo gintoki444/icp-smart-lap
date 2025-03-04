@@ -1,14 +1,16 @@
-// SignUp1.jsx
 import React, { useState } from 'react';
-import { Card, Row, Col } from 'react-bootstrap';
-import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { Card, Row, Alert, Col, Form, Button } from 'react-bootstrap'; // เพิ่ม Form และ Button
+import { NavLink, useNavigate } from 'react-router-dom';
 import logo from '../../../assets/images/logo/logo.png';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
 import { Signup } from 'services/_api/authentication';
+import { IoEyeOffOutline, IoEyeOutline } from 'react-icons/io5';
 
 const SignUp1 = () => {
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const initialValue = {
     username: '',
@@ -29,7 +31,12 @@ const SignUp1 = () => {
       phone: Yup.string()
         .matches(/^[0-9]{10}$/, 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (10 หลัก)')
         .required('กรุณากรอกเบอร์โทรศัพท์'),
-      password: Yup.string().min(6, 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร').required('กรุณากรอกรหัสผ่าน'),
+      password: Yup.string()
+        .min(8, 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร')
+        .matches(/[0-9]/, 'รหัสผ่านต้องมีตัวเลขอย่างน้อย 1 ตัว')
+        .matches(/[A-Z]/, 'รหัสผ่านต้องมีตัวอักษรพิมพ์ใหญ่อย่างน้อย 1 ตัว')
+        .matches(/[^A-Za-z0-9]/, 'รหัสผ่านต้องมีอักขระพิเศษอย่างน้อย 1 ตัว')
+        .required('กรุณากรอกรหัสผ่าน'),
       confirmPassword: Yup.string()
         .oneOf([Yup.ref('password'), null], 'รหัสผ่านไม่ตรงกัน')
         .required('กรุณายืนยันรหัสผ่าน')
@@ -43,6 +50,8 @@ const SignUp1 = () => {
       if (response.userId) {
         alert('สมัครสมาชิกสำเร็จ กรุณาตรวจสอบอีเมล์เพื่อยืนยันตัวตน');
         navigate('/auth/activate-token');
+      } else {
+        setErrors({ submit: err.message });
       }
     } catch (err) {
       console.error(err);
@@ -51,6 +60,7 @@ const SignUp1 = () => {
       setSubmitting(false);
     }
   };
+
   return (
     <React.Fragment>
       <div className="auth-wrapper">
@@ -71,97 +81,125 @@ const SignUp1 = () => {
                   <h3 className="mb-4">Sign up</h3>
                   <Formik initialValues={initialValue} validationSchema={validateValue} onSubmit={handleSubmit}>
                     {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
-                      <form onSubmit={handleSubmit}>
-                        <div className="form-group mb-3 text-start">
-                          <input
+                      <Form onSubmit={handleSubmit}>
+                        <Form.Group className="mb-3 text-start">
+                          <Form.Control
                             type="text"
-                            className="form-control"
                             placeholder="ชื่อ"
                             name="first_name"
                             value={values.first_name}
                             onChange={handleChange}
                             onBlur={handleBlur}
+                            isInvalid={!!errors.first_name && touched.first_name}
                           />
-                          {touched.first_name && errors.first_name && <small className="text-danger">{errors.first_name}</small>}
-                        </div>
-                        <div className="form-group mb-3 text-start">
-                          <input
+                          <Form.Control.Feedback type="invalid">{errors.first_name}</Form.Control.Feedback>
+                        </Form.Group>
+
+                        <Form.Group className="mb-3 text-start">
+                          <Form.Control
                             type="text"
-                            className="form-control"
                             placeholder="นามสกุล"
                             name="last_name"
                             value={values.last_name}
                             onChange={handleChange}
                             onBlur={handleBlur}
+                            isInvalid={!!errors.last_name && touched.last_name}
                           />
-                          {touched.last_name && errors.last_name && <small className="text-danger">{errors.last_name}</small>}
-                        </div>
-                        <div className="form-group mb-3 text-start">
-                          <input
+                          <Form.Control.Feedback type="invalid">{errors.last_name}</Form.Control.Feedback>
+                        </Form.Group>
+
+                        <Form.Group className="mb-3 text-start">
+                          <Form.Control
                             type="email"
-                            className="form-control"
                             placeholder="อีเมล์"
                             name="email"
                             value={values.email}
                             onChange={handleChange}
                             onBlur={handleBlur}
+                            isInvalid={!!errors.email && touched.email}
                           />
-                          {touched.email && errors.email && <small className="text-danger">{errors.email}</small>}
-                        </div>
-                        <div className="form-group mb-3 text-start">
-                          <input
+                          <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
+                        </Form.Group>
+
+                        <Form.Group className="mb-3 text-start">
+                          <Form.Control
                             type="text"
-                            className="form-control"
                             placeholder="เบอร์โทรศัพท์"
                             name="phone"
                             value={values.phone}
                             onChange={handleChange}
                             onBlur={handleBlur}
+                            isInvalid={!!errors.phone && touched.phone}
                           />
-                          {touched.phone && errors.phone && <small className="text-danger">{errors.phone}</small>}
-                        </div>
-                        <div className="form-group mb-3 text-start">
-                          <input
-                            type="password"
-                            className="form-control"
+                          <Form.Control.Feedback type="invalid">{errors.phone}</Form.Control.Feedback>
+                        </Form.Group>
+
+                        <Form.Group className="mb-3 text-start position-relative">
+                          <Form.Control
+                            type={showPassword ? 'text' : 'password'}
                             placeholder="รหัสผ่าน"
                             name="password"
                             value={values.password}
                             onChange={handleChange}
                             onBlur={handleBlur}
+                            isInvalid={!!errors.password && touched.password}
                           />
-                          {touched.password && errors.password && <small className="text-danger">{errors.password}</small>}
-                        </div>
-                        <div className="form-group mb-3 text-start">
-                          <input
-                            type="password"
-                            className="form-control"
+                          <span
+                            className="position-absolute"
+                            style={{
+                              right: errors.password ? 30 : '10px',
+                              top: errors.password ? '30%' : '50%',
+                              transform: 'translateY(-50%)',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? <IoEyeOffOutline size={20} /> : <IoEyeOutline size={20} />}
+                          </span>
+                          <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
+                        </Form.Group>
+
+                        <Form.Group className="mb-3 text-start position-relative">
+                          <Form.Control
+                            type={showConfirmPassword ? 'text' : 'password'}
                             placeholder="ยืนยันรหัสผ่าน"
                             name="confirmPassword"
                             value={values.confirmPassword}
                             onChange={handleChange}
                             onBlur={handleBlur}
+                            isInvalid={!!errors.confirmPassword && touched.confirmPassword}
                           />
-                          {touched.confirmPassword && errors.confirmPassword && (
-                            <small className="text-danger">{errors.confirmPassword}</small>
-                          )}
-                        </div>
-                        <div className="form-check text-start mb-4 mt-2">
-                          <input type="checkbox" className="form-check-input" id="customCheck1" />
-                          <label className="form-check-label" htmlFor="customCheck1">
-                            Send me the <Link to="#">Newsletter</Link> weekly.
-                          </label>
-                        </div>
-                        <button type="submit" className="btn btn-primary mb-4">
+                          <span
+                            className="position-absolute"
+                            style={{
+                              right: errors.confirmPassword ? 30 : '10px',
+                              top: errors.confirmPassword ? '30%' : '50%',
+                              transform: 'translateY(-50%)',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          >
+                            {showConfirmPassword ? <IoEyeOffOutline size={20} /> : <IoEyeOutline size={20} />}
+                          </span>
+                          <Form.Control.Feedback type="invalid">{errors.confirmPassword}</Form.Control.Feedback>
+                        </Form.Group>
+
+                        {errors.submit && (
+                          <Col sm={12}>
+                            <Alert variant="danger">{errors.submit}</Alert>
+                          </Col>
+                        )}
+
+                        <Button type="submit" variant="primary" className="mb-4">
                           Sign up
-                        </button>
-                        <p className="mb-2">
+                        </Button>
+                        <p className="mb-1 text-muted">
                           Already have an account?{' '}
                           <NavLink to={'/auth/signin'} className="f-w-400">
                             Login
                           </NavLink>
                         </p>
-                      </form>
+                      </Form>
                     )}
                   </Formik>
                 </Card.Body>

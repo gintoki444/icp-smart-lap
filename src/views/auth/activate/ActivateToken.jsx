@@ -1,9 +1,8 @@
-// ActivateToken.jsx
 import React from 'react';
-import { Card, Row, Col, Form, Button } from 'react-bootstrap';
+import { Card, Row, Col, Form, Button, Alert } from 'react-bootstrap'; // เพิ่ม Alert
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import logo from '../../../assets/images/logo/logo.png';
 import { activateEmail } from 'services/_api/authentication';
 
@@ -12,21 +11,33 @@ const ActivateToken = () => {
 
   const formik = useFormik({
     initialValues: {
-      token: ''
+      token: '',
+      submit: null // เพิ่ม field สำหรับเก็บ error จาก server
     },
     validationSchema: Yup.object({
       token: Yup.string().length(4, 'Token ต้องมี 4 ตัวอักษร').required('กรุณากรอก Token')
     }),
-    onSubmit: (values) => {
+    onSubmit: async (values, { setErrors, setSubmitting }) => {
+      setSubmitting(true);
       try {
-        console.log('Token:', values.token);
-        activateEmail(values.token).then((response) => {
-          if (response.message === 'Account activated successfully. You can now log in.') {
-            alert('ยืนยันอีเมล์สำเร็จ!');
-            navigate('/auth/activate-success');
-          }
-        });
-      } catch (errror) {}
+        const response = await activateEmail(values.token);
+        if (response.message === 'Account activated successfully. You can now log in.') {
+          alert('ยืนยันอีเมล์สำเร็จ!');
+          navigate('/auth/activate-success');
+        }
+      } catch (error) {
+        let errorMessage = 'เกิดข้อผิดพลาดในการยืนยันอีเมล์';
+        if (error.message.includes('400')) {
+          errorMessage = 'Token ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง';
+        } else if (error.message.includes('404')) {
+          errorMessage = 'ไม่พบ Token นี้ กรุณาขอ Token ใหม่';
+        } else if (error.message.includes('500')) {
+          errorMessage = 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่ภายหลัง';
+        }
+        setErrors({ submit: errorMessage }); // ใช้ setErrors เพื่อเก็บข้อความ error
+      } finally {
+        setSubmitting(false);
+      }
     }
   });
 
@@ -34,7 +45,13 @@ const ActivateToken = () => {
     <React.Fragment>
       <div className="auth-wrapper">
         <div className="auth-content text-center">
-          <Card className="borderless">
+          <div className="auth-bg">
+            <span className="r" />
+            <span className="r s" />
+            <span className="r s" />
+            <span className="r" />
+          </div>
+          <Card className="borderless text-center">
             <Card.Body>
               <Row className="justify-content-center">
                 <div className="mb-0">
@@ -42,7 +59,10 @@ const ActivateToken = () => {
                 </div>
                 <Col md={12}>
                   <h3 className="mb-4">Activate E-mail</h3>
-                  <p className="mb-4">กรอก Token ที่คุณได้รับจากอีเมล์เพื่อยืนยันตัวตน</p>
+                  <p className="mb-4">
+                    กรอก Token ที่ได้รับจาก <br />
+                    อีเมล์เพื่อยืนยันตัวตน
+                  </p>
                   <Form onSubmit={formik.handleSubmit}>
                     <Form.Group className="mb-3">
                       <Form.Control
@@ -56,11 +76,24 @@ const ActivateToken = () => {
                       />
                       <Form.Control.Feedback type="invalid">{formik.errors.token}</Form.Control.Feedback>
                     </Form.Group>
-                    <Button variant="primary" type="submit" className="btn-block mb-4">
+
+                    {/* แสดงข้อความ error จาก server */}
+                    {formik.errors.submit && (
+                      <Alert variant="danger" className="mb-3">
+                        {formik.errors.submit}
+                      </Alert>
+                    )}
+
+                    <Button variant="primary" type="submit" className="btn-block mb-4" disabled={formik.isSubmitting}>
                       Activate
                     </Button>
                   </Form>
-                  <p className="mb-2">
+                  <p className="mb-2 text-muted">
+                    <NavLink to={'/auth/resend-token'} className="f-w-400">
+                      Re-send activate token?
+                    </NavLink>
+                  </p>
+                  <p className="mb-2 text-muted">
                     Already have an account?{' '}
                     <NavLink to={'/auth/signin'} className="f-w-400">
                       Login

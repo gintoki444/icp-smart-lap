@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { Formik } from 'formik';
@@ -8,11 +8,13 @@ import { getAllFertilicerType } from 'services/_api/fertilizerTypes';
 import Step1 from './Steps/Step1'; // Component Step 1
 import Step2 from './Steps/Step2'; // Component Step 2
 import Step3 from './Steps/Step3'; // Component Step 3
+import { getAllCustomer } from 'services/_api/customerRequest';
 
 export const SampleRequestForm = ({ onHandleSave, userId, sampleType }) => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [fertilizerTypes, setFertilizerTypes] = useState([]);
+  const [companyList, setCompanyList] = useState([]);
   const [spacialCon, setSpacialCon] = useState({});
 
   // Initial values
@@ -23,14 +25,11 @@ export const SampleRequestForm = ({ onHandleSave, userId, sampleType }) => {
     notes: '',
     sample_type_id: sampleType,
     fertilizerRecords: [],
-    reportMethod: 'is_self_pickup',
+    reportMethod: [],
     email: '',
     sameAddress: true,
-    address: '',
-    province: '',
-    district: '',
-    subDistrict: '',
-    postalCode: '',
+    sr_mail_delivery_location: '',
+    phone: '',
     otherRequirements: '',
     files: [],
 
@@ -50,59 +49,103 @@ export const SampleRequestForm = ({ onHandleSave, userId, sampleType }) => {
 
   // Validation schemas
   const stepValidationSchemas = [
-    // Step 1
+    // Step 1 (ไม่เปลี่ยน)
     Yup.object({
-      company_id: Yup.string().required('กรุณาเลือกบริษัท')
+      company_id: Yup.string().required('กรุณาเลือกบริษัท'),
+      analysisMethod: Yup.string()
+        .required('กรุณาเลือกวัตถุประสงค์การขอใช้บริการ')
+        .oneOf(['is_registration_analysis', 'is_quality_check_analysis'], 'กรุณาเลือกวัตถุประสงค์ที่ถูกต้อง'),
+      notes: Yup.string().max(500, 'ความต้องการอื่นต้องไม่เกิน 500 ตัวอักษร').optional()
     }),
     // Step 2
     Yup.object({
-      fertilizerRecords: Yup.array().min(1, 'กรุณาเพิ่มข้อมูลปุ๋ยอย่างน้อยหนึ่งรายการ')
+      fertilizerRecords: Yup.array()
+        .min(1, 'กรุณาเพิ่มข้อมูลปุ๋ยอย่างน้อยหนึ่งรายการ')
+        .of(
+          Yup.object({
+            fertilizerCategory: Yup.string()
+              .required('กรุณาเลือกประเภทของปุ๋ย')
+              .oneOf(
+                ['is_single_fertilizer', 'is_compound_fertilizer', 'is_mixed_fertilizer', 'is_secondary_nutrient_fertilizer'],
+                'กรุณาเลือกประเภทปุ๋ยที่ถูกต้อง'
+              ),
+            fertilizer_type_id: Yup.number().required('กรุณาเลือกประเภทลักษณะปุ๋ย').nullable(),
+            packaging_id: Yup.number().required('กรุณาเลือกภาชนะบรรจุ').nullable(),
+            color: Yup.string().required('กรุณากรอกสี'),
+            fertilizer_formula: Yup.string().required('กรุณากรอกสูตรปุ๋ย'),
+            common_name: Yup.string().required('กรุณากรอกชื่อสามัญ'),
+            trade_name: Yup.string().required('กรุณากรอกชื่อการค้า'),
+            trademark: Yup.string().required('กรุณากรอกเครื่องหมายการค้า'),
+            manufacturer: Yup.string().required('กรุณากรอกชื่อผู้ผลิต'),
+            manufacturer_country: Yup.string().required('กรุณากรอกประเทศของผู้ผลิต'),
+            supplier: Yup.string().required('กรุณากรอกชื่อผู้จัดจำหน่าย'),
+            supplier_country: Yup.string().required('กรุณากรอกประเทศของผู้จัดจำหน่าย'),
+            composition: Yup.string().required('กรุณากรอกวัตถุส่วนประกอบของปุ๋ย'),
+            sample_weight: Yup.number().required('กรุณากรอกปริมาณ').typeError('ปริมาณต้องเป็นตัวเลข'),
+            sample_weight_unit: Yup.string().required('กรุณากรอกหน่วย'),
+            test_items: Yup.array()
+              .min(1, 'กรุณาเลือกอย่างน้อยหนึ่งรายการทดสอบ')
+              .of(
+                Yup.object({
+                  test_item_id: Yup.number().required('ต้องระบุรายการทดสอบ'),
+                  test_percentage: Yup.string().test('requires-percentage', 'กรุณากรอกเปอร์เซ็นต์สำหรับรายการนี้', function (value) {
+                    const testItemId = this.parent.test_item_id;
+                    const requiresPercentage = [1, 3, 5, 7, 10, 15].includes(testItemId);
+                    if (requiresPercentage) {
+                      return (
+                        value !== undefined && value !== null && value !== '' && /^\d+(\.\d+)?$/.test(value) // เปลี่ยนจาก % เป็นตัวเลขธรรมดา
+                      );
+                    }
+                    return true;
+                  })
+                })
+              )
+          })
+        )
+    }), // Step 3
+    Yup.object({
+      reportMethod: Yup.array()
+        .min(1, 'กรุณาเลือกวิธีการรับรายงานอย่างน้อยหนึ่งวิธี')
+        .of(Yup.string().oneOf(['is_self_pickup', 'pdf_email', 'is_mail_delivery'], 'วิธีการรับรายงานไม่ถูกต้อง')),
+      email: Yup.string().test('email-required', 'กรุณากรอกอีเมลสำหรับรับผลตรวจ', function (value) {
+        const reportMethod = this.parent.reportMethod;
+        if (Array.isArray(reportMethod) && reportMethod.includes('pdf_email')) {
+          return Yup.string().email('กรุณากรอกอีเมลที่ถูกต้อง').isValidSync(value);
+        }
+        return true;
+      }),
+      sameAddress: Yup.boolean(),
+      sr_mail_delivery_location: Yup.string().test('address-required', 'กรุณากรอกที่อยู่จัดส่ง', function (value) {
+        const { reportMethod, sameAddress } = this.parent;
+        if (Array.isArray(reportMethod) && reportMethod.includes('is_mail_delivery') && !sameAddress) {
+          return value !== undefined && value !== null && value.trim() !== '';
+        }
+        return true;
+      }),
+      phone: Yup.string().test('phone-required', 'กรุณากรอกเบอร์โทรศัพท์ 9-10 หลัก', function (value) {
+        const { reportMethod, sameAddress } = this.parent;
+        if (Array.isArray(reportMethod) && reportMethod.includes('is_mail_delivery') && !sameAddress) {
+          return value !== undefined && value !== null && value.trim() !== '' && /^\d{9,10}$/.test(value);
+        }
+        return true;
+      }),
+      sampleDisposal: Yup.string()
+        .required('กรุณาเลือกวิธีการจำหน่ายตัวอย่าง')
+        .oneOf(['is_lab_dispose_sample', 'is_collect_within_3_months', 'is_return_sample'], 'วิธีการจำหน่ายตัวอย่างไม่ถูกต้อง'),
+      test_all_items: Yup.boolean().required('กรุณาเลือกขอบเขตการทดสอบ'),
+      submitted_by: Yup.string().required('กรุณากรอกชื่อผู้ส่งตัวอย่าง'),
+      submitted_phone: Yup.string()
+        .required('กรุณากรอกเบอร์โทรศัพท์ผู้ส่งตัวอย่าง')
+        .matches(/^\d{9,10}$/, 'กรุณากรอกเบอร์โทรศัพท์ 9-10 หลัก'),
+      submitted_date: Yup.string().required('กรุณาเลือกวันที่ส่ง'),
+      files: Yup.array().min(1, 'กรุณาอัปโหลดเอกสารอย่างน้อยหนึ่งไฟล์').of(Yup.mixed())
     })
-    // Step 3
-    // Yup.object({
-    //   reportMethod: Yup.array().min(1, 'กรุณาเลือกอย่างน้อยหนึ่งวิธีรับรายงานผล').required('กรุณาเลือกวิธีรับรายงานผล'),
-    //   email: Yup.string().when('reportMethod', {
-    //     is: (val) => val && val.includes('ต้องการไฟล์ pdf เพิ่มเติมทาง E-mail'),
-    //     then: Yup.string().email('อีเมลไม่ถูกต้อง').required('กรุณากรอกอีเมล'),
-    //     otherwise: Yup.string()
-    //   }),
-    //   address: Yup.string().when(['reportMethod', 'sameAddress'], {
-    //     is: (reportMethod, sameAddress) => reportMethod && reportMethod.includes('ส่งทางไปรษณีย์') && !sameAddress,
-    //     then: Yup.string().required('กรุณากรอกที่อยู่'),
-    //     otherwise: Yup.string()
-    //   }),
-    //   province: Yup.string().when(['reportMethod', 'sameAddress'], {
-    //     is: (reportMethod, sameAddress) => reportMethod && reportMethod.includes('ส่งทางไปรษณีย์') && !sameAddress,
-    //     then: Yup.string().required('กรุณากรอกจังหวัด'),
-    //     otherwise: Yup.string()
-    //   }),
-    //   district: Yup.string().when(['reportMethod', 'sameAddress'], {
-    //     is: (reportMethod, sameAddress) => reportMethod && reportMethod.includes('ส่งทางไปรษณีย์') && !sameAddress,
-    //     then: Yup.string().required('กรุณากรอกอำเภอ'),
-    //     otherwise: Yup.string()
-    //   }),
-    //   subDistrict: Yup.string().when(['reportMethod', 'sameAddress'], {
-    //     is: (reportMethod, sameAddress) => reportMethod && reportMethod.includes('ส่งทางไปรษณีย์') && !sameAddress,
-    //     then: Yup.string().required('กรุณากรอกตำบล'),
-    //     otherwise: Yup.string()
-    //   }),
-    //   postalCode: Yup.string().when(['reportMethod', 'sameAddress'], {
-    //     is: (reportMethod, sameAddress) => reportMethod && reportMethod.includes('ส่งทางไปรษณีย์') && !sameAddress,
-    //     then: Yup.string().required('กรุณากรอกรหัสไปรษณีย์'),
-    //     otherwise: Yup.string()
-    //   }),
-    //   phone: Yup.string().when(['reportMethod', 'sameAddress'], {
-    //     is: (reportMethod, sameAddress) => reportMethod && reportMethod.includes('ส่งทางไปรษณีย์') && !sameAddress,
-    //     then: Yup.string().required('กรุณากรอกเบอร์โทรศัพท์'),
-    //     otherwise: Yup.string()
-    //   }),
-    //   sampleDisposal: Yup.string().required('กรุณาเลือกวิธีการจำหน่ายตัวอย่าง')
-    // })
   ];
 
   const currentValidationSchema = stepValidationSchemas[step - 1];
 
   const handleNext = (values, { setErrors }) => {
+    // setStep(step + 1);
     currentValidationSchema
       .validate(values, { abortEarly: false })
       .then(() => {
@@ -110,9 +153,13 @@ export const SampleRequestForm = ({ onHandleSave, userId, sampleType }) => {
       })
       .catch((err) => {
         const formErrors = {};
-        err.inner.forEach((error) => {
-          formErrors[error.path] = error.message;
-        });
+        if (err.name === 'ValidationError' && Array.isArray(err.inner)) {
+          err.inner.forEach((error) => {
+            formErrors[error.path] = error.message;
+          });
+        } else {
+          formErrors['general'] = err.message || 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล';
+        }
         setErrors(formErrors);
         console.log('Validation errors:', formErrors);
       });
@@ -136,6 +183,16 @@ export const SampleRequestForm = ({ onHandleSave, userId, sampleType }) => {
     }
   };
 
+  const getCompanyList = async () => {
+    try {
+      const response = await getAllCustomer();
+      console.log('company:', response);
+      setCompanyList(response);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const handleGetCusSpacialCon = async (companyId) => {
     try {
       const response = await getCustomerSpecialConditionsByID(companyId);
@@ -148,6 +205,7 @@ export const SampleRequestForm = ({ onHandleSave, userId, sampleType }) => {
 
   useEffect(() => {
     getFertilizerTypes();
+    getCompanyList();
   }, []);
 
   return (
@@ -161,7 +219,7 @@ export const SampleRequestForm = ({ onHandleSave, userId, sampleType }) => {
         >
           <Card>
             <Card.Header>
-              <h5>{sampleType === 1 ? 'ลงทะเบียนใบนำส่งตัวอย่างปุ๋ยเคมีเพื่อขึ้นทะเบียนปุ๋ย' : 'ลงทะเบียนใบนำส่งตัวอย่างปุ๋ยอินทรีย์'}</h5>
+              <h5>{sampleType === 1 ? 'ลงทะเบียนใบนำส่งตัวอย่างปุ๋ยอินทรีย์' : 'ลงทะเบียนใบนำส่งตัวอย่างปุ๋ยเคมีเพื่อขึ้นทะเบียนปุ๋ย'}</h5>
             </Card.Header>
             <Card.Body>
               {/* Progress Steps */}
@@ -174,7 +232,7 @@ export const SampleRequestForm = ({ onHandleSave, userId, sampleType }) => {
                 >
                   <a className="mx-2">
                     <span className="form-stepper-circle">
-                      <span style={{ fontSize: 24 }}>{step === 1 ? '1' : <i className="feather icon-check" />}</span>
+                      <span style={{ fontSize: 24 }}>{step > 1 ? <i className="feather icon-check" /> : '1'}</span>
                     </span>
                     <div className="label">ข้อมูลบริษัท</div>
                   </a>
@@ -187,7 +245,7 @@ export const SampleRequestForm = ({ onHandleSave, userId, sampleType }) => {
                 >
                   <a className="mx-2">
                     <span className="form-stepper-circle">
-                      <span style={{ fontSize: 24 }}>{step === 2 ? '2' : <i className="feather icon-check" />}</span>
+                      <span style={{ fontSize: 24 }}>{step > 2 ? <i className="feather icon-check" /> : '2'}</span>
                     </span>
                     <div className="label">ข้อมูลปุ๋ยเคมี</div>
                   </a>
@@ -200,7 +258,7 @@ export const SampleRequestForm = ({ onHandleSave, userId, sampleType }) => {
                 >
                   <a className="mx-2">
                     <span className="form-stepper-circle">
-                      <span style={{ fontSize: 24 }}>{step === 3 ? '3' : <i className="feather icon-check" />}</span>
+                      <span style={{ fontSize: 24 }}>{step > 3 ? <i className="feather icon-check" /> : '3'}</span>
                     </span>
                     <div className="label">ที่อยู่การจัดส่ง</div>
                   </a>
@@ -220,7 +278,14 @@ export const SampleRequestForm = ({ onHandleSave, userId, sampleType }) => {
                 />
               )}
               {step === 2 && (
-                <Step2 values={values} errors={errors} touched={touched} setFieldValue={setFieldValue} fertilizerTypes={fertilizerTypes} />
+                <Step2
+                  values={values}
+                  errors={errors}
+                  touched={touched}
+                  setFieldValue={setFieldValue}
+                  companyData={companyList}
+                  fertilizerTypes={fertilizerTypes}
+                />
               )}
               {step === 3 && (
                 <Step3
@@ -230,6 +295,7 @@ export const SampleRequestForm = ({ onHandleSave, userId, sampleType }) => {
                   handleChange={handleChange}
                   handleBlur={handleBlur}
                   setFieldValue={setFieldValue}
+                  companyData={companyList}
                 />
               )}
             </Card.Body>
@@ -254,7 +320,7 @@ export const SampleRequestForm = ({ onHandleSave, userId, sampleType }) => {
                   <i className="feather icon-save" /> บันทึก
                 </Button>
               )}
-              <Button variant="danger" onClick={() => navigate('/user/request/')}>
+              <Button variant="danger" onClick={() => navigate('/user/request')}>
                 <i className="feather icon-corner-up-left" /> ยกเลิก
               </Button>
             </Card.Footer>

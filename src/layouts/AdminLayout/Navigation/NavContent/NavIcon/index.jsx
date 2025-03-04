@@ -4,11 +4,13 @@ import React from 'react';
 // import { BsBuilding } from 'react-icons/bs';
 import { FiHome, FiUserCheck } from 'react-icons/fi';
 import { LuBuilding } from 'react-icons/lu';
+import { RiScales2Line } from 'react-icons/ri';
 // สร้าง Mapping ระหว่างชื่อไอคอนกับ React Components
 const iconMap = {
   'lu icon-building': LuBuilding,
   'Bs icon-home': FiHome,
-  'fi user-check': FiUserCheck
+  'fi user-check': FiUserCheck,
+  'ri scales-2line': RiScales2Line
 };
 
 const NavIcon = ({ items }) => {

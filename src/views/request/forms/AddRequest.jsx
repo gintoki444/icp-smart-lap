@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Form, Modal, Row, Col } from 'react-bootstrap';
-import { ChemicalFertilizerForm } from './ChemicalFertilizerForm';
-import { OrganicFertilizerForm } from './OrganicFertilizerForm';
+// import { ChemicalFertilizerForm } from './ChemicalFertilizerForm';
+// import { OrganicFertilizerForm } from './OrganicFertilizerForm';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GiFertilizerBag, GiChemicalTank } from 'react-icons/gi';
 import { postServiceRequests, postServiceRequestDocuments } from 'services/_api/serviceRequest';
-import { postSampleSubmisDetail, postSampleSubmissions } from 'services/_api/SampleSubmissionsRequest';
+import { postSampleSubmisDetail, postSampleSubmissions } from 'services/_api/sampleSubmissionsRequest';
 import { handleUploadFiles } from 'services/_api/uploadFileRequest';
 import SampleRequestForm from './SampleRequestForm';
+import { authenUser } from 'services/_api/authentication';
+import { toast } from 'react-toastify';
 
 const RegistrationForm = () => {
   const navagate = useNavigate();
@@ -15,38 +17,49 @@ const RegistrationForm = () => {
   const [samepleSelected, setSamepleSelected] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const location = useLocation();
-  const usersFromState = location.state?.user || null;
+  const [user, setUser] = useState([]);
+  // const location = useLocation();
+  // const usersFromState = location.state?.user || null;
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      authenUser(token).then((response) => {
+        setUser(response.user);
+      });
+    }
+  }, []);
 
-  console.log(usersFromState);
   const handleFormSelection = (formType) => {
     setSelectedForm(formType);
-    if (formType === 'chemical') {
+    if (formType === 'organic') {
       setSamepleSelected(1);
-    } else if (formType === 'organic') {
+    } else if (formType === 'chemical') {
       setSamepleSelected(2);
     }
   };
 
-  useEffect(() => {
-    if (usersFromState === null) {
-      navagate('/user/request/');
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (usersFromState === null) {
+  //     navagate('/user/request/');
+  //   }
+  // }, []);
   const handleSave = async (data) => {
     // ข้อมูลจาก Step 1
     const step1 = {
-      user_id: usersFromState.user_id,
+      user_id: user.user_id,
       customer_id: data.company_id,
       is_registration_analysis: data.analysisMethod === 'is_registration_analysis' ? 1 : 0,
       is_quality_check_analysis: data.analysisMethod === 'is_quality_check_analysis' ? 1 : 0,
       sample_type_id: data.sample_type_id,
+      sr_is_self_pickup: data.reportMethod.includes('is_self_pickup') ? 1 : 0,
+      sr_pdf_email: data.reportMethod.includes('pdf_email') ? data.email : '',
+      sr_is_mail_delivery: data.reportMethod.includes('is_self_pickup') ? 1 : 0,
+      sr_mail_delivery_location: data.sr_mail_delivery_location,
       notes: data.notes
     };
 
     let sampleSubmissionsData = [];
     data.fertilizerRecords.forEach((record) => {
-      console.log(record.reportMethod);
       const step2 = {
         request_id: null,
         is_single_fertilizer: record.fertilizerCategory === 'is_single_fertilizer' ? 1 : 0,
@@ -69,9 +82,6 @@ const RegistrationForm = () => {
         sample_weight_unit: record.sample_weight_unit,
         packaging_id: record.packaging_id,
         test_all_items: data.test_all_items,
-        is_self_pickup: data.reportMethod === 'is_self_pickup' ? 1 : 0,
-        pdf_email: data.reportMethod === 'pdf_email' ? data.email : '',
-        is_mail_delivery: data.reportMethod === 'is_self_pickup' ? 1 : 0,
         is_lab_dispose_sample: data.sampleDisposal === 'is_lab_dispose_sample' ? 1 : 0,
         is_collect_within_3_months: data.sampleDisposal === 'is_collect_within_3_months' ? 1 : 0,
         is_return_sample: data.sampleDisposal === 'is_return_sample' ? 1 : 0,
@@ -79,14 +89,12 @@ const RegistrationForm = () => {
         phone: data.submitted_phone,
         test_items: record.test_items
       };
-      console.log('Step 2 data for record:', step2);
       sampleSubmissionsData.push(step2);
     });
 
-    console.log('sampleSubmissionsData:', sampleSubmissionsData);
     // ข้อมูลไฟล์จาก Step ที่เก็บใน data.files
     const fileData = data.files;
-    // if (usersFromState.user_id === 99999) {
+
     try {
       const responseService = await postServiceRequests(step1);
 
@@ -107,33 +115,30 @@ const RegistrationForm = () => {
         }
 
         // อัปโหลดไฟล์ทั้งหมด และรับผลลัพธ์
-        const uploadResults = await handleUploadFiles(fileData);
-        console.log('ผลลัพธ์การอัปโหลด:', uploadResults);
+        const uploadResults = await handleUploadFiles(fileData, 'service-requests', 'service_');
 
         // สำหรับแต่ละไฟล์ที่อัปโหลด ให้ส่งข้อมูลไปยัง /service-request-documents
         for (const fileResult of uploadResults) {
-          // ดึงเฉพาะชื่อไฟล์ (ส่วนหลังสุดหลังจาก /)
           const extractedFileName = fileResult.fileName.split('/').pop();
           const documentData = {
             request_id: responseService.request_id,
-            uploaded_by: usersFromState.user_id,
+            uploaded_by: user.user_id,
             file_name: extractedFileName,
-            // สมมุติว่า file_path ต้องการเป็น path ของไฟล์ใน Storage (เพิ่ม / นำหน้า)
             file_path: `/${fileResult.fileName}`
           };
 
           // เรียก API เพิ่มข้อมูลเอกสาร
-          const responseDoc = await postServiceRequestDocuments(documentData);
-          console.log('Response from service-request-documents:', responseDoc);
+          await postServiceRequestDocuments(documentData);
         }
 
+        toast.success('เพิ่มข้อมูลคำขอรับบริการสำเร็จ!', { autoClose: 3000 });
         setShowSuccessModal(true);
       }
     } catch (error) {
       console.log('Error:', error);
+      toast.error('เพิ่มข้อมูลคำขอรับบริการไม่สำเร็จ!', { autoClose: 3000 });
       alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล:', error);
     }
-    // }
   };
   return (
     <>
@@ -167,9 +172,7 @@ const RegistrationForm = () => {
       {/* {selectedForm === 'organic' && <OrganicFertilizerForm onHandleSave={setShowSuccessModal} />}
       {selectedForm === 'chemical' && <ChemicalFertilizerForm onHandleSave={handleSave} userId={usersFromState.user_id} />} */}
 
-      {selectedForm !== null && (
-        <SampleRequestForm userId={usersFromState.user_id} onHandleSave={handleSave} sampleType={samepleSelected} />
-      )}
+      {selectedForm !== null && <SampleRequestForm userId={user.user_id} onHandleSave={handleSave} sampleType={samepleSelected} />}
       <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered>
         <Modal.Body className="text-center">
           <i className="text-success" style={{ fontSize: '3rem' }}>

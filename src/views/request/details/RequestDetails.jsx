@@ -10,6 +10,7 @@ import { getAllPackagingType } from 'services/_api/packageingTypeRequest';
 import { getAllFertilicerType } from 'services/_api/fertilizerTypes';
 import { Divider } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
+import { FiEdit } from 'react-icons/fi';
 
 const FertilizerDetails = ({ data, title }) => {
   // const { id } = useLocation().state;
@@ -50,8 +51,6 @@ const FertilizerDetails = ({ data, title }) => {
   const [sampleList, setSampleList] = useState([]);
   const getServiceRequest = async (id) => {
     const response = await getServiceRequestsByID(id);
-    console.log('response', response);
-    console.log('sample_submissions', response.sample_submissions);
     setSampleList(response.sample_submissions);
     setServiceData(response);
   };
@@ -189,6 +188,15 @@ const FertilizerDetails = ({ data, title }) => {
     console.log('setData', setData);
     return setData;
   };
+
+  const handleEdit = (id) => {
+    navigate('/user/request/edit/', { state: { id: id } });
+  };
+
+  const handleReload = (check) => {
+    if (check) {
+    }
+  };
   return (
     <div>
       <Card>
@@ -315,13 +323,6 @@ const FertilizerDetails = ({ data, title }) => {
                 >
                   {serviceData.status === 'pending' ? ' รออนุมัติ' : serviceData.status === 'approved' ? 'อนุมัติ' : ' ไม่อนุมัติ'}
                 </Badge>
-                <span
-                  style={{
-                    marginLeft: 12,
-                    color: serviceData.status === 'pending' ? '#ffc107' : serviceData.status === 'approved' ? '#198754' : '#f44236',
-                    fontWeight: 'bold'
-                  }}
-                >{` ( ${serviceData.notes} )`}</span>
               </p>
             </Col>
             {/* ข้อมูลปุ๋ย */}
@@ -388,22 +389,51 @@ const FertilizerDetails = ({ data, title }) => {
                     </p>
                   </Col>
 
+                  <Col md={6} className="mb-0">
+                    <p className="mb-0">
+                      สถานะ :
+                      <Badge
+                        bg={
+                          (sample.verification_status === 'No' && sample.is_job_accepted) ||
+                          (sample.verification_status === 'No' && !sample.is_job_accepted) ||
+                          (sample.verification_status === 'Yes' && !sample.is_job_accepted)
+                            ? 'warning'
+                            : sample.verification_status === 'Yes' && sample.is_job_accepted
+                              ? 'success'
+                              : 'danger'
+                        }
+                        style={{ marginLeft: 12 }}
+                      >
+                        {(sample.verification_status === 'No' && sample.is_job_accepted) ||
+                        (sample.verification_status === 'No' && !sample.is_job_accepted) ||
+                        (sample.verification_status === 'Yes' && !sample.is_job_accepted)
+                          ? 'รอการตรวจสอบ'
+                          : sample.verification_status === 'Yes' && sample.is_job_accepted
+                            ? 'รับงาน'
+                            : ' ไม่อนุมัติ'}
+                      </Badge>
+                    </p>
+                  </Col>
                   <Col md={12} className="mb-2">
                     <h6 className="mb-3">ข้อมูลการทดสอบ</h6>
-                    <div style={{ height: 400, width: '100%' }}>
+                    <div style={{ width: '100%' }}>
                       <DataGrid
                         rows={handleSetDataGrid(sample.sample_submission_details)}
                         columns={columns}
-                        initialState={{
-                          pagination: {
-                            paginationModel: { pageSize: 5 }
-                          }
-                        }}
-                        pageSizeOptions={[5, 10, 20]}
-                        checkboxSelection={false}
-                        disableRowSelectionOnClick
+                        pageSize={5}
+                        rowsPerPageOptions={[5, 10, 20]}
+                        pagination
+                        disableSelectionOnClick
+                        hideFooterSelectedRowCount
                       />
                     </div>
+                  </Col>
+                  <Col>
+                    <AddTestTracking
+                      submissionId={sample.submission_id}
+                      handleTracking={handleReload}
+                      trackingData={sample.sample_tracking}
+                    />
                   </Col>
                 </Row>
                 {index < sampleList.length - 1 && <hr className="mt-4 mb-2" />}
@@ -464,8 +494,8 @@ const FertilizerDetails = ({ data, title }) => {
           </Row>
         </Card.Body>
         <Card.Footer className="text-start">
-          <Button variant="primary" onClick={() => navigate('/user/request/edite', { state: { services: serviceData } })}>
-            <i className="feather icon-corner-up-left" />
+          <Button variant="primary" onClick={() => handleEdit(id)}>
+            <FiEdit style={{ marginRight: 8 }} />
             แก้ไขข้อมูล
           </Button>
           <Button variant="danger" onClick={() => navigate('/user/request/')}>

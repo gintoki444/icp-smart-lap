@@ -7,29 +7,36 @@ const Step1 = ({ values, errors, touched, handleChange, setFieldValue, spacialCo
     { value: 'is_registration_analysis', label: 'วิเคราะห์ขึ้นทะเบียน' },
     { value: 'is_quality_check_analysis', label: 'วิเคราะห์เพื่อตรวจสอบคุณภาพ' }
   ];
+
+  console.log('values :', values);
+  console.log('values.user_id :', values.user_id);
   return (
     <Row>
       <Col>
         <Card className="m-0">
           <Card.Body className="pb-2 pt-4">
             <h5>รายละเอียดบริษัท</h5>
-            <CompanySelect
-              name="company_id"
-              value={values.company_id}
-              userId={values.user_id}
-              onSelect={(_, value) => {
-                setFieldValue('company_id', value);
-                handleGetCusSpacialCon(value);
-              }}
-            />
-            {touched.company_id && errors.company_id && <Form.Control.Feedback type="invalid">{errors.company_id}</Form.Control.Feedback>}
+            <Form.Group className="mb-3">
+              <CompanySelect
+                name="company_id"
+                value={values.company_id}
+                userId={values.user_id}
+                isInvalid={errors.company_id}
+                onSelect={(_, value) => {
+                  setFieldValue('company_id', value);
+                  handleGetCusSpacialCon(value);
+                }}
+              />
+            </Form.Group>
+
             {spacialCon.length > 0 && (
               <Form.Group className="mb-3">
                 <Form.Label>เงื่อนไขพิเศษ :</Form.Label>
                 <Form.Control type="text" readOnly value={spacialCon.find((x) => x.company_id === values.company_id)?.description || ''} />
               </Form.Group>
             )}
-            <Form.Group className="mb-2">
+
+            <Form.Group className="mb-3">
               <Form.Label>วัตถุประสงค์การขอใช้บริการ</Form.Label>
               <Form.Group>
                 {analysisMethodOptions.map((option, idx) => (
@@ -37,26 +44,34 @@ const Step1 = ({ values, errors, touched, handleChange, setFieldValue, spacialCo
                     inline
                     type="radio"
                     name="analysisMethod"
-                    value={option.value} // ใช้ option.value เป็น string
+                    value={option.value}
                     key={idx}
-                    label={option.label} // ใช้ option.label เป็น string
+                    label={option.label}
                     checked={values.analysisMethod === option.value}
                     onChange={handleChange}
                     id={`reportCheck${idx}`}
                   />
                 ))}
               </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>ความต้องการอื่น</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={3}
-                  name="notes"
-                  placeholder="กรอกความต้องการอื่น"
-                  value={values.notes}
-                  onChange={handleChange}
-                />
-              </Form.Group>
+              {errors.analysisMethod && (
+                <Form.Control.Feedback type="invalid" style={{ display: 'block' }}>
+                  {errors.analysisMethod}
+                </Form.Control.Feedback>
+              )}
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>ความต้องการอื่น</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                name="notes"
+                placeholder="กรอกความต้องการอื่น"
+                value={values.notes}
+                onChange={handleChange}
+                isInvalid={touched.notes && !!errors.notes}
+              />
+              <Form.Control.Feedback type="invalid">{errors.notes}</Form.Control.Feedback>
             </Form.Group>
           </Card.Body>
         </Card>

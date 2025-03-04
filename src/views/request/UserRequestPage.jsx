@@ -13,7 +13,7 @@ import * as userRequest from 'services/_api/usersRequest';
 import { AiFillCloseCircle } from 'react-icons/ai';
 import { toast } from 'react-toastify';
 import { authenUser } from 'services/_api/authentication';
-import { deleteServiceRequests, getAllServiceRequests } from 'services/_api/serviceRequest';
+import { deleteServiceRequests, getAllServiceRequestByUser } from 'services/_api/serviceRequest';
 
 const UserRequestPage = () => {
   const [user, setUser] = useState([]);
@@ -28,14 +28,14 @@ const UserRequestPage = () => {
     if (token) {
       authenUser(token).then((response) => {
         setUser(response.user);
+        getServiceRequests(response.user.user_id);
       });
     }
-    getServiceRequests();
   }, []);
 
   useEffect(() => {}, [rows]);
-  const getServiceRequests = () => {
-    getAllServiceRequests().then((result) => {
+  const getServiceRequests = (id) => {
+    getAllServiceRequestByUser(id).then((result) => {
       if (result) {
         const rows = result.map((service, index) => ({
           id: service.request_id,
@@ -77,7 +77,7 @@ const UserRequestPage = () => {
       align: 'center',
       renderCell: (params) => (
         <Badge pill style={{}} bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
-          {params.row.status === 'pending' ? 'รออนุมัติ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
+          {params.row.status === 'pending' ? 'กำลังดำเนินการ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
         </Badge>
       )
     },
@@ -126,22 +126,20 @@ const UserRequestPage = () => {
   };
 
   const handleEdit = (services) => {
-    navigate('/user/request/detial', { state: { services } });
-    // alert(`คุณกำลังแก้ไขข้อมูล: ${row.fullName}`);
-    // คุณสามารถใส่การนำทางไปหน้าแก้ไขหรือแสดง Modal แก้ไขที่นี่
+    navigate('/user/request/edit/', { state: { id: services.id } });
   };
 
   const handleDelete = (id) => {
-    const confirmDelete = window.confirm(`คุณต้องการลบข้อมูลผู้ใช้หมายเลข ${id} หรือไม่?`);
+    const confirmDelete = window.confirm(`คุณต้องการลบข้อมูลคำขอรับบริการ หรือไม่?`);
     if (confirmDelete) {
-      // alert(`ลบข้อมูลสำเร็จ (ID: ${id})`);
       // ที่นี่สามารถเพิ่มฟังก์ชันลบจากฐานข้อมูล
       try {
         deleteServiceRequests(id).then(() => {
-          getServiceRequests();
+          toast.success('ลบข้อมูลคำขอรับบริการสำเร็จ!', { autoClose: 3000 });
+          getServiceRequests(user.user_id);
         });
       } catch (error) {
-        alert(`ลบข้อมูลไม่สำเร็จ:`, error);
+        toast.error('ลบข้อมูลคำขอรับบริการไม่สำเร็จ!', { autoClose: 3000 });
       }
     }
   };
@@ -176,65 +174,6 @@ const UserRequestPage = () => {
             disableSelectionOnClick
             hideFooterSelectedRowCount
           />
-          {/* <Table striped bordered hover responsive className="m-0">
-            <thead>
-              <tr>
-                <th className="text-center">#</th>
-                <th className="text-center">วันที่สร้าง</th>
-                <th className="text-center">เลขที่คำขอบริการ</th>
-                <th>ประเภทคำขอ</th>
-                <th className="text-center">จำนวนตัวอย่าง</th>
-                <th className="text-center">วันที่เริ่มทดสอบ</th>
-                <th className="text-center">วันที่สิ้นสุด</th>
-                <th className="text-center">สถานะปัจจุบัน</th>
-                <th className="text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((request, index) => (
-                <tr key={index}>
-                  <td className="text-center">{index + 1}</td>
-                  <td className="text-center">{request.create_date}</td>
-                  <td className="text-center">{request.requestNo}</td>
-                  <td>{request.typeRequest}</td>
-                  <td className="text-center">{request.sampleCout}</td>
-                  <td className="text-center">{request.start_date}</td>
-                  <td className="text-center">{request.end_date}</td>
-                  <td className="text-center">
-                    <Badge
-                      className="p-2"
-                      style={{ fontWeight: 'normal' }}
-                      bg={request.status === 'กำลังดำเนินการ' ? 'warning' : request.status === 'เสร็จสิ้น' ? 'success' : 'secondary'}
-                    >
-                      {request.currentStep}
-                    </Badge>
-                  </td>
-                  <td className="">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => {
-                        navigate('/user/request/detial');
-                      }}
-                    >
-                      <i className="feather icon-file-text m-0" />
-                    </Button>
-                    {request.status !== 'เสร็จสิ้น' && (
-                      <Button variant="info" size="sm" className="me-2" onClick={() => {}}>
-                        <i className="feather icon-edit m-0" />
-                      </Button>
-                    )}
-                    {request.status !== 'เสร็จสิ้น' && (
-                      <Button variant="danger" size="sm" onClick={() => {}}>
-                        <i className="feather icon-trash-2 m-0" />
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table> */}
         </Card.Body>
       </Card>
     </>
