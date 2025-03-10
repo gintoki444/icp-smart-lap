@@ -17,7 +17,7 @@ export const getAllQuotations = async () => {
   return await response.json();
 };
 
-//  ✅ get Role By id
+//  ✅ get Quotations By id
 export const getQuotationsByID = async (id) => {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
@@ -309,4 +309,42 @@ export const deleteQuotationType = async (id) => {
 
   const response = await fetch(API_BASE_URL + '/quotation-types/' + id, requestOptions);
   return await response.json();
+};
+
+//  ✅ get Quotations By id
+export const getCompareQuotationQuatity = async (id) => {
+  const myHeaders = new Headers();
+  myHeaders.append('Content-Type', 'application/json');
+
+  const requestOptions = {
+    method: 'GET',
+    headers: myHeaders,
+    redirect: 'follow'
+  };
+
+  const response = await fetch(API_BASE_URL + '/compare-sample-quotation-quantity/' + id, requestOptions);
+  return await response.json();
+};
+
+//  ✅ get Quotations By id
+export const getSampleRemainQuatity = async (id) => {
+  const myHeaders = new Headers();
+  myHeaders.append('Content-Type', 'application/json');
+
+  const requestOptions = {
+    method: 'GET',
+    headers: myHeaders,
+    redirect: 'follow'
+  };
+
+  const response = await fetch(API_BASE_URL + '/sample-remain-quantity/' + id, requestOptions);
+
+  // ตรวจสอบว่าการร้องขอสำเร็จหรือไม่ (status 200-299)
+  if (!response.ok) {
+    const errorData = await response.json(); // ดึง error message จากเซิร์ฟเวอร์
+    throw new Error(errorData.message || `HTTP Error: ${response.status}`);
+  }
+
+  return await response.json(); // ถ้า status 200-299 ส่ง JSON กลับ
+  // return await response.json();
 };

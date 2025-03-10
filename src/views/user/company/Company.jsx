@@ -117,7 +117,7 @@ const Company = () => {
   };
 
   const handleEdit = (company) => {
-    navigate('/user/company/edit', { state: { company } });
+    navigate('/company/edit', { state: { company } });
     // alert(`คุณกำลังแก้ไขข้อมูล: ${row.fullName}`);
     // คุณสามารถใส่การนำทางไปหน้าแก้ไขหรือแสดง Modal แก้ไขที่นี่
   };
@@ -147,7 +147,7 @@ const Company = () => {
               </span>
             </Col>
             {/* <Col className="text-end">
-              <Button variant="primary" onClick={() => navigate('/user/company/select')}>
+              <Button variant="primary" onClick={() => navigate('/company/select')}>
                 <i className="feather icon-plus-circle" />
                 เพิ่ม
               </Button>
@@ -160,7 +160,7 @@ const Company = () => {
             <Button variant="primary" size="sm" color="secondary" onClick={handleClearFilter} disabled={!filterText}>
               <IoReload style={{ fontSize: 20 }} />
             </Button>
-            <Button variant="success" size="sm" onClick={() => navigate('/user/company/select')}>
+            <Button variant="success" size="sm" onClick={() => navigate('/company/select')}>
               <i className="feather icon-plus-circle" />
               เพิ่ม
             </Button>

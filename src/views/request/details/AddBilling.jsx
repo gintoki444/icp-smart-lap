@@ -71,7 +71,7 @@ const AddBilling = ({ handleBilling }) => {
     }
   };
   const handleOpenNewTab = () => {
-    const url = '/user/request/detial/quotation';
+    const url = '/request/detial/quotation';
     window.open(url, '_blank'); // เปิด URL ในแท็บใหม่
   };
   return (

@@ -522,7 +522,7 @@ const EditSampleRequestForm = ({ userId }) => {
       setSuccessMessage('บันทึกการแก้ไขสำเร็จ');
       setErrorMessage(null);
       setSubmitting(false);
-      // setTimeout(() => navigate('/user/request/'), 1000);
+      // setTimeout(() => navigate('/request/'), 1000);
     } catch (error) {
       console.error('Error updating form:', error);
       if (!errorMessage) setErrorMessage('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
@@ -557,7 +557,7 @@ const EditSampleRequestForm = ({ userId }) => {
               <h5>แก้ไขใบนำส่งตัวอย่าง - Request ID: {requestId}</h5>
             </Card.Header>
             <Card.Body>
-              <ul className="form-stepper form-stepper-horizontal text-center mx-auto pl-0">
+              <ul className="form-stepper form-stepper-horizontal text-center mx-auto pl-0 mb-3">
                 <li
                   className={`form-stepper-list text-center ${
                     step === 1 ? 'form-stepper-active' : step > 1 ? 'form-stepper-completed' : 'form-stepper-unfinished'
@@ -565,10 +565,10 @@ const EditSampleRequestForm = ({ userId }) => {
                   step="1"
                 >
                   <a className="mx-2">
-                    <span className="form-stepper-circle">
+                    {/* <span className="form-stepper-circle">
                       <span style={{ fontSize: 24 }}>{step > 1 ? <i className="feather icon-check" /> : '1'}</span>
-                    </span>
-                    <div className="label">ข้อมูลบริษัท</div>
+                    </span> */}
+                    <h5 className="label">1. ข้อมูลผู้ขึ้นทะเบียน</h5>
                   </a>
                 </li>
                 <li
@@ -578,10 +578,10 @@ const EditSampleRequestForm = ({ userId }) => {
                   step="2"
                 >
                   <a className="mx-2">
-                    <span className="form-stepper-circle">
+                    {/* <span className="form-stepper-circle">
                       <span style={{ fontSize: 24 }}>{step > 2 ? <i className="feather icon-check" /> : '2'}</span>
-                    </span>
-                    <div className="label">ข้อมูลปุ๋ยเคมี</div>
+                    </span> */}
+                    <h5 className="label">2. ข้อมูลตัวอย่าง</h5>
                   </a>
                 </li>
                 <li
@@ -591,10 +591,10 @@ const EditSampleRequestForm = ({ userId }) => {
                   step="3"
                 >
                   <a className="mx-2">
-                    <span className="form-stepper-circle">
+                    {/* <span className="form-stepper-circle">
                       <span style={{ fontSize: 24 }}>{step > 3 ? <i className="feather icon-check" /> : '3'}</span>
-                    </span>
-                    <div className="label">ที่อยู่การจัดส่ง</div>
+                    </span> */}
+                    <h5 className="label">3. การรับรายงานผล</h5>
                   </a>
                 </li>
               </ul>
@@ -655,7 +655,7 @@ const EditSampleRequestForm = ({ userId }) => {
                   <i className="feather icon-save" /> แก้ไข
                 </Button>
               )}
-              <Button variant="danger" onClick={() => navigate('/user/request/')}>
+              <Button variant="danger" onClick={() => navigate('/request/')}>
                 <i className="feather icon-corner-up-left" /> ยกเลิก
               </Button>
             </Card.Footer>

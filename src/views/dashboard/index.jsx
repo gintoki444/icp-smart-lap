@@ -12,7 +12,7 @@ function DashDefault() {
       setUserRole(role); // Redirect ไปหน้า Login
     }
   }, [userRole]);
-  return <>{userRole === 'user' ? <AdminDashDefault /> : <UserDashDefault />}</>;
+  return <>{userRole !== 'user' ? <AdminDashDefault /> : <UserDashDefault />}</>;
 }
 
 export default DashDefault;

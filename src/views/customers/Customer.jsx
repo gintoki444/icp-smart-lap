@@ -40,7 +40,8 @@ const Customer = () => {
           email: customer.email,
           phone: customer.phone,
           special_conditions: customer.special_conditions,
-          created_at: new Date(customer.created_at).toLocaleString()
+          created_at: new Date(customer.created_at).toLocaleString(),
+          contacts: customer['customer-contacts']
           //   status: customer.status
         }));
         setcustomer(rows);

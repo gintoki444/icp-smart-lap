@@ -163,7 +163,7 @@ const SearchCompany = () => {
             <Button variant="primary" size="sm" color="secondary" onClick={handleClearFilter} disabled={!filterText}>
               <IoReload style={{ fontSize: 20 }} />
             </Button>
-            <Button variant="success" size="sm" onClick={() => navigate('/user/company/select')}>
+            <Button variant="success" size="sm" onClick={() => navigate('/company/select')}>
               <i className="feather icon-plus-circle" />
               เพิ่ม
             </Button>

@@ -1,17 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, ListGroup, Dropdown } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 
 import ChatList from './ChatList';
 
-import avatar1 from '../../../../assets/images/user/avatar-1.jpg';
+import avatar from '../../../../assets/images/user/avatar.png';
 import avatar2 from '../../../../assets/images/user/avatar-2.jpg';
 import avatar3 from '../../../../assets/images/user/avatar-3.jpg';
 import avatar4 from '../../../../assets/images/user/avatar-4.jpg';
+import { authenUser } from 'services/_api/authentication';
+import { getUserByID } from 'services/_api/usersRequest';
 
 const NavRight = () => {
   const [listOpen, setListOpen] = useState(false);
+  const [user, setUser] = useState([]);
 
   const notiData = [
     {
@@ -34,11 +37,22 @@ const NavRight = () => {
     }
   ];
 
-  const handleLogout = () => {  // ต้องเพิ่มการ Logout ให้เสร็จ
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userRole');
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      authenUser(token).then((response) => {
+        getUserByID(response.user.user_id).then((data) => {
+          setUser(data);
+        });
+      });
+    }
+  }, []);
+
+  const handleLogout = () => {
+    // ต้องเพิ่มการ Logout ให้เสร็จ
+    localStorage.clear();
     window.location.href = '/login';
-  }
+  };
   return (
     <React.Fragment>
       <ListGroup as="ul" bsPrefix=" " className="navbar-nav ml-auto" id="navbar-right">
@@ -48,7 +62,7 @@ const NavRight = () => {
               <i className="feather icon-bell icon" />
             </Dropdown.Toggle>
             <Dropdown.Menu align="end" className="notification notification-scroll">
-              <div className="noti-head">
+              {/* <div className="noti-head">
                 <h6 className="d-inline-block m-b-0">Notifications</h6>
                 <div className="float-end">
                   <Link to="#" className="me-2">
@@ -56,8 +70,8 @@ const NavRight = () => {
                   </Link>
                   <Link to="#">clear all</Link>
                 </div>
-              </div>
-              <PerfectScrollbar>
+              </div> */}
+              {/* <PerfectScrollbar>
                 <ListGroup as="ul" bsPrefix=" " variant="flush" className="noti-body">
                   <ListGroup.Item as="li" bsPrefix=" " className="n-title">
                     <p className="m-b-0">NEW</p>
@@ -67,10 +81,10 @@ const NavRight = () => {
                       className="d-flex align-items-center shadow-none mb-0 p-0"
                       style={{ flexDirection: 'row', backgroundColor: 'unset' }}
                     >
-                      <img className="img-radius" src={avatar1} alt="Generic placeholder" />
+                      <img className="img-radius" src={avatar} alt="Generic placeholder" />
                       <Card.Body className="p-0">
                         <p>
-                          <strong>John Doe</strong>
+                          <strong>{user.first_name + ' ' + user.last_name}</strong>
                           <span className="n-time text-muted">
                             <i className="icon feather icon-clock me-2" />
                             30 min
@@ -106,20 +120,20 @@ const NavRight = () => {
                     );
                   })}
                 </ListGroup>
-              </PerfectScrollbar>
-              <div className="noti-footer">
+              </PerfectScrollbar> */}
+              {/* <div className="noti-footer">
                 <Link to="#">show all</Link>
-              </div>
+              </div> */}
             </Dropdown.Menu>
           </Dropdown>
         </ListGroup.Item>
-        <ListGroup.Item as="li" bsPrefix=" ">
+        {/* <ListGroup.Item as="li" bsPrefix=" ">
           <Dropdown>
             <Dropdown.Toggle as={Link} variant="link" to="#" className="displayChatbox" onClick={() => setListOpen(true)}>
               <i className="icon feather icon-mail" />
             </Dropdown.Toggle>
           </Dropdown>
-        </ListGroup.Item>
+        </ListGroup.Item> */}
         <ListGroup.Item as="li" bsPrefix=" ">
           <Dropdown align={'end'} className="drp-user">
             <Dropdown.Toggle as={Link} variant="link" to="#" id="dropdown-basic">
@@ -127,13 +141,19 @@ const NavRight = () => {
             </Dropdown.Toggle>
             <Dropdown.Menu align="end" className="profile-notification">
               <div className="pro-head">
-                <img src={avatar1} className="img-radius" alt="User Profile" />
-                <span>John Doe</span>
-                <Link onClick={handleLogout} className="dud-logout" title="Logout">
+                <img src={avatar} className="img-radius" alt="User Profile" />
+                <span>{user.first_name + ' ' + user.last_name}</span>
+                <Link
+                  onClick={() => {
+                    handleLogout();
+                  }}
+                  className="dud-logout"
+                  title="Logout"
+                >
                   <i className="feather icon-log-out" />
                 </Link>
               </div>
-              <ListGroup as="ul" bsPrefix=" " variant="flush" className="pro-body">
+              {/* <ListGroup as="ul" bsPrefix=" " variant="flush" className="pro-body">
                 <ListGroup.Item as="li" bsPrefix=" ">
                   <Link to="#" className="dropdown-item">
                     <i className="feather icon-settings" /> Settings
@@ -154,12 +174,12 @@ const NavRight = () => {
                     <i className="feather icon-lock" /> Lock Screen
                   </Link>
                 </ListGroup.Item>
-              </ListGroup>
+              </ListGroup> */}
             </Dropdown.Menu>
           </Dropdown>
         </ListGroup.Item>
       </ListGroup>
-      <ChatList listOpen={listOpen} closed={() => setListOpen(false)} />
+      {/* <ChatList listOpen={listOpen} closed={() => setListOpen(false)} /> */}
     </React.Fragment>
   );
 };

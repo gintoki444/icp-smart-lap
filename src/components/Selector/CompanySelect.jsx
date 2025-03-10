@@ -50,7 +50,7 @@ const CompanySelect = ({
   return (
     <Form.Group className="mb-3">
       <Form.Label>
-        บริษัท
+        เลือกบริษัท
         {showText ? (
           <>
             <span className="text-meta-1"> : </span>

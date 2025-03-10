@@ -1,6 +1,6 @@
 import React from 'react';
 import { Container, Row, Col, Button, Form, InputGroup } from 'react-bootstrap';
-import { IoSearch } from 'react-icons/io5';
+import { IoBackspace, IoSearch } from 'react-icons/io5';
 // import { Search } from 'react-bootstrap-icons';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,18 +14,18 @@ const Page404 = () => {
           <Col md={8} lg={6}>
             <h1 className="display-3 fw-bold text-danger">404</h1>
             <h4 className="mb-3">Oops! หน้านี้ไม่มีอยู่</h4>
-            <p className="text-muted">ขออภัย! หน้าที่คุณกำลังค้นหาไม่มีอยู่ในระบบ หรืออาจถูกย้ายไปแล้ว</p>
+            <p className="text-muted">ขออภัย! หน้าที่คุณกำลังค้นหาไม่มีอยู่ในระบบ</p>
 
-            <InputGroup className="mb-3">
+            {/* <InputGroup className="mb-3">
               <InputGroup.Text>
                 <IoSearch />
               </InputGroup.Text>
               <Form.Control type="text" placeholder="ค้นหาสิ่งที่ต้องการ..." />
               <Button variant="info">ค้นหา</Button>
-            </InputGroup>
+            </InputGroup> */}
 
             <Button variant="primary" onClick={() => navigate('/')} className="mt-2">
-              ⬅️ กลับไปหน้าแรก
+              <IoBackspace /> กลับไปหน้าแรก
             </Button>
           </Col>
         </Row>

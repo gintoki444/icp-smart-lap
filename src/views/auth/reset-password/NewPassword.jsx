@@ -2,13 +2,16 @@ import React, { useState } from 'react'; // เพิ่ม useState
 import { Card, Button, Form } from 'react-bootstrap';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { useNavigate, NavLink } from 'react-router-dom';
+import { useNavigate, NavLink, useParams } from 'react-router-dom';
 
 import logo from '../../../assets/images/logo/logo.png';
 import { IoEyeOffOutline, IoEyeOutline } from 'react-icons/io5';
 import { postNewPassword } from 'services/_api/authentication';
 
 const NewPassword = () => {
+  const { token } = useParams('token');
+
+  console.log('token', token);
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false); // state สำหรับรหัสผ่าน
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // state สำหรับยืนยันรหัสผ่าน

@@ -1,15 +1,19 @@
 import QuotationTypeSelect from 'components/Selector/QuotationTypeSelect';
 import React, { useEffect, useState } from 'react';
 import { Modal, Button, Form, Table, Row, Col } from 'react-bootstrap';
+import { TbInvoice } from 'react-icons/tb';
 import { useNavigate } from 'react-router-dom';
-import { postQuotations, postQuotationDetails } from 'services/_api/quotationRequest'; // ปรับชื่อไฟล์ให้ถูกต้อง
-import { postSampleStatus } from 'services/_api/sampleStatusRequest';
+import { postQuotations, postQuotationDetails, getSampleRemainQuatity } from 'services/_api/quotationRequest'; // ปรับชื่อไฟล์ให้ถูกต้อง
+import { postSampleStatus, postSampleStatusArray } from 'services/_api/sampleStatusRequest';
 
-const CreateQuotation = ({ handleBilling, testItems = [], serviceData, createdBy, submissionId }) => {
+const CreateQuotation = ({ handleBilling, testItems = [], serviceData, createdBy, serviceId, reloadData }) => {
   const navigate = useNavigate();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
   const [discountPercentage, setDiscountPercentage] = useState(0);
+  const [sampleRemain, setSampleRemain] = useState([]);
+
+  console.log('testItems:', testItems);
 
   // แปลงข้อมูล testItems ให้อยู่ในรูปแบบที่แก้ไขได้
   const initialItems = testItems.map((item) => ({
@@ -17,7 +21,7 @@ const CreateQuotation = ({ handleBilling, testItems = [], serviceData, createdBy
     name: item.name_for_quotation,
     price: parseFloat(item.unit_price),
     quantity: item.quantity,
-    maxQuantity: item.quantity,
+    maxQuantity: item.remain_quantity,
     summary: parseFloat(item.unit_price) * item.quantity,
     quotation_type_id: item.quotation_type_id
   }));
@@ -25,8 +29,22 @@ const CreateQuotation = ({ handleBilling, testItems = [], serviceData, createdBy
   const [items, setItems] = useState(initialItems);
   const [quotationTypeId, setQuotationTypeId] = useState('');
 
-  useEffect(() => {}, [quotationTypeId]);
+  useEffect(() => {
+    fetchTrackingData(); // โหลดข้อมูลใหม่เมื่อ reloadData เปลี่ยน
+  }, [reloadData]);
   // const [submissionId, setSubmissionId] = useState('');
+
+  const fetchTrackingData = () => {
+    if (serviceId) getSampleRemain(serviceId);
+    setItems(initialItems);
+    setSelectedItems([]);
+    setQuotationTypeId('');
+  };
+  const getSampleRemain = async (id) => {
+    const response = await getSampleRemainQuatity(id);
+    console.log('response', response);
+    setSampleRemain(response);
+  };
 
   // คำนวณราคารวมทั้งหมด
   const calculateTotals = () => {
@@ -43,6 +61,8 @@ const CreateQuotation = ({ handleBilling, testItems = [], serviceData, createdBy
 
   // จัดการการเลือก/ยกเลิกเลือก item
   const handleItemSelection = (item) => {
+    console.log('item:', item);
+    console.log('item:', selectedItems);
     const isSelected = selectedItems.find((selected) => selected.id === item.id);
     let updatedItems;
 
@@ -52,6 +72,7 @@ const CreateQuotation = ({ handleBilling, testItems = [], serviceData, createdBy
       updatedItems = [...selectedItems, { ...item }];
     }
 
+    console.log('updatedItems:', updatedItems);
     setSelectedItems(updatedItems);
   };
 
@@ -105,7 +126,12 @@ const CreateQuotation = ({ handleBilling, testItems = [], serviceData, createdBy
       alert('กรุณาเลือกอย่างน้อย 1 รายการเพื่อสร้างใบเสนอราคา');
       return;
     }
+    if (!quotationTypeId) {
+      alert('กรุณาเลือกประเภทใบเสนอราคา');
+      return;
+    }
 
+    let newSampleStatus = [];
     const validUntil = new Date();
     validUntil.setDate(validUntil.getDate() + 30);
     const quotationData = {
@@ -125,8 +151,24 @@ const CreateQuotation = ({ handleBilling, testItems = [], serviceData, createdBy
       approved_by: null
     };
 
+    serviceData.sample_submissions.map((service) => {
+      const penddingStatus = {
+        submission_id: service.submission_id,
+        status: 'pending_test',
+        notes: 'รอทดสอบบางรายการ'
+      };
+      if (selectedItems.length !== sampleRemain.length) {
+        newSampleStatus.push({ ...penddingStatus, id: newSampleStatus.length + 1 });
+      } else {
+        penddingStatus.status = 'quotation_issued';
+        penddingStatus.notes = 'ออกใบเสนอราคา';
+        newSampleStatus.push({ ...penddingStatus, id: newSampleStatus.length + 1 });
+      }
+    });
     try {
+      // if (serviceData.customer_id === 9999) {
       // บันทึก Quotation
+      await postSampleStatusArray(newSampleStatus);
       const response = await postQuotations(quotationData);
 
       if (response && response.quotation_id) {
@@ -154,22 +196,13 @@ const CreateQuotation = ({ handleBilling, testItems = [], serviceData, createdBy
         // บันทึก Quotation Details
         console.log('Quotation Details Data:', quotationDetails);
         await postQuotationDetails(quotationDetails);
-        // console.log('Response from postQuotationDetails:', detailsResponse);
-        // const sampleStatus = {
-        //   request_id: serviceData.request_id,
-        //   status: 'quotation_issued',
-        //   notes: 'ออกใบเสนอราคา'
-        // };
-        // console.log('sampleStatus:', sampleStatus);
-        // const responseSample = await postSampleStatus(sampleStatus);
-        // console.log('responseSample:', responseSample);
-
         // ปิด Modal หลังบันทึกสำเร็จ
         setShowPaymentModal(false);
         handleBilling(true); // แจ้ง parent ว่าสำเร็จ
       } else {
         throw new Error('Failed to get quotation ID');
       }
+      // }
     } catch (error) {
       console.error('Error generating quotation:', error);
       alert('เกิดข้อผิดพลาดในการสร้างใบเสนอราคา กรุณาลองใหม่');
@@ -179,18 +212,31 @@ const CreateQuotation = ({ handleBilling, testItems = [], serviceData, createdBy
   return (
     <>
       <Button variant="success" onClick={() => setShowPaymentModal(true)}>
-        ออกใบเสนอราคา
+        <TbInvoice className="me-2" style={{ fontSize: 16 }} /> ออกใบเสนอราคา
       </Button>
 
       {/* Modal for Payment Selection */}
-      <Modal show={showPaymentModal} className="modal-lg" onHide={() => setShowPaymentModal(false)} centered>
+      <Modal
+        show={showPaymentModal}
+        className="modal-lg"
+        onHide={() => {
+          setShowPaymentModal(false);
+          fetchTrackingData();
+        }}
+        centered
+      >
         <Modal.Header closeButton>
           <Modal.Title>
             <h5>สร้างใบเสนอราคา</h5>
           </Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ overflowX: 'auto' }}>
-          <Table bordered style={{ width: '100%', maxWidth: '100%', tableLayout: 'fixed' }}>
+          <Row>
+            <Col item className="ps-3 pe-3">
+              <QuotationTypeSelect name="quotation_type_id" value={quotationTypeId} onSelect={(e) => setQuotationTypeId(e)} />
+            </Col>
+          </Row>
+          <Table striped bordered hover>
             <thead>
               <tr>
                 <th width={80} className="text-center">
@@ -207,11 +253,11 @@ const CreateQuotation = ({ handleBilling, testItems = [], serviceData, createdBy
             <tbody>
               {items.map((item) => (
                 <tr key={item.id}>
-                  <td className="text-center">
+                  <td className="text-center" onChange={() => handleItemSelection(item)}>
                     <Form.Check
                       type="checkbox"
                       checked={selectedItems.some((selected) => selected.id === item.id)}
-                      onChange={() => handleItemSelection(item)}
+                      disabled={!sampleRemain.find((x) => x.test_item_id === item.id)}
                     />
                   </td>
                   <td
@@ -231,15 +277,17 @@ const CreateQuotation = ({ handleBilling, testItems = [], serviceData, createdBy
                       min={1}
                       max={item.maxQuantity}
                       onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                      disabled={!sampleRemain.find((x) => x.test_item_id === item.id)}
                       style={{ width: '80px' }}
                     />
                   </td>
                   <td>
                     <Form.Control
                       type="number"
-                      value={item.price.toFixed(2)}
-                      step="0.01"
+                      value={item.price}
+                      step="1"
                       onChange={(e) => handlePriceChange(item.id, e.target.value)}
+                      disabled={!sampleRemain.find((x) => x.test_item_id === item.id)}
                       style={{ width: '100px' }}
                     />
                   </td>
@@ -309,18 +357,18 @@ const CreateQuotation = ({ handleBilling, testItems = [], serviceData, createdBy
               </tr>
             </tbody>
           </Table>
-
-          <Row className="mt-3">
-            <Col item className="ps-4 pe-4">
-              <QuotationTypeSelect name="quotation_type_id" value={quotationTypeId} onSelect={(e) => setQuotationTypeId(e)} />
-            </Col>
-          </Row>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="success" onClick={handleGenerateQuotation}>
+          <Button variant="success" onClick={handleGenerateQuotation} disabled={sampleRemain.length === 0}>
             สร้างใบเสนอราคา
           </Button>
-          <Button variant="secondary" onClick={() => setShowPaymentModal(false)}>
+          <Button
+            variant="danger"
+            onClick={() => {
+              setShowPaymentModal(false);
+              fetchTrackingData();
+            }}
+          >
             ยกเลิก
           </Button>
         </Modal.Footer>

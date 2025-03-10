@@ -93,7 +93,7 @@ const UserRequestPage = () => {
             variant="primary"
             size="sm"
             onClick={() => {
-              navigate('/user/request/detial', { state: { id: params.row.id } });
+              navigate('/request/detial', { state: { id: params.row.id } });
             }}
           >
             <i className="feather icon-file-text m-0" />
@@ -126,7 +126,7 @@ const UserRequestPage = () => {
   };
 
   const handleEdit = (services) => {
-    navigate('/user/request/edit/', { state: { id: services.id } });
+    navigate('/request/edit/', { state: { id: services.id } });
   };
 
   const handleDelete = (id) => {
@@ -159,7 +159,7 @@ const UserRequestPage = () => {
             <Button variant="primary" size="sm" color="secondary" onClick={handleClearFilter} disabled={!filterText}>
               <IoReload style={{ fontSize: 20 }} />
             </Button>
-            <Button variant="success" size="sm" onClick={() => navigate('/user/request/add', { state: { user: user } })}>
+            <Button variant="success" size="sm" onClick={() => navigate('/request/add', { state: { user: user } })}>
               <i className="feather icon-plus-circle" />
               เพิ่ม
             </Button>

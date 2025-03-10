@@ -159,7 +159,7 @@ const UsersList = () => {
     <div className="">
       <Card>
         <Card.Header>
-          <h5>ข้อมูลรายการตัวอย่าง</h5>
+          <h5>ข้อมูลรายการข้อมูลผู้ใช้งาน</h5>
         </Card.Header>
         <Card.Body className="p-10">
           <Stack direction="row" spacing={1} sx={{ mb: 2 }}>

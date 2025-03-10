@@ -2,23 +2,28 @@ import React, { useEffect, useState } from 'react';
 import { Row, Col, Alert, Button, Form } from 'react-bootstrap';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { authenUser, signIn } from 'services/_api/authentication';
 import { getAllMenusRolesByID } from 'services/_api/permissionRequest';
 import { IoEyeOffOutline, IoEyeOutline } from 'react-icons/io5';
+import { toast } from 'react-toastify';
 
 const JWTLogin = () => {
   const navigate = useNavigate();
-  const authToken = localStorage.getItem('authToken');
-  const userRole = localStorage.getItem('userRole');
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('authToken'));
 
-  // ตรวจสอบ authToken และ Redirect ถ้ามี
+  // ตรวจสอบการล็อกอินและ Redirect
   useEffect(() => {
-    if (authToken && userRole) {
-      navigate(userRole === 'admin' ? '/admin/dashboard' : '/user/dashboard', { replace: true });
+    const authToken = localStorage.getItem('authToken');
+    const userRole = localStorage.getItem('userRole');
+
+    if (authToken && userRole && isAuthenticated) {
+      const redirectPath = userRole === 'user' ? '/dashboard' : '/admin/dashboard';
+      navigate(redirectPath, { replace: true });
     }
-  }, [authToken, userRole, navigate]);
+  }, [isAuthenticated, navigate]); // ใช้ isAuthenticated เพื่อป้องกัน Infinite Loop
 
   const initialValue = {
     email: '',
@@ -39,20 +44,33 @@ const JWTLogin = () => {
       const response = await signIn(values);
 
       if (response && response.token) {
+        // เก็บข้อมูลใน localStorage
         localStorage.setItem('authToken', response.token);
         localStorage.setItem('userRole', response.user.role);
 
+        if (response.user.position) {
+          localStorage.setItem('userPosition', response.user.position);
+        }
+
+        // ดึงและเก็บ Permissions
         await fetchUserPermissions(response.user.role_id);
 
-        // ✅ Redirect ไปหน้า Dashboard ตาม Role
-        navigate(response.user.role === 'user' ? '/user/dashboard' : '/admin/dashboard', { replace: true });
+        setIsAuthenticated(true); // อัปเดตสถานะหลังล็อกอินสำเร็จ
+
+        const role = response.user.role;
+        const redirectPath = location.state?.from?.pathname || (role === 'user' ? '/dashboard' : '/admin/dashboard');
+        navigate(redirectPath, { replace: true });
+
+        toast.success('Login successful');
       } else {
         console.warn('🔴 Login failed:', response.message);
-        setErrors({ submit: response.message });
+        setErrors({ submit: response.message || 'Login failed' });
+        toast.error(response.message || 'Login failed');
       }
     } catch (error) {
       console.error('🔴 Error logging in:', error);
-      setErrors({ submit: 'An error occurred. Please try again.' });
+      setErrors({ submit: error.message || 'An error occurred. Please try again.' });
+      toast.error(error.message || 'An error occurred. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -61,14 +79,15 @@ const JWTLogin = () => {
   const fetchUserPermissions = async (role_id) => {
     try {
       const data = await getAllMenusRolesByID(role_id);
-      localStorage.setItem('permissions', JSON.stringify(data));
+      localStorage.setItem('permissions', JSON.stringify(data || []));
     } catch (error) {
       console.error('Error fetching permissions:', error);
+      toast.error('Failed to fetch permissions');
     }
   };
 
   return (
-    <Formik initialValues={initialValue} validationSchema={validations} onSubmit={handleSubmit}>
+    <Formik initialValues={initialValue} validationSchema={validations()} onSubmit={handleSubmit}>
       {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => (
         <Form noValidate onSubmit={handleSubmit}>
           <Form.Group className="mb-3 text-start" controlId="email">
@@ -79,7 +98,7 @@ const JWTLogin = () => {
               onChange={handleChange}
               type="email"
               value={values.email}
-              isInvalid={touched.email && !!errors.email} // แก้ไขเงื่อนไขให้ถูกต้อง
+              isInvalid={touched.email && !!errors.email}
             />
             <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
           </Form.Group>
@@ -90,7 +109,7 @@ const JWTLogin = () => {
               name="password"
               onBlur={handleBlur}
               onChange={handleChange}
-              type={showPassword ? 'text' : 'password'} // เปลี่ยน type ตาม state
+              type={showPassword ? 'text' : 'password'}
               value={values.password}
               isInvalid={touched.password && !!errors.password}
             />

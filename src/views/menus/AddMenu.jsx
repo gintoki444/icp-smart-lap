@@ -146,7 +146,7 @@ function AddMenu() {
                         <option value="">เลือก Parent เมนู</option>
                         {menus.map((menu) => (
                           <option key={menu.menu_id} value={menu.menu_id}>
-                            {menu.menu_name}
+                            {`${menu.menu_name} (${menu.menu_key})`}
                           </option>
                         ))}
                       </Form.Select>

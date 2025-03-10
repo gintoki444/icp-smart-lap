@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Row, Col, Card, Table, Button, Modal, Form } from 'react-bootstrap';
-import { Formik } from 'formik';
+import { Row, Col, Card, Button, Form } from 'react-bootstrap';
+import { Formik, FieldArray } from 'formik';
 import { useDropzone } from 'react-dropzone';
 import * as Yup from 'yup';
 
@@ -11,16 +11,19 @@ import * as customerRequest from 'services/_api/customerRequest';
 import { getAllSpecialConditions, postCustomerSpecialConditions } from 'services/_api/specialConditionsRequest';
 import { postUserCustomerLinks } from 'services/_api/usersRequest';
 import { authenUser } from 'services/_api/authentication';
+import { RiDeleteBin5Line } from 'react-icons/ri';
+import { FaPlusCircle } from 'react-icons/fa';
 
 function AddCompany() {
-  const [user, setUser] = useState([]);
+  const [user, setUser] = useState({});
   const [specialConditions, setSpecialConditions] = useState([]);
+  const [files, setFiles] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     if (token) {
       authenUser(token).then((response) => {
-        setUser(response.user);
+        setUser(response.user || {});
       });
     }
   }, []);
@@ -46,7 +49,15 @@ function AddCompany() {
     email: '',
     phone: '',
     condition_id: '',
-    special_conditions: ''
+    special_conditions: '',
+    contacts: [
+      {
+        contact_name: '',
+        contact_phone: '',
+        contact_email: '',
+        position: ''
+      }
+    ]
   };
 
   const validateValue = () =>
@@ -62,7 +73,17 @@ function AddCompany() {
       phone: Yup.string()
         .matches(/^[0-9]{10}$/, 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (10 หลัก)')
         .required('กรุณากรอกเบอร์โทรศัพท์'),
-      condition_id: Yup.string().required('กรุณาเลือกเงื่อนไขพิเศษ')
+      condition_id: Yup.string().required('กรุณาเลือกเงื่อนไขพิเศษ'),
+      contacts: Yup.array().of(
+        Yup.object({
+          contact_name: Yup.string().required('กรุณากรอกชื่อผู้ติดต่อ'),
+          contact_phone: Yup.string()
+            .matches(/^[0-9]{10}$/, 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (10 หลัก)')
+            .required('กรุณากรอกเบอร์โทรศัพท์'),
+          contact_email: Yup.string().email('รูปแบบอีเมล์ไม่ถูกต้อง').required('กรุณากรอกอีเมล์'),
+          position: Yup.string().required('กรุณากรอกตำแหน่ง')
+        })
+      )
     });
 
   const handleSubmit = async (values, { setErrors, setStatus, setSubmitting }) => {
@@ -75,16 +96,31 @@ function AddCompany() {
           condition_id: values.condition_id
         });
 
+        // Prepare and post contacts
+        const contactsData = values.contacts.map((contact) => ({
+          ...contact,
+          company_id: response.company_id
+        }));
+        const contactPromises = contactsData.map((contact) => customerRequest.postCustomerContacts(contact));
+        await Promise.all(contactPromises);
+
         const data = {
           user_id: user.user_id,
           company_id: response.company_id,
           approved_by: null,
           status: 'pending'
         };
-        postUserCustomerLinks(data).then(() => {
-          toast.success('เพิ่มข้อมูลบริษัทสำเร็จ!', { autoClose: 3000 });
-          navigate('/user/company');
-        });
+        await postUserCustomerLinks(data);
+
+        // Handle file upload (if needed)
+        if (files.length > 0) {
+          // Add file upload logic here (e.g., API call to upload files)
+          console.log('Uploading files:', files);
+          // Example: await customerRequest.uploadFiles(response.company_id, files);
+        }
+
+        toast.success('เพิ่มข้อมูลบริษัทและผู้ติดต่อสำเร็จ!', { autoClose: 3000 });
+        navigate('/company');
       }
     } catch (err) {
       toast.error(`เพิ่มข้อมูลไม่สำเร็จ: ${err.message}`, { autoClose: 3000 });
@@ -95,7 +131,7 @@ function AddCompany() {
   };
 
   const navigate = useNavigate();
-  const [files, setFiles] = useState([]);
+
   const onDrop = useCallback((acceptedFiles) => {
     setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
   }, []);
@@ -105,6 +141,7 @@ function AddCompany() {
     accept: 'image/*,application/pdf',
     maxSize: 5 * 1024 * 1024
   });
+
   return (
     <Row className="">
       <Card>
@@ -263,6 +300,105 @@ function AddCompany() {
                       )}
                     </Form.Group>
                   </Col>
+                  <Col>
+                    {/* Contacts Section */}
+                    <FieldArray name="contacts">
+                      {({ push, remove }) => (
+                        <>
+                          <Row className="mt-2 mb-2">
+                            <Col>
+                              <h6>ข้อมูลผู้ติดต่อ</h6>
+                            </Col>
+                          </Row>
+                          {values.contacts.map((contact, index) => (
+                            <Card className="p-3 mb-2 pb-0 rounded" key={index}>
+                              <Row key={index} className="ps-2 pe-2">
+                                <Col md={6} className="mb-3">
+                                  <Form.Group>
+                                    <Form.Label>ชื่อผู้ติดต่อ:</Form.Label>
+                                    <Form.Control
+                                      type="text"
+                                      name={`contacts.${index}.contact_name`}
+                                      value={values.contacts[index].contact_name}
+                                      onChange={handleChange}
+                                      placeholder="กรอกชื่อผู้ติดต่อ"
+                                      onBlur={handleBlur}
+                                      isInvalid={touched.contacts?.[index]?.contact_name && !!errors.contacts?.[index]?.contact_name}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{errors.contacts?.[index]?.contact_name}</Form.Control.Feedback>
+                                  </Form.Group>
+                                </Col>
+                                <Col md={6} className="mb-3">
+                                  <Form.Group>
+                                    <Form.Label>เบอร์โทร:</Form.Label>
+                                    <Form.Control
+                                      type="text"
+                                      name={`contacts.${index}.contact_phone`}
+                                      value={values.contacts[index].contact_phone}
+                                      onChange={handleChange}
+                                      placeholder="กรอกเบอร์โทร"
+                                      onBlur={handleBlur}
+                                      isInvalid={touched.contacts?.[index]?.contact_phone && !!errors.contacts?.[index]?.contact_phone}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{errors.contacts?.[index]?.contact_phone}</Form.Control.Feedback>
+                                  </Form.Group>
+                                </Col>
+                                <Col md={6} className="mb-3">
+                                  <Form.Group>
+                                    <Form.Label>อีเมล์:</Form.Label>
+                                    <Form.Control
+                                      type="email"
+                                      name={`contacts.${index}.contact_email`}
+                                      value={values.contacts[index].contact_email}
+                                      placeholder="กรอกอีเมล์"
+                                      onChange={handleChange}
+                                      onBlur={handleBlur}
+                                      isInvalid={touched.contacts?.[index]?.contact_email && !!errors.contacts?.[index]?.contact_email}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{errors.contacts?.[index]?.contact_email}</Form.Control.Feedback>
+                                  </Form.Group>
+                                </Col>
+                                <Col md={6} className="mb-3">
+                                  <Form.Group>
+                                    <Form.Label>ตำแหน่ง:</Form.Label>
+                                    <Form.Control
+                                      type="text"
+                                      name={`contacts.${index}.position`}
+                                      value={values.contacts[index].position}
+                                      onChange={handleChange}
+                                      placeholder="กรอกตำแหน่ง"
+                                      onBlur={handleBlur}
+                                      isInvalid={touched.contacts?.[index]?.position && !!errors.contacts?.[index]?.position}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{errors.contacts?.[index]?.position}</Form.Control.Feedback>
+                                  </Form.Group>
+                                </Col>
+
+                                {values.contacts.length > 1 && (
+                                  <Col md={12} className="d-flex align-items-end mb-3">
+                                    <Button variant="danger" onClick={() => remove(index)} size="sm">
+                                      <RiDeleteBin5Line style={{ fontSize: 16 }} className="me-2" /> ลบ
+                                    </Button>
+                                  </Col>
+                                )}
+                              </Row>
+                            </Card>
+                          ))}
+                          <Row className="ps-2 pe-2">
+                            <Col>
+                              <Button
+                                variant="outline-success"
+                                size="sm"
+                                onClick={() => push({ contact_name: '', contact_phone: '', contact_email: '', position: '' })}
+                              >
+                                <FaPlusCircle style={{ fontSize: 16 }} className="me-2" /> เพิ่มผู้ติดต่อ
+                              </Button>
+                            </Col>
+                          </Row>
+                        </>
+                      )}
+                    </FieldArray>
+                  </Col>
                   <Col md={12}>
                     <Form.Group className="mb-4">
                       <Form.Label>อัพโหลดเอกสาร :</Form.Label>
@@ -307,7 +443,7 @@ function AddCompany() {
                       )}
                     </Button>
 
-                    <Button variant="danger" onClick={() => navigate('/user/company/select')} className="ms-2">
+                    <Button variant="danger" onClick={() => navigate('/company/select')} className="ms-2">
                       <i className="feather icon-corner-up-left" /> ย้อนกลับ
                     </Button>
                   </Col>
@@ -320,4 +456,5 @@ function AddCompany() {
     </Row>
   );
 }
+
 export default AddCompany;

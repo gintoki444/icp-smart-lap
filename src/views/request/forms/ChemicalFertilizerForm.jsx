@@ -124,7 +124,7 @@ export const ChemicalFertilizerForm = ({ onHandleSave, userId, sampleType }) => 
     console.log('Form Values from All Steps:', values); // แสดง values จากทั้ง 3 step
     onHandleSave(values); // ส่งข้อมูลไปยัง parent component
     setSubmitting(false);
-    // navigate('/user/request/'); // ถ้าต้องการ redirect หลัง submit
+    // navigate('/request/'); // ถ้าต้องการ redirect หลัง submit
   };
 
   const getFertilizerTypes = async () => {
@@ -254,7 +254,7 @@ export const ChemicalFertilizerForm = ({ onHandleSave, userId, sampleType }) => 
                   <i className="feather icon-save" /> บันทึก
                 </Button>
               )}
-              <Button variant="danger" onClick={() => navigate('/user/request/')}>
+              <Button variant="danger" onClick={() => navigate('/request/')}>
                 <i className="feather icon-corner-up-left" /> ยกเลิก
               </Button>
             </Card.Footer>

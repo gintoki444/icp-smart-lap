@@ -168,7 +168,7 @@ const Quotation = () => {
               <i className="feather icon-printer" />
               พิมพ์ใบเสนอราคา
             </Button>
-            <Button variant="danger" onClick={() => navigate('/user/request/detial')}>
+            <Button variant="danger" onClick={() => navigate('/request/detial')}>
               <i className="feather icon-arrow-left" />
               ย้อนกลับ
             </Button>

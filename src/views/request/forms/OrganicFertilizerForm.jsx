@@ -532,7 +532,7 @@ export const OrganicFertilizerForm = ({ onHandleSave }) => {
               บันทึก
             </Button>
           )}
-          <Button variant="danger" onClick={() => navigate('/user/request/')}>
+          <Button variant="danger" onClick={() => navigate('/request/')}>
             <i className="feather icon-corner-up-left" />
             ยกเลิก
           </Button>

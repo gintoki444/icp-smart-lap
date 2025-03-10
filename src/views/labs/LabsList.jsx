@@ -57,7 +57,7 @@ const labList = () => {
                       size="sm"
                       className="me-2"
                       onClick={() => {
-                        navigate('/user/request/detial');
+                        navigate('/request/detial');
                       }}
                     >
                       <i className="feather icon-file-text m-0" />

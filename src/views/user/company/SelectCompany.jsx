@@ -23,7 +23,7 @@ function SelectCompany() {
               <Button
                 variant="outline-primary"
                 className="w-100 py-4 d-flex align-items-center justify-content-center flex-column"
-                onClick={() => navigate('/user/company/search')}
+                onClick={() => navigate('/company/search')}
               >
                 <FaBuilding size={40} className="mb-2" />
                 เคยลงทะเบียนบริษัท / ขอรับบริการ
@@ -33,7 +33,7 @@ function SelectCompany() {
               <Button
                 variant="outline-success"
                 className="w-100 py-4 d-flex align-items-center justify-content-center flex-column"
-                onClick={() => navigate('/user/company/add')}
+                onClick={() => navigate('/company/add')}
               >
                 <FaPlusCircle size={40} className="mb-2" />
                 ลงทะเบียนบริษัทใหม่
@@ -45,7 +45,7 @@ function SelectCompany() {
               <Button
                 variant="danger"
                 onClick={() => {
-                  navigate('/user/company/');
+                  navigate('/company/');
                 }}
               >
                 <i className="feather icon-corner-up-left" />

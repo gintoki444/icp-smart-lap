@@ -7,6 +7,7 @@ import { deleteSampleTrackingByID, postSampleTracking, putSampleTracking } from 
 import FirebaseImage from 'components/Firebase/FirebaseImage';
 import { FiEdit } from 'react-icons/fi';
 import { RiDeleteBin5Fill } from 'react-icons/ri';
+import { toast } from 'react-toastify';
 
 const AddTestTracking = ({ submissionId, handleTracking, trackingData }) => {
   const [showAddModal, setShowAddModal] = useState(false); // Modal สำหรับเพิ่ม
@@ -92,7 +93,7 @@ const AddTestTracking = ({ submissionId, handleTracking, trackingData }) => {
 
       await putSampleTracking(editData.tracking_id, updatedTrackingData); // สมมติว่ามี API นี้
 
-      setDeliveryData((prev) => prev.map((item) => (item.id === editData.id ? { ...item, ...updatedTrackingData } : item)));
+      setDeliveryData((prev) => prev.map((item) => (item.id === editData.tracking_id ? { ...item, ...updatedTrackingData } : item)));
 
       handleTracking(true);
       setShowEditModal(false);
@@ -105,20 +106,24 @@ const AddTestTracking = ({ submissionId, handleTracking, trackingData }) => {
 
   // ฟังก์ชันเริ่มต้นการแก้ไข
   const handleEdit = (id) => {
-    const dataToEdit = deliveryData.find((item) => item.id === id);
-    console.log('dataToEdit', dataToEdit);
+    const dataToEdit = deliveryData.find((item) => item.tracking_id === id);
     setEditData(dataToEdit);
     setShowEditModal(true);
   };
 
   // ฟังก์ชันลบข้อมูล
   const handleDelete = async (id) => {
-    try {
-      await deleteSampleTrackingByID(id);
-      setDeliveryData((prev) => prev.filter((item) => item.id !== id));
-      handleTracking(true);
-    } catch (error) {
-      console.error('Error deleting tracking data:', error);
+    const confirmDelete = window.confirm(`คุณต้องการลบข้อมูลการจัดส่งตัวอย่าง หรือไม่?`);
+    if (confirmDelete) {
+      // ที่นี่สามารถเพิ่มฟังก์ชันลบจากฐานข้อมูล
+      try {
+        deleteSampleTrackingByID(id).then(() => {
+          toast.success('ลบข้อมูลการจัดส่งตัวอย่างสำเร็จ!', { autoClose: 3000 });
+          getServiceRequests(user.user_id);
+        });
+      } catch (error) {
+        toast.error('ลบข้อมูลการจัดส่งตัวอย่างไม่สำเร็จ!', { autoClose: 3000 });
+      }
     }
   };
 
@@ -142,7 +147,7 @@ const AddTestTracking = ({ submissionId, handleTracking, trackingData }) => {
         </thead>
         <tbody>
           {deliveryData.map((data, index) => (
-            <tr key={data.id}>
+            <tr key={`${data.tracking_number}-${index}`}>
               <td className="text-center">{index + 1}</td>
               <td>{data.carrier_name}</td>
               <td>{data.tracking_number}</td>
@@ -177,10 +182,10 @@ const AddTestTracking = ({ submissionId, handleTracking, trackingData }) => {
               </td>
               <td className="text-center">
                 <ButtonGroup>
-                  <Button variant="info" size="sm" onClick={() => handleEdit(data.id)}>
+                  <Button variant="info" size="sm" onClick={() => handleEdit(data.tracking_id)}>
                     <FiEdit />
                   </Button>
-                  <Button variant="danger" size="sm" onClick={() => handleDelete(data.id)}>
+                  <Button variant="danger" size="sm" onClick={() => handleDelete(data.tracking_id)}>
                     <RiDeleteBin5Fill />
                   </Button>
                 </ButtonGroup>

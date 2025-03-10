@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Row, Col, Spinner, Badge } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { AiOutlineFileText } from 'react-icons/ai';
-import AddTestTracking from './AddTestTracking';
-import AddBilling from './AddBilling';
-import { getServiceRequestsByID } from 'services/_api/serviceRequest';
+import { getServiceRequestsByID, getServiceRequestsStatusByID } from 'services/_api/serviceRequest';
 import { getAllTestItems } from 'services/_api/testItemsRequest';
 import { getAllPackagingType } from 'services/_api/packageingTypeRequest';
 import { getAllFertilicerType } from 'services/_api/fertilizerTypes';
-import { Divider } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { FiEdit } from 'react-icons/fi';
+import SampleSubmissionModal from './SampleSubmissionModal';
+import { Stepper, Step, StepLabel, StepContent } from '@mui/material';
+import ServiceStepContent from './StepContent';
+import AddTestTracking from './AddTestTracking';
 
-const FertilizerDetails = ({ data, title }) => {
-  // const { id } = useLocation().state;
+const FertilizerDetails = ({ title }) => {
   const location = useLocation();
   const id = location.state?.id || null;
   console.log('id', id);
@@ -29,61 +28,80 @@ const FertilizerDetails = ({ data, title }) => {
     { value: 'is_mixed_fertilizer', label: 'เชิงผสม' },
     { value: 'is_secondary_nutrient_fertilizer', label: 'ธาตุอาหารรอง-อาหารเสริม' }
   ];
-  const reportMethodOptions = [
-    { value: 'is_self_pickup', label: 'รับด้วยตนเอง' },
-    { value: 'pdf_email', label: 'ต้องการไฟล์ pdf เพิ่มเติมทาง E-mail' },
-    { value: 'is_mail_delivery', label: 'ส่งทางไปรษณีย์' }
-  ];
-  const sampleDisposalOptions = [
-    { value: 'is_lab_dispose_sample', label: 'ให้ห้องปฏิบัติการจำหน่ายตัวอย่าง' },
-    { value: 'is_collect_within_3_months', label: 'มารับตัวอย่างคืนภายใน 3 เดือน' },
-    { value: 'is_return_sample', label: 'ให้ห้องปฏิบัติการจัดส่งตัวอย่างคืน' }
-  ];
+  const [orientation, setOrientation] = useState('horizontal');
+  const [activeStep, setActiveStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(true); // เพิ่ม state สำหรับจัดการการโหลดข้อมูล
+
   useEffect(() => {
     if (id) {
       getServiceRequest(id);
     } else {
-      navigate('/user/request/');
+      navigate('/request/');
     }
-  }, []);
+  }, [id, navigate]);
 
   const [serviceData, setServiceData] = useState({});
   const [sampleList, setSampleList] = useState([]);
+  const [serviceStatus, setServiceStatus] = useState({});
+
   const getServiceRequest = async (id) => {
-    const response = await getServiceRequestsByID(id);
-    setSampleList(response.sample_submissions);
-    setServiceData(response);
-  };
+    try {
+      setIsLoading(true); // เริ่มโหลด
+      const response = await getServiceRequestsByID(id);
+      const responseStatus = await getServiceRequestsStatusByID(id);
 
-  const nextStep = () => {
-    setStep(step + 1);
-  };
+      setSampleList(response.sample_submissions || []);
+      setServiceStatus(responseStatus || {});
+      setServiceData(response);
 
-  const prevStep = () => {
-    setStep(step - 1);
-
-    if (step === 1) {
-      resetStep();
+      updateActiveStep(response, responseStatus);
+    } catch (error) {
+      console.error('Error fetching service request:', error);
+    } finally {
+      setIsLoading(false); // หยุดโหลดเมื่อเสร็จ
     }
   };
 
-  const resetStep = () => {
-    setStep(2);
-    setQuotation(false);
-    setConfirmRequest(false);
-    setTracking(false);
-    setBilling(false);
+  const updateActiveStep = (serviceData, serviceStatus) => {
+    const sampleSubmissions = serviceData.sample_submissions || [];
+    const statusTracking =
+      serviceStatus.request_status_tracking && serviceStatus.request_status_tracking.length > 0
+        ? serviceStatus.request_status_tracking[0]
+        : {};
+
+    for (let i = 0; i < steps.length; i++) {
+      if (isStepComplete(i, sampleSubmissions, statusTracking)) {
+        setActiveStep(i + 1);
+      } else {
+        setActiveStep(i);
+        break;
+      }
+    }
   };
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setOrientation('vertical');
+      } else {
+        setOrientation('horizontal');
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [loading, setLoading] = useState(false);
 
   const handleDownload = () => {
     setLoading(true);
     handleOpenNewTab();
-    // จำลองการโหลดเอกสาร (เช่น การดาวน์โหลดไฟล์ PDF)
     setTimeout(() => {
       setLoading(false);
       alert('ดาวน์โหลดเอกสารสำเร็จ!');
-    }, 3000); // กำหนดเวลาโหลด 3 วินาที
+    }, 3000);
   };
 
   const [packagingTypes, setPackagingTypes] = useState([]);
@@ -121,19 +139,16 @@ const FertilizerDetails = ({ data, title }) => {
   };
 
   const handleOpenNewTab = () => {
-    const url = '/user/request/detial/quotation';
-    window.open(url, '_blank'); // เปิด URL ในแท็บใหม่
+    const url = '/request/detial/quotation';
+    window.open(url, '_blank');
   };
 
   const getFertilizerCategoryLabel = (sampleList, fertilizerCategoryOptions) => {
-    // ค้นหาคีย์แรกที่มีค่า 1
     const selectedKey = Object.keys(sampleList).find((key) => sampleList[key] === 1);
-    // ค้นหาข้อมูล option ที่ตรงกับคีย์ที่เลือก
     const selectedOption = fertilizerCategoryOptions.find((option) => option.value === selectedKey);
     return selectedOption ? selectedOption.label : null;
   };
 
-  // กำหนดคอลัมน์สำหรับ DataGrid
   const columns = [
     { field: 'no', headerName: '#', width: 90, headerAlign: 'center', align: 'center' },
     {
@@ -141,17 +156,10 @@ const FertilizerDetails = ({ data, title }) => {
       headerName: 'ทดสอบ',
       flex: 1,
       renderCell: (params) => {
-        // ตรวจสอบ params และ params.row ก่อนใช้งาน
         if (!params || !params.row) return '-';
         const { test_code, test_percentage } = params.row;
         return `${test_code || ''}${test_percentage ? ` (${test_percentage})` : ''}`.trim();
       }
-      // valueGetter: (params) => {
-      //   // ตรวจสอบ params และ params.row ก่อนใช้งาน
-      //   if (!params || !params.row) return '-';
-      //   const { test_code, test_percentage } = params.row;
-      //   return `${test_code || ''}${test_percentage ? ` (${test_percentage} %)` : ''}`.trim();
-      // }
     },
     {
       field: 'status',
@@ -160,7 +168,7 @@ const FertilizerDetails = ({ data, title }) => {
       align: 'center',
       flex: 1,
       renderCell: (params) => (
-        <Badge pill style={{}} bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
+        <Badge pill bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
           {params.row.status === 'pending' ? 'รออนุมัติ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
         </Badge>
       )
@@ -175,13 +183,13 @@ const FertilizerDetails = ({ data, title }) => {
       field: 'test_date',
       headerName: 'วันที่ทดสอบ',
       flex: 1,
-      valueGetter: (params) => params?.row?.created_at || '-' // เปลี่ยนจาก test_date เป็น created_at ตาม API
+      valueGetter: (params) => params?.row?.created_at || '-'
     }
   ];
 
   const handleSetDataGrid = (data) => {
     const setData = data.map((test, idx) => ({
-      id: test.detail_id, // หรือเปลี่ยนเป็น key ที่เหมาะสม
+      id: test.detail_id,
       no: idx + 1,
       ...test
     }));
@@ -190,13 +198,72 @@ const FertilizerDetails = ({ data, title }) => {
   };
 
   const handleEdit = (id) => {
-    navigate('/user/request/edit/', { state: { id: id } });
+    navigate('/request/edit/', { state: { id } });
   };
 
   const handleReload = (check) => {
     if (check) {
+      getServiceRequest(id);
     }
   };
+
+  const steps = [
+    { label: 'การขอรับบริการ', status: 'delivered_to_lab' },
+    { label: 'ส่งตัวอย่าง', status: 'received' },
+    { label: 'รับตัวอย่างเข้าระบบ', status: 'received_in_system' },
+    { label: 'ตรวจสอบข้อมูล', status: 'verification_status' },
+    { label: 'ออกใบเสนอราคา', status: 'quotation_issued' },
+    { label: 'ออก Invoice', status: 'invoice_requested' },
+    { label: 'ชำระเงิน', status: 'payment_received' }
+  ];
+  const isStepComplete = (index, sampleSubmissions, statusTracking) => {
+    const sampleCount = sampleSubmissions.length;
+
+    switch (index) {
+      case 0: // การขอรับบริการ
+        return true;
+
+      case 1: // ส่งตัวอย่าง
+        if (sampleCount === 0) return false;
+        if (sampleCount === 1) {
+          // ตรวจสอบ sample_tracking ใน sampleSubmissions[0]
+          const tracking = sampleSubmissions[0].sample_tracking;
+          return tracking && tracking.length > 0 && tracking[0]?.status;
+        }
+        // ตรวจสอบว่าแต่ละ submission มี sample_tracking และ status เป็น 'received'
+        return sampleSubmissions.every((submission) => {
+          const tracking = submission.sample_tracking;
+          return (
+            tracking && tracking.length > 0 && tracking.some((track) => track.submission_id === submission.submission_id && track.status)
+          );
+        });
+      case 2: // รับตัวอย่างเข้าระบบ
+        return statusTracking.received_in_system === 'yes';
+
+      case 3: // ตรวจสอบข้อมูล
+        if (sampleCount === 0) return false;
+        if (sampleCount === 1) {
+          return serviceStatus.verification_status && serviceStatus.verification_status[0]?.status === 'Yes';
+        }
+        if (!serviceStatus.verification_status || !Array.isArray(serviceStatus.verification_status)) return false;
+        return sampleSubmissions.every((submission) =>
+          serviceStatus.verification_status.some((verify) => verify.submission_id === submission.submission_id && verify.status === 'Yes')
+        );
+
+      case 4: // ออกใบเสนอราคา
+        return statusTracking.quotation_issued === 'yes';
+
+      case 5: // ออก Invoice
+        return statusTracking.invoice_requested === 'yes';
+
+      case 6: // ชำระเงิน
+        return statusTracking.payment_received === 'yes';
+
+      default:
+        return false;
+    }
+  };
+
   return (
     <div>
       <Card>
@@ -204,351 +271,69 @@ const FertilizerDetails = ({ data, title }) => {
           <h5>{title}</h5>
         </Card.Header>
         <Card.Body>
-          <div className="container">
-            {/* Form Steps / Progress Bar */}
-            <ul className="form-stepper form-stepper-horizontal text-center mx-auto pl-0">
-              {/* Step 1 */}
-              <li
-                className={`form-stepper-list text-center ${step === 1 ? 'form-stepper-active' : step > 1 ? 'form-stepper-completed' : 'form-stepper-unfinished'}`}
-                step="1"
+          <div>
+            {isLoading ? (
+              <div className="text-center">
+                <Spinner animation="border" variant="primary" />
+                <p>กำลังโหลดข้อมูล...</p>
+              </div>
+            ) : orientation === 'vertical' ? (
+              <Stepper
+                activeStep={activeStep}
+                orientation={orientation}
+                alternativeLabel={orientation === 'horizontal'}
+                sx={{ width: '100%', margin: '0 auto', padding: '20px 0' }}
               >
-                <a className="mx-2">
-                  <span className="form-stepper-circle">
-                    <span style={{ fontSize: 24 }}>{step === 1 ? '1' : <i className="feather icon-check" />}</span>
-                  </span>
-                  <div className="label">การขอรับบริการ</div>
-                </a>
-              </li>
-              {/* Step 2 */}
-              <li
-                className={`form-stepper-list text-center ${step === 2 ? 'form-stepper-active' : step > 2 ? 'form-stepper-completed' : 'form-stepper-unfinished'}`}
-                step="2"
-              >
-                <a className="mx-2">
-                  <span className="form-stepper-circle">
-                    <span style={{ fontSize: 24 }}>{step === 2 || step < 2 ? '2' : <i className="feather icon-check" />}</span>
-                  </span>
-                  <div className="label">ตรวจสอบข้อมูล</div>
-                </a>
-              </li>
-              {/* Step 3 */}
-              <li
-                className={`form-stepper-list text-center ${step === 3 ? 'form-stepper-active' : step > 3 || tracking ? 'form-stepper-completed' : 'form-stepper-unfinished'}`}
-                step="3"
-              >
-                <a className="mx-2">
-                  <span className="form-stepper-circle">
-                    <span style={{ fontSize: 24 }}>{step === 3 || step < 3 ? '3' : <i className="feather icon-check" />}</span>
-                  </span>
-                  <div className="label">รับตัวอย่างเข้าระบบ</div>
-                </a>
-              </li>
-              {/* Step 4 */}
-              <li
-                className={`form-stepper-list text-center ${step === 4 ? 'form-stepper-active' : step > 4 || quotation ? 'form-stepper-completed' : 'form-stepper-unfinished'}`}
-                step="3"
-              >
-                <a className="mx-2">
-                  <span className="form-stepper-circle">
-                    <span style={{ fontSize: 24 }}>
-                      {(step === 4 || step < 4) && quotation === false ? '4' : <i className="feather icon-check" />}
-                    </span>
-                  </span>
-                  <div className="label">ใบเสนอราคา</div>
-                </a>
-              </li>
-              {/* Step 5 */}
-              <li
-                className={`form-stepper-list text-center ${step === 5 ? 'form-stepper-active' : step > 5 ? 'form-stepper-completed' : 'form-stepper-unfinished'}`}
-                step="3"
-              >
-                <a className="mx-2">
-                  <span className="form-stepper-circle">
-                    <span style={{ fontSize: 24 }}>{step === 5 || step < 5 ? '5' : <i className="feather icon-check" />}</span>
-                  </span>
-                  <div className="label">ชำระค่าบริการ</div>
-                </a>
-              </li>
-              {/* Step 6 */}
-              <li
-                className={`form-stepper-list text-center ${step === 6 ? 'form-stepper-active' : step > 6 ? 'form-stepper-completed' : 'form-stepper-unfinished'}`}
-                step="3"
-              >
-                <a className="mx-2">
-                  <span className="form-stepper-circle">
-                    <span style={{ fontSize: 24 }}>{step === 6 || step < 6 ? '6' : <i className="feather icon-check" />}</span>
-                  </span>
-                  <div className="label">ผลการทดสอบ</div>
-                </a>
-              </li>
-            </ul>
+                {steps.map((step, index) => (
+                  <Step key={index} completed={isStepComplete(index, sampleList, serviceStatus.request_status_tracking?.[0] || {})}>
+                    <StepLabel>{step.label}</StepLabel>
+                    {orientation === 'vertical' && (
+                      <StepContent>
+                        <ServiceStepContent serviceId={id} handleReload={handleReload} />
+                      </StepContent>
+                    )}
+                  </Step>
+                ))}
+              </Stepper>
+            ) : (
+              <>
+                <Card style={{ borderRadius: 10, marginBottom: 10 }}>
+                  <Card.Body style={{ padding: '8px 20px 3px' }}>
+                    <Stepper
+                      activeStep={activeStep}
+                      orientation={orientation}
+                      alternativeLabel={orientation === 'horizontal'}
+                      sx={{ width: '100%', margin: '0 auto', padding: '20px 0' }}
+                    >
+                      {steps.map((step, index) => (
+                        <Step key={index} completed={isStepComplete(index, sampleList, serviceStatus.request_status_tracking?.[0] || {})}>
+                          <StepLabel>{step.label}</StepLabel>
+                        </Step>
+                      ))}
+                    </Stepper>
+                  </Card.Body>
+                </Card>
+                <ServiceStepContent serviceId={id} handleReload={handleReload} />
+              </>
+            )}
           </div>
-          {/* ข้อมูลบริษัท */}
-          <Row>
-            {serviceData.request_no && (
-              <Col md={12}>
-                <h5 className="mb-4">
-                  เลขที่คำขอบริการ : <span style={{ fontSize: 18 }}>{data.request_no}</span>
-                </h5>
-              </Col>
-            )}
-            <Col md={12}>
-              <h6 className="mb-3">ข้อมูลผู้ขอขึ้นทะเบียน</h6>
-            </Col>
-            <Col md={6} className="mb-2">
-              <p className="mb-0">
-                บริษัท : <strong className="text-dark">{serviceData.customer_name}</strong>
-              </p>
-            </Col>
-            <Col md={6} className="mb-2">
-              <p className="mb-0">
-                ประเภทคำขอ :
-                <strong className="text-dark">
-                  {serviceData.is_quality_check_analysis === 1 ? 'วิเคราะห์เพื่อตรวจสอบคุณภาพ' : 'วิเคราะห์ขึ้นทะเบียน'}
-                </strong>
-              </p>
-            </Col>
-            <Col md={6} className="mb-2">
-              <p className="mb-0">
-                คำขอเพิ่มเติม : <strong className="text-dark">{serviceData.sample_type_name}</strong>
-              </p>
-            </Col>
-
-            <Col md={12} className="mb-0">
-              <p className="mb-0">
-                สถานะ :
-                <Badge
-                  bg={serviceData.status === 'pending' ? 'warning' : serviceData.status === 'approved' ? 'success' : 'danger'}
-                  style={{ marginLeft: 12 }}
-                >
-                  {serviceData.status === 'pending' ? ' รออนุมัติ' : serviceData.status === 'approved' ? 'อนุมัติ' : ' ไม่อนุมัติ'}
-                </Badge>
-              </p>
-            </Col>
-            {/* ข้อมูลปุ๋ย */}
-            <h6 className="mt-3 mb-2">ข้อมูลตัวอย่างปุ๋ย</h6>
-            {sampleList.map((sample, index) => (
-              <Col md={12} key={index} className="mb-2 p-4 pt-0 pb-0">
-                <Row>
-                  <h6>
-                    ตัวอย่างที่ {index + 1} สูตรปุ๋ย : <strong className="text-dark">{sample.fertilizer_formula || '-'}</strong> ( ชื่อสามัญ
-                    : <strong className="text-dark">{sample.common_name || '-'}</strong>)
-                  </h6>
-                  {/* <Col md={6} className="mb-2">
-                    <p className="mb-0">
-                      สูตรปุ๋ย : <strong className="text-dark">{sample.fertilizer_formula || '-'}</strong>
-                    </p>
-                  </Col>
-                  <Col md={6} className="mb-2">
-                    <p className="mb-0">
-                      ชื่อสามัญ : <strong className="text-dark">{sample.common_name || '-'}</strong>
-                    </p>
-                  </Col> */}
-                  <Col md={6} className="mb-2">
-                    <p className="mb-0">
-                      ประเภทของปุ๋ย : <strong className="text-dark">{getFertilizerCategoryLabel(sample, fertilizerCategoryOptions)}</strong>
-                    </p>
-                  </Col>
-                  <Col md={6} className="mb-2">
-                    <p className="mb-0">
-                      ลักษณะปุ๋ย :{' '}
-                      <strong className="text-dark">
-                        {fertilizerTypes.find((type) => type.fertilizer_type_id === sample.fertilizer_type_id)?.fertilizer_type_name || '-'}
-                      </strong>
-                    </p>
-                  </Col>
-                  <Col md={6} className="mb-2">
-                    <p className="mb-0">
-                      สี : <strong className="text-dark">{sample.color || '-'}</strong>
-                    </p>
-                  </Col>
-                  <Col md={6} className="mb-2">
-                    <p className="mb-0">
-                      ภาชนะบรรจุ :{' '}
-                      <strong className="text-dark">
-                        {packagingTypes.find((type) => type.packaging_type_id === sample.packaging_id)?.packaging_type_name || '-'}
-                      </strong>
-                    </p>
-                  </Col>
-
-                  <Col md={6} className="mb-2">
-                    <p className="mb-0">
-                      ชื่อการค้า : <strong className="text-dark">{sample.trade_name || '-'}</strong>
-                    </p>
-                  </Col>
-                  <Col md={6} className="mb-2">
-                    <p className="mb-0">
-                      ผู้ผลิต (บริษัท/ห้าง/ร้าน) : <strong className="text-dark">{sample.manufacturer || '-'}</strong>
-                      ประเทศ : <strong className="text-dark">{sample.manufacturer_country || '-'}</strong>
-                    </p>
-                  </Col>
-                  <Col md={6} className="mb-2">
-                    <p className="mb-0">
-                      สั่งจาก (บริษัท/ห้าง/ร้าน) : <strong className="text-dark">{sample.supplier || '-'}</strong>
-                      ประเทศ : <strong className="text-dark">{sample.supplier_country || '-'}</strong>
-                    </p>
-                  </Col>
-
-                  <Col md={6} className="mb-0">
-                    <p className="mb-0">
-                      สถานะ :
-                      <Badge
-                        bg={
-                          (sample.verification_status === 'No' && sample.is_job_accepted) ||
-                          (sample.verification_status === 'No' && !sample.is_job_accepted) ||
-                          (sample.verification_status === 'Yes' && !sample.is_job_accepted)
-                            ? 'warning'
-                            : sample.verification_status === 'Yes' && sample.is_job_accepted
-                              ? 'success'
-                              : 'danger'
-                        }
-                        style={{ marginLeft: 12 }}
-                      >
-                        {(sample.verification_status === 'No' && sample.is_job_accepted) ||
-                        (sample.verification_status === 'No' && !sample.is_job_accepted) ||
-                        (sample.verification_status === 'Yes' && !sample.is_job_accepted)
-                          ? 'รอการตรวจสอบ'
-                          : sample.verification_status === 'Yes' && sample.is_job_accepted
-                            ? 'รับงาน'
-                            : ' ไม่อนุมัติ'}
-                      </Badge>
-                    </p>
-                  </Col>
-                  <Col md={12} className="mb-2">
-                    <h6 className="mb-3">ข้อมูลการทดสอบ</h6>
-                    <div style={{ width: '100%' }}>
-                      <DataGrid
-                        rows={handleSetDataGrid(sample.sample_submission_details)}
-                        columns={columns}
-                        pageSize={5}
-                        rowsPerPageOptions={[5, 10, 20]}
-                        pagination
-                        disableSelectionOnClick
-                        hideFooterSelectedRowCount
-                      />
-                    </div>
-                  </Col>
-                  <Col>
-                    <AddTestTracking
-                      submissionId={sample.submission_id}
-                      handleTracking={handleReload}
-                      trackingData={sample.sample_tracking}
-                    />
-                  </Col>
-                </Row>
-                {index < sampleList.length - 1 && <hr className="mt-4 mb-2" />}
-              </Col>
-            ))}
-
-            {quotation && !billing && (
-              <>
-                <h5>ข้อมูลใบเสนอราคา</h5>
-                <Col md={12} className="mb-3">
-                  <Button
-                    variant="outline-primary"
-                    onClick={handleDownload}
-                    disabled={loading} // ปิดปุ่มเมื่อกำลังโหลด
-                    style={{ minWidth: '150px' }}
-                  >
-                    {loading ? (
-                      <>
-                        <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
-                        กำลังดาวน์โหลด...
-                      </>
-                    ) : (
-                      <>
-                        <i className="feather icon-download" />
-                        ดาวน์โหลดเอกสาร
-                      </>
-                    )}
-                  </Button>
-                </Col>
-              </>
-            )}
-
-            {step >= 6 && (
-              <>
-                <h5>ผลการทดสอบ</h5>
-                <Col md={12} className="mb-3">
-                  <Button
-                    variant="outline-primary"
-                    onClick={() => {}}
-                    disabled={loading} // ปิดปุ่มเมื่อกำลังโหลด
-                    style={{ minWidth: '150px' }}
-                  >
-                    {loading ? (
-                      <>
-                        <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
-                        กำลังดาวน์โหลด...
-                      </>
-                    ) : (
-                      <>
-                        <i className="feather icon-download" />
-                        ดาวน์โหลดทดสอบ
-                      </>
-                    )}
-                  </Button>
-                </Col>
-              </>
-            )}
-          </Row>
         </Card.Body>
         <Card.Footer className="text-start">
+          <SampleSubmissionModal service={serviceData} />
           <Button variant="primary" onClick={() => handleEdit(id)}>
-            <FiEdit style={{ marginRight: 8 }} />
-            แก้ไขข้อมูล
+            <FiEdit style={{ marginRight: 8 }} /> แก้ไขข้อมูล
           </Button>
-          <Button variant="danger" onClick={() => navigate('/user/request/')}>
-            <i className="feather icon-corner-up-left" />
-            กลับหน้าหลัก
+          <Button variant="danger" onClick={() => navigate('/request/')}>
+            <i className="feather icon-corner-up-left" /> กลับหน้าหลัก
           </Button>
         </Card.Footer>
-        {/* <Card.Footer>
-          <Button variant="primary" onClick={() => navigate('/user/request/')}>
-            กลับหน้าหลัก
-          </Button>
-        </Card.Footer> */}
       </Card>
     </div>
   );
 };
 
-// ตัวอย่างการใช้งาน
-const organicData = {
-  id: 1,
-  request_no: 'REQ-2025-002',
-  company: 'บริษัท เกษตรรุ่งเรือง จำกัด',
-  typeRequest: ['วิเคราะห์ขึ้นทะเบียน'],
-  reportMethod: ['รับด้วยตัวอย่าง'],
-  email: '',
-  sameAddress: true,
-  address: '',
-  province: '',
-  district: '',
-  subDistrict: '',
-  postalCode: '',
-  phone: '081-234-5678',
-  sampleDisposal: 'ให้ห้องปฏิบัติการจำหน่ายตัวอย่าง',
-  otherRequirements: '',
-  fertilizers: [
-    {
-      fertilizerCategory: ['ปุ๋ยอินทรีย์'],
-      fertilizerType: ['เม็ด'],
-      color: ['ดำ'],
-      container: 'ถุงพลาสติก',
-      tradeName: 'ปุ๋ยอินทรีย์สูตรเข้มข้น',
-      trademark: 'ตราใบไม้',
-      formula: '',
-      manufacturer: 'โรงงานปุ๋ยอินทรีย์ไทย',
-      country: 'ไทย',
-      tests: ['pH', 'MC', 'OM'],
-      status: 'pending'
-    }
-  ]
-};
-
 const RequestDetailPage = () => {
-  return <FertilizerDetails data={organicData} title="รายละเอียดข้อมูลนำส่งตัวอย่างปุ๋ยอินทรีย์" />;
+  return <FertilizerDetails title="รายละเอียดข้อมูลนำส่งตัวอย่างปุ๋ย" />;
 };
 
 export default RequestDetailPage;

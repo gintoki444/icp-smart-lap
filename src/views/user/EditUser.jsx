@@ -19,7 +19,7 @@ function AddEdit() {
 
   //   const [open, setOpen] = useState(false);
   useEffect(() => {
-    if (!usersFromState) navigate('/admin/user/');
+    if (!usersFromState) navigate('/admin/');
 
     getRoles();
     getDepartments();

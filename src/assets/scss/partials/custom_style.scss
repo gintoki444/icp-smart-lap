@@ -50,7 +50,7 @@ h2 {
 }
 ul.form-stepper {
   counter-reset: section;
-  margin-bottom: 3rem;
+  margin-bottom: 0rem;
 }
 ul.form-stepper .form-stepper-circle {
   position: relative;
@@ -97,13 +97,23 @@ ul.form-stepper > li:not(:last-of-type) {
   transition: 0.5s;
 }
 .form-stepper-horizontal li:not(:last-child):after {
+  // position: absolute;
+  // -webkit-box-flex: 1;
+  // width: 77%;
+  // right: -25%;
+  // -ms-flex: 1;
+  // flex: 3;
+  // height: 4px;
+  // content: '';
+  // top: 20%;
+  // border-radius: 50px;
   position: relative;
   -webkit-box-flex: 1;
   -ms-flex: 1;
   flex: 1;
-  height: 4px;
+  height: 1px;
   content: '';
-  top: 32%;
+  top: 49%;
   border-radius: 50px;
 }
 .form-stepper-horizontal li:after {
@@ -117,8 +127,8 @@ ul.form-stepper > li:not(:last-of-type) {
 }
 ul.form-stepper li a .form-stepper-circle {
   display: inline-block;
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   margin-right: 0;
   line-height: 1.7rem;
   text-align: center;
@@ -158,10 +168,11 @@ ul.form-stepper li a .form-stepper-circle {
 }
 .form-stepper .label {
   font-size: 1rem;
-  margin-top: 0.5rem;
+  margin-top: 0rem;
 }
 .form-stepper a {
   cursor: default;
+  z-index: 1;
 }
 
 // ********** css Data Table **********
@@ -193,4 +204,116 @@ nav.pcoded-navbar .pcoded-inner-navbar li.pcoded-hasmenu .pcoded-submenu li > a 
 }
 .css-13cymwt-control {
   background: #f4f7fa !important;
+}
+.MuiButtonBase-root {
+  font-family: 'Sarabun', sans-serif !important;
+  font-weight: normal;
+}
+.MuiStepLabel-label {
+  font-family: 'Sarabun', sans-serif !important;
+}
+/* Custom styles for MUI Stepper */
+.MuiStepper-root {
+  padding: 20px 0;
+}
+
+/* Horizontal Stepper (Desktop) */
+.MuiStepper-horizontal {
+  width: 100%;
+  margin: 0 auto;
+}
+
+.MuiStepLabel-label {
+  font-size: 0.9rem;
+}
+
+// .MuiStepConnector-root.MuiStepConnector-horizontal {
+//   top: 10px;
+// }
+
+.MuiStepConnector-line.MuiStepConnector-lineHorizontal {
+  border-color: #dee2e6;
+  // border-top-width: 4px;
+  border-radius: 10px;
+}
+
+.MuiStepConnector-active.MuiStepConnector-horizontal .MuiStepConnector-lineHorizontal,
+.MuiStepConnector-completed.MuiStepConnector-horizontal .MuiStepConnector-lineHorizontal {
+  border-color: #0e9594;
+}
+
+.MuiStepIcon-root {
+  color: #f8f7ff;
+  font-size: 18px;
+}
+
+.MuiStepIcon-active {
+  color: #0e9594;
+}
+
+.MuiStepIcon-completed {
+  color: #0e9594;
+}
+
+.MuiStepLabel-label.Mui-active {
+  color: #0e9594;
+}
+
+.Mui-active .MuiStepConnector-line.MuiStepConnector-lineHorizontal {
+  border-color: #0e9594;
+}
+
+span > .Mui-completed {
+  color: #0e9594 !important;
+}
+.Mui-completed .MuiStepConnector-line.MuiStepConnector-lineHorizontal {
+  border-color: #0e9594;
+}
+
+/* Vertical Stepper (Mobile) */
+.MuiStepper-vertical {
+  width: 100%;
+}
+
+.MuiStepConnector-line.MuiStepConnector-lineVertical {
+  border-left-width: 4px;
+  border-color: #dee2e6;
+  min-height: 24px;
+}
+
+.MuiStepConnector-active.MuiStepConnector-vertical .MuiStepConnector-lineVertical,
+.MuiStepConnector-completed.MuiStepConnector-vertical .MuiStepConnector-lineVertical {
+  border-color: #0e9594;
+}
+.MuiBox-root {
+  padding: 0 !important;
+}
+
+.MuiStepLabel-iconContainer {
+  padding-right: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .MuiStepper-horizontal {
+    display: none;
+  }
+
+  .MuiStepper-vertical {
+    display: flex;
+    padding: 0 !important;
+  }
+  .card-body .mb-2.p-3.pt-0.pb-0.col-md-12 {
+    padding: 0 !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .MuiStepper-vertical {
+    display: none;
+  }
+
+  .MuiStepper-horizontal {
+    display: flex;
+  }
 }

@@ -134,7 +134,7 @@ const UserLinkCostomer = () => {
     <div className="">
       <Card>
         <Card.Header>
-          <h5>ข้อมูลรายการตัวอย่าง</h5>
+          <h5>ข้อมูลการขอใช้บริษัท</h5>
         </Card.Header>
         <Card.Body className="p-10">
           <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
@@ -142,7 +142,7 @@ const UserLinkCostomer = () => {
             <Button variant="primary" size="sm" color="secondary" onClick={handleClearFilter} disabled={!filterText}>
               <IoReload style={{ fontSize: 20 }} />
             </Button>
-            <Button variant="success" size="sm" onClick={() => navigate('/admin/user/add')}>
+            <Button variant="success" size="sm" onClick={() => navigate('/admin/add')}>
               <i className="feather icon-plus-circle" />
               เพิ่ม
             </Button>

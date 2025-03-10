@@ -2,13 +2,15 @@ import PropTypes from 'prop-types';
 import React from 'react';
 // Import ชุดไอคอนที่ใช้งาน
 // import { BsBuilding } from 'react-icons/bs';
-import { FiHome } from 'react-icons/fi';
+import { FiHome, FiUserCheck } from 'react-icons/fi';
 import { LuBuilding } from 'react-icons/lu';
-
+import { RiScales2Line } from 'react-icons/ri';
 // สร้าง Mapping ระหว่างชื่อไอคอนกับ React Components
 const iconMap = {
   'lu icon-building': LuBuilding,
-  'Bs icon-home': FiHome
+  'Bs icon-home': FiHome,
+  'fi user-check': FiUserCheck,
+  'ri scales-2line': RiScales2Line
 };
 
 const NavIcon = ({ items }) => {

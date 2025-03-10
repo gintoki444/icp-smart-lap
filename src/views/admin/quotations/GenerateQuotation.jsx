@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Document, Page, Text, Image, View, StyleSheet, PDFDownloadLink, Font, pdf } from '@react-pdf/renderer';
-import { Button, Col, Row, Table } from 'react-bootstrap';
+import { Badge, Button, ButtonGroup, Col, Row, Table } from 'react-bootstrap';
 import logo from '../../../assets/images/logo/logo.png';
 import { deleteQuotations, getQuotationsByID } from 'services/_api/quotationRequest';
 import { toast } from 'react-toastify';
-import { RiDeleteBin5Line } from 'react-icons/ri';
+import { RiDeleteBin5Line, RiMailSendLine } from 'react-icons/ri';
+import { LuView } from 'react-icons/lu';
+import { Tooltip } from '@mui/material';
+import { MdOutlineSimCardDownload } from 'react-icons/md';
+import { deleteSampleStatus } from 'services/_api/sampleStatusRequest';
 
 // ✅ โหลดฟอนต์ภาษาไทย
 Font.register({
@@ -110,12 +114,13 @@ const GenerateQuotation = ({ quotationData, onChange }) => {
   //   return <div>กำลังโหลด...</div>;
   // }
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     const confirmDelete = window.confirm(`คุณต้องการลบข้อมูลใบเสนอราคา หรือไม่?`);
     if (confirmDelete) {
       // ที่นี่สามารถเพิ่มฟังก์ชันลบจากฐานข้อมูล
       try {
-        deleteQuotations(id).then(() => {
+        await deleteSampleStatus();
+        await deleteQuotations(id).then(() => {
           toast.success('ลบข้อมูลใบเสนอราคาสำเร็จ!', { autoClose: 3000 });
           onChange(true);
         });
@@ -157,22 +162,37 @@ const GenerateQuotation = ({ quotationData, onChange }) => {
                 <td className="text-center">{data.quotation_type_name || '-'}</td>
                 <td>{new Date(data.quotation_date).toLocaleDateString('th-TH')}</td>
                 <td className="text-end">{setNumber(data.grand_total)}</td>
-                <td className="text-center">{data.status}</td>
+                <td className="text-center">
+                  <Badge pill style={{}} bg={data.status === 'pending' ? 'warning' : data.status === 'rejected' ? 'danger' : 'success'}>
+                    {data.status === 'pending' ? 'รอชำระเงิน' : data.status === 'rejected' ? 'ยกเลิก' : 'ชำระเงินสำเร็จ'}
+                  </Badge>
+                </td>
                 <td>{data.approved_by || '-'}</td>
                 <td className="text-center" style={{ flex: 1 }}>
-                  <Button variant="info" onClick={() => generatePDF(data)}>
-                    Pre-view
-                  </Button>
-                  <PDFDownloadLink document={<MyDocument quotation={data} />} fileName={`${data.quotation_no}.pdf`}>
-                    <Button variant="info">ดาวน์โหลด PDF</Button>
-                  </PDFDownloadLink>
-                  <Button variant="info" onClick={() => generateAndSendPDF(data)}>
-                    ส่ง PDF ผ่านอีเมล
-                  </Button>
-                  <Button variant="danger" onClick={() => handleDelete(data.quotation_id)}>
-                    <RiDeleteBin5Line style={{ marginRight: 6 }} />
-                    ลบ
-                  </Button>
+                  <ButtonGroup>
+                    <Tooltip title="Pre-view" placement="bottom" arrow>
+                      <Button variant="info" size="sm" onClick={() => generatePDF(data)}>
+                        <LuView style={{ fontSize: 16 }} />
+                      </Button>
+                    </Tooltip>
+                    <PDFDownloadLink document={<MyDocument quotation={data} />} fileName={`${data.quotation_no}.pdf`}>
+                      <Tooltip title="ดาวน์โหลด PDF" placement="bottom" arrow>
+                        <Button variant="primary" style={{ borderRadius: 0, padding: '12px', display: 'flex', alignItems: 'center' }}>
+                          <MdOutlineSimCardDownload style={{ fontSize: 16 }} />
+                        </Button>
+                      </Tooltip>
+                    </PDFDownloadLink>
+                    <Tooltip title="ส่งอีเมล์" placement="bottom" arrow>
+                      <Button variant="info" size="sm" onClick={() => generateAndSendPDF(data)}>
+                        <RiMailSendLine style={{ fontSize: 16 }} />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title="ลบใบเสนอราคา" placement="bottom" arrow>
+                      <Button variant="danger" size="sm" onClick={() => handleDelete(data.quotation_id)}>
+                        <RiDeleteBin5Line style={{ fontSize: 16 }} />
+                      </Button>
+                    </Tooltip>
+                  </ButtonGroup>
                 </td>
                 {/* <td>{data.proofImage && <Image src={data.proofImage} alt="Proof" thumbnail style={{ maxHeight: '100px' }} />}</td> */}
               </tr>

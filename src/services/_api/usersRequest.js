@@ -174,7 +174,7 @@ export const putUserCustomerLinks = async (data, id) => {
   };
 
   try {
-    const response = await fetch(API_BASE_URL + '/user-customer-links/' + id, requestOptions);
+    const response = await fetch(API_BASE_URL + '/user-customer-links/user/' + id, requestOptions);
 
     if (!response.ok) {
       const errorData = await response.json(); // ดึง error message จากเซิร์ฟเวอร์

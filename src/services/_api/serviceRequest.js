@@ -34,7 +34,7 @@ export const getAllServiceRequestByUser = async (id) => {
   return await response.json();
 };
 
-//  ✅ get Role By id
+//  ✅ get ServiceRequests By id
 export const getServiceRequestsByID = async (id) => {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
@@ -46,6 +46,21 @@ export const getServiceRequestsByID = async (id) => {
   };
 
   const response = await fetch(API_BASE_URL + '/service-requests/' + id, requestOptions);
+  return await response.json();
+};
+
+//  ✅ get status ServiceRequests By id
+export const getServiceRequestsStatusByID = async (id) => {
+  const myHeaders = new Headers();
+  myHeaders.append('Content-Type', 'application/json');
+
+  const requestOptions = {
+    method: 'GET',
+    headers: myHeaders,
+    redirect: 'follow'
+  };
+
+  const response = await fetch(API_BASE_URL + '/service-requests/status-tracking/' + id, requestOptions);
   return await response.json();
 };
 

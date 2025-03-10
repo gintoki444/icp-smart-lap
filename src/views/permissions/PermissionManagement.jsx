@@ -162,7 +162,7 @@ const PermissionManagement = () => {
               return (
                 <Card className="mb-3 text-dark" key={`menu-${menu.menu_id}`}>
                   <Card.Header style={{ cursor: 'pointer', fontWeight: 'bold', background: '#d1defa', padding: '12px 25px' }}>
-                    {menu.menu_name}
+                    {`${menu.menu_name} (${menu.menu_key})`}
                   </Card.Header>
                   <Card.Body style={{ padding: '15px 25px' }}>
                     <Row>

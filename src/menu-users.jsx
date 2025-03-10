@@ -11,7 +11,7 @@ const menuUserItems = {
           title: 'Dashboard',
           type: 'item',
           icon: 'feather icon-home',
-          url: '/user/dashboard'
+          url: '/dashboard'
         }
       ]
     },
@@ -26,14 +26,14 @@ const menuUserItems = {
           title: 'โปรไฟล์',
           type: 'item',
           icon: 'feather icon-user',
-          url: '/user/profile'
+          url: '/profile'
         },
         {
           id: 'company',
           title: 'บริษัท',
           type: 'item',
           icon: 'lu icon-building',
-          url: '/user/company'
+          url: '/company'
         }
       ]
     },
@@ -52,14 +52,14 @@ const menuUserItems = {
             title: '1',
             type: 'label-danger'
           },
-          url: '/user/request'
+          url: '/request'
         },
         {
           id: 'request-history',
           title: 'ประวัติการขอรับบริการ',
           type: 'item',
           icon: 'feather icon-clock',
-          url: '/user/request/history'
+          url: '/request/history'
         }
       ]
     }
@@ -74,14 +74,14 @@ const menuUserItems = {
     //       title: 'Form Elements',
     //       type: 'item',
     //       icon: 'feather icon-file-text',
-    //       url: '/user/forms/form-basic'
+    //       url: '/forms/form-basic'
     //     },
     //     {
     //       id: 'table',
     //       title: 'Table',
     //       type: 'item',
     //       icon: 'feather icon-server',
-    //       url: '/user/tables/bootstrap'
+    //       url: '/tables/bootstrap'
     //     }
     //   ]
     // }
@@ -96,14 +96,14 @@ const menuUserItems = {
     //       title: 'Charts',
     //       type: 'item',
     //       icon: 'feather icon-pie-chart',
-    //       url: '/user/charts/nvd3'
+    //       url: '/charts/nvd3'
     //     },
     //     {
     //       id: 'maps',
     //       title: 'Maps',
     //       type: 'item',
     //       icon: 'feather icon-map',
-    //       url: '/user/maps/google-map'
+    //       url: '/maps/google-map'
     //     }
     //   ]
     // },
@@ -127,7 +127,7 @@ const menuUserItems = {
     //           id: 'signup-1',
     //           title: 'Sign up',
     //           type: 'item',
-    //           url: '/user/auth/signup-1',
+    //           url: '/auth/signup-1',
     //           target: true,
     //           breadcrumbs: false
     //         },
@@ -135,7 +135,7 @@ const menuUserItems = {
     //           id: 'signin',
     //           title: 'Sign in',
     //           type: 'item',
-    //           url: '/user/auth/signin',
+    //           url: '/auth/signin',
     //           target: true,
     //           breadcrumbs: false
     //         }
@@ -145,7 +145,7 @@ const menuUserItems = {
     //       id: 'sample-page',
     //       title: 'Sample Page',
     //       type: 'item',
-    //       url: '/user/sample-page',
+    //       url: '/sample-page',
     //       classes: 'nav-item',
     //       icon: 'feather icon-sidebar'
     //     },

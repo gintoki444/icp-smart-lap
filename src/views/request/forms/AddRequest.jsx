@@ -40,7 +40,7 @@ const RegistrationForm = () => {
 
   // useEffect(() => {
   //   if (usersFromState === null) {
-  //     navagate('/user/request/');
+  //     navagate('/request/');
   //   }
   // }, []);
   const handleSave = async (data) => {
@@ -54,7 +54,7 @@ const RegistrationForm = () => {
       sr_is_self_pickup: data.reportMethod.includes('is_self_pickup') ? 1 : 0,
       sr_pdf_email: data.reportMethod.includes('pdf_email') ? data.email : '',
       sr_is_mail_delivery: data.reportMethod.includes('is_self_pickup') ? 1 : 0,
-      sr_mail_delivery_location: data.sr_mail_delivery_location,
+      sr_mail_delivery_location: '-',
       notes: data.notes
     };
 
@@ -81,12 +81,12 @@ const RegistrationForm = () => {
         sample_weight: record.sample_weight,
         sample_weight_unit: record.sample_weight_unit,
         packaging_id: record.packaging_id,
-        test_all_items: data.test_all_items,
-        is_lab_dispose_sample: data.sampleDisposal === 'is_lab_dispose_sample' ? 1 : 0,
-        is_collect_within_3_months: data.sampleDisposal === 'is_collect_within_3_months' ? 1 : 0,
-        is_return_sample: data.sampleDisposal === 'is_return_sample' ? 1 : 0,
-        submitted_by: data.submitted_by,
-        phone: data.submitted_phone,
+        test_all_items: record.test_all_items,
+        is_lab_dispose_sample: record.sampleDisposal === 'is_lab_dispose_sample' ? 1 : 0,
+        is_collect_within_3_months: record.sampleDisposal === 'is_collect_within_3_months' ? 1 : 0,
+        is_return_sample: record.sampleDisposal === 'is_return_sample' ? 1 : 0,
+        submitted_by: record.submitted_by,
+        phone: record.submitted_phone,
         test_items: record.test_items
       };
       sampleSubmissionsData.push(step2);
@@ -96,6 +96,7 @@ const RegistrationForm = () => {
     const fileData = data.files;
 
     try {
+      console.log('step1:', step1);
       const responseService = await postServiceRequests(step1);
 
       if (responseService.request_id) {
@@ -153,6 +154,7 @@ const RegistrationForm = () => {
                 variant="info"
                 className="w-50 py-4 d-flex align-items-center justify-content-center flex-column"
                 onClick={() => handleFormSelection('organic')}
+                style={{ fontSize: 18 }}
               >
                 <GiFertilizerBag size={45} className="mb-2" />
                 แบบฟอร์มนำส่งตัวอย่างปุ๋ยอินทรีย์
@@ -161,6 +163,7 @@ const RegistrationForm = () => {
                 variant="success"
                 className="w-50  py-4 d-flex align-items-center justify-content-center flex-column"
                 onClick={() => handleFormSelection('chemical')}
+                style={{ fontSize: 18 }}
               >
                 <GiChemicalTank size={45} className="mb-2" />
                 แบบฟอร์มนำส่งตัวอย่างปุ๋ยเคมีเพื่อขึ้นทะเบียนปุ๋ย
@@ -182,7 +185,7 @@ const RegistrationForm = () => {
           <p>กรุณารอผลการตรวจสอบคำขอใช้บริการ</p>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="success" onClick={() => navagate('/user/request/')}>
+          <Button variant="success" onClick={() => navagate('/request/')}>
             ปิด
           </Button>
         </Modal.Footer>
