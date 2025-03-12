@@ -14,7 +14,7 @@ import { deleteSampleStatus, postSampleStatusArray } from 'services/_api/sampleS
 import { Tooltip } from '@mui/material';
 import { toast } from 'react-toastify';
 
-const ItemModal = ({ submissionId, handleTracking, trackingData, reviewBy, sampleNo, reloadData, sampleStatus }) => {
+const SampleReceivingModal = ({ submissionId, handleTracking, trackingData, reviewBy, sampleNo, reloadData, sampleStatus }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [deliveryData, setDeliveryData] = useState(trackingData);
@@ -453,4 +453,4 @@ const ItemModal = ({ submissionId, handleTracking, trackingData, reviewBy, sampl
   );
 };
 
-export default ItemModal;
+export default SampleReceivingModal;

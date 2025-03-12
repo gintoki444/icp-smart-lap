@@ -50,7 +50,8 @@ const Company = () => {
           company_phone: customer.company_phone,
           special_conditions: customer.special_conditions,
           created_at: new Date(customer.created_at).toLocaleString(),
-          status: customer.status
+          status: customer.status,
+          customer_contacts: customer.customer_contacts
         }));
         setcustomer(rows);
         setRows(rows);

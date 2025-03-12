@@ -43,7 +43,6 @@ export const postPackagingType = async (data) => {
   }
 };
 
-//  ✅ get Customer all
 export const getPackagingTypeByID = async (id) => {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
@@ -87,7 +86,6 @@ export const putPackagingType = async (data, id) => {
   }
 };
 
-//  ✅ get Customer all
 export const deletePackagingType = async (id) => {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');

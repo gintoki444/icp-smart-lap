@@ -16,7 +16,7 @@ export const getAllTestItems = async () => {
   return await response.json();
 };
 
-export const getAllTestItemsByType = async (id) => {
+export const getTestItemsById = async (id) => {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
   //   const raw = JSON.stringify(data);
@@ -28,7 +28,7 @@ export const getAllTestItemsByType = async (id) => {
     redirect: 'follow'
   };
 
-  const response = await fetch(API_BASE_URL + '/test-items/type/' + id, requestOptions);
+  const response = await fetch(API_BASE_URL + '/test-items/' + id, requestOptions);
   return await response.json();
 };
 
@@ -59,24 +59,7 @@ export const postTestItems = async (data) => {
   }
 };
 
-//  ✅ get Customer all
-export const getTestItemsByID = async (id) => {
-  const myHeaders = new Headers();
-  myHeaders.append('Content-Type', 'application/json');
-  //   const raw = JSON.stringify(data);
-
-  const requestOptions = {
-    method: 'GET',
-    headers: myHeaders,
-    // body: raw,
-    redirect: 'follow'
-  };
-
-  const response = await fetch(API_BASE_URL + '/test-items/' + id, requestOptions);
-  return await response.json();
-};
-
-export const putTestItems = async (data, id) => {
+export const putTestItems = async (id, data) => {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
   const raw = JSON.stringify(data);
@@ -103,7 +86,6 @@ export const putTestItems = async (data, id) => {
   }
 };
 
-//  ✅ get Customer all
 export const deleteTestItems = async (id) => {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');

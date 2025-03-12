@@ -41,7 +41,7 @@ const Customer = () => {
           phone: customer.phone,
           special_conditions: customer.special_conditions,
           created_at: new Date(customer.created_at).toLocaleString(),
-          contacts: customer['customer-contacts']
+          customer_contacts: customer.customer_contacts
           //   status: customer.status
         }));
         setcustomer(rows);

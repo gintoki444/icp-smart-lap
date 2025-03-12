@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { getCustomerSpecialConditionsByID } from 'services/_api/specialConditionsRequest';
-import { getAllFertilicerType } from 'services/_api/fertilizerTypes';
+import { getAllFertilicerType } from 'services/_api/fertilizerTypesRequest';
 import Step1 from './Steps/Step1';
 import Step2 from './Steps/Step2';
 import Step3 from './Steps/Step3';

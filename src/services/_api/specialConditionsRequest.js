@@ -43,7 +43,6 @@ export const postCustomerSpecialConditions = async (data) => {
   }
 };
 
-//  ✅ get Customer all
 export const getCustomerSpecialConditionsByID = async (id) => {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');

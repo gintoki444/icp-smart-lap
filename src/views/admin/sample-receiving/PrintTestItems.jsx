@@ -16,7 +16,7 @@ const printPageStyle = {
   padding: '18px 24'
 };
 
-function PrintTestItems() {
+function PrintSampleReceiving() {
   const location = useLocation();
 
   const sampleSubId = location.state?.sampleSubId;
@@ -71,7 +71,7 @@ function PrintTestItems() {
   };
   const navigate = useNavigate();
   const backTo = () => {
-    navigate('/admin/test-items');
+    navigate('/admin/sample-receiving');
   };
   return (
     <>
@@ -153,4 +153,4 @@ function PrintTestItems() {
   );
 }
 
-export default PrintTestItems;
+export default PrintSampleReceiving;

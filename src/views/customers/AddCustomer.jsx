@@ -1,26 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Row, Col, Card, Button, Form } from 'react-bootstrap';
 import { Formik, FieldArray } from 'formik';
+import { useDropzone } from 'react-dropzone';
 import * as Yup from 'yup';
 
 // api request
 import { toast } from 'react-toastify';
 import * as customerRequest from 'services/_api/customerRequest';
-import { getAllSpecialConditions } from 'services/_api/specialConditionsRequest';
+import { getAllSpecialConditions, postCustomerSpecialConditions } from 'services/_api/specialConditionsRequest';
+import { postUserCustomerLinks } from 'services/_api/usersRequest';
+import { authenUser } from 'services/_api/authentication';
 import { RiDeleteBin5Line } from 'react-icons/ri';
 import { FaPlusCircle } from 'react-icons/fa';
+import { handleUploadFiles } from 'services/_api/uploadFileRequest';
+import SpecialConditionSelect from 'components/Selector/SpecialConditionSelect';
 
 function AddCustomer() {
-  const navigate = useNavigate();
+  const [user, setUser] = useState({});
   const [specialConditions, setSpecialConditions] = useState([]);
+  const [files, setFiles] = useState([]);
 
-  //   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      authenUser(token).then((response) => {
+        setUser(response.user || {});
+      });
+    }
+  }, []);
+
   useEffect(() => {
     getSpecialConditions();
   }, []);
 
-  // useEffect(() => {}, []);
   const getSpecialConditions = () => {
     getAllSpecialConditions().then((result) => {
       if (result) {
@@ -73,43 +86,119 @@ function AddCustomer() {
           position: Yup.string().required('กรุณากรอกตำแหน่ง')
         })
       )
+      // เพิ่ม validation สำหรับ files
+      // files: Yup.array().min(1, 'กรุณาอัปโหลดเอกสารหนังสือรับรองบริษัทอย่างน้อย 1 ไฟล์').required('กรุณาอัปโหลดเอกสาร')
     });
 
   const handleSubmit = async (values, { setErrors, setStatus, setSubmitting }) => {
     try {
-      // Prepare customer data
-      const customerData = { ...values };
-      delete customerData.contacts;
-      customerData.special_conditions = specialConditions.find((x) => x.condition_id === Number(values.condition_id))?.description;
+      // เพิ่ม files เข้าไปใน values เพื่อให้ Yup ใช้ validate ได้
+      values.files = files;
 
-      console.log('customerData :', customerData);
-      // Post customer first
-      const customerResponse = await customerRequest.postCustomer(customerData);
+      // Validate ค่าก่อนดำเนินการ
+      const validationSchema = validateValue();
+      await validationSchema.validate(values, { abortEarly: false });
 
-      if (customerResponse.company_id) {
-        // Prepare and post contacts
+      values.special_conditions = specialConditions.find((x) => x.condition_id === Number(values.condition_id))?.description;
+      const response = await customerRequest.postCustomer(values);
+      if (response.company_id) {
+        // บันทึกเงื่อนไขพิเศษ
+        await postCustomerSpecialConditions({
+          company_id: response.company_id,
+          condition_id: values.condition_id
+        });
+
+        // บันทึก contacts
         const contactsData = values.contacts.map((contact) => ({
           ...contact,
-          company_id: customerResponse.company_id
+          company_id: response.company_id
         }));
-
-        // Loop through contacts and post each one
         const contactPromises = contactsData.map((contact) => customerRequest.postCustomerContacts(contact));
-
         await Promise.all(contactPromises);
 
+        // บันทึก user-customer link
+        const data = {
+          user_id: user.user_id,
+          company_id: response.company_id,
+          approved_by: null,
+          status: 'pending'
+        };
+        await postUserCustomerLinks(data);
+
+        // อัปโหลดไฟล์ทั้งหมดไปที่ Firebase Storage
+        if (files.length > 0) {
+          const uploadResults = await handleUploadFiles(
+            files,
+            `customer-documents/${response.company_id}`,
+            `หนังสือรับรองบริษัท_${response.company_id}`
+          );
+          const documentPromises = uploadResults.map((fileResult) => {
+            const extractedFileName = fileResult.fileName.split('/').pop();
+            return customerRequest.postCustomerDocuments({
+              company_id: response.company_id,
+              document_name: `${extractedFileName}`,
+              document_type: 'ใบจดทะเบียน',
+              document_path: `/${fileResult.fileName}` // พาธไฟล์จาก Firebase Storage
+            });
+          });
+
+          await Promise.all(documentPromises);
+        }
+
         toast.success('เพิ่มข้อมูลบริษัทและผู้ติดต่อสำเร็จ!', { autoClose: 3000 });
-        navigate('/admin/customer/');
+        navigate('/admin/company');
       }
     } catch (err) {
-      toast.error(`เพิ่มข้อมูลไม่สำเร็จ: ${err.message}`, { autoClose: 3000 });
-      setStatus({ success: false });
-      setErrors({ submit: err.message });
+      if (err.name === 'ValidationError') {
+        const errors = err.inner.reduce((acc, error) => {
+          acc[error.path] = error.message;
+          return acc;
+        }, {});
+        setErrors(errors);
+      } else {
+        console.log('err.message :', err.message);
+        toast.error(`เพิ่มข้อมูลไม่สำเร็จ: ${err.message}`, { autoClose: 3000 });
+        setStatus({ success: false });
+        setErrors({ submit: err.message });
+      }
       setSubmitting(false);
     }
   };
+
+  const navigate = useNavigate();
+
+  const onDrop = useCallback((acceptedFiles, fileRejections) => {
+    // เพิ่มไฟล์ที่ยอมรับ
+    setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
+
+    // แสดง error หากมีไฟล์ที่ถูกปฏิเสธ
+    if (fileRejections.length > 0) {
+      fileRejections.forEach((file) => {
+        file.errors.forEach((err) => {
+          if (err.code === 'file-too-large') {
+            toast.error(`ไฟล์ ${file.file.name} มีขนาดใหญ่เกินไป (สูงสุด 5MB)`, { autoClose: 3000 });
+          } else if (err.code === 'file-invalid-type') {
+            toast.error(`ไฟล์ ${file.file.name} ไม่รองรับ (ต้องเป็น image หรือ PDF เท่านั้น)`, { autoClose: 3000 });
+          } else {
+            toast.error(`ไฟล์ ${file.file.name}: ${err.message}`, { autoClose: 3000 });
+          }
+        });
+      });
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.jpeg', '.jpg', '.png'],
+      'application/pdf': ['.pdf']
+    },
+    maxSize: 5 * 1024 * 1024, // 5MB
+    maxFiles: 5 // จำกัดจำนวนไฟล์สูงสุดที่อัปโหลดได้
+  });
+
   return (
-    <Row>
+    <Row className="">
       <Card>
         <Card.Header>
           <Row>
@@ -120,7 +209,7 @@ function AddCustomer() {
         </Card.Header>
         <Card.Body>
           <Formik initialValues={initialValue} validationSchema={validateValue} onSubmit={handleSubmit}>
-            {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+            {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting, setFieldValue }) => (
               <Form onSubmit={handleSubmit}>
                 <Row>
                   <Col md={6}>
@@ -244,7 +333,8 @@ function AddCustomer() {
                     </Form.Group>
                   </Col>
                   <Col md={6}>
-                    <Form.Group className="mb-2">
+                    <SpecialConditionSelect name="condition_id" value={values.condition_id} onSelect={setFieldValue} />
+                    {/* <Form.Group className="mb-2">
                       <Form.Label>เงื่อนไขพิเศษ :</Form.Label>
                       <Form.Select
                         name="condition_id"
@@ -264,106 +354,139 @@ function AddCustomer() {
                       {touched.condition_id && errors.condition_id && (
                         <Form.Control.Feedback type="invalid">{errors.condition_id}</Form.Control.Feedback>
                       )}
+                    </Form.Group> */}
+                  </Col>
+                  <Col className="mb-2">
+                    {/* Contacts Section */}
+                    <FieldArray name="contacts">
+                      {({ push, remove }) => (
+                        <>
+                          <Row className="mt-2 mb-2">
+                            <Col>
+                              <h6>ข้อมูลผู้ติดต่อ</h6>
+                            </Col>
+                          </Row>
+                          {values.contacts.map((contact, index) => (
+                            <Card className="p-3 mb-2 pb-0 rounded" key={index}>
+                              <Row key={index} className="ps-2 pe-2">
+                                <Col md={6} className="mb-3">
+                                  <Form.Group>
+                                    <Form.Label>ชื่อผู้ติดต่อ:</Form.Label>
+                                    <Form.Control
+                                      type="text"
+                                      name={`contacts.${index}.contact_name`}
+                                      value={values.contacts[index].contact_name}
+                                      onChange={handleChange}
+                                      placeholder="กรอกชื่อผู้ติดต่อ"
+                                      onBlur={handleBlur}
+                                      isInvalid={touched.contacts?.[index]?.contact_name && !!errors.contacts?.[index]?.contact_name}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{errors.contacts?.[index]?.contact_name}</Form.Control.Feedback>
+                                  </Form.Group>
+                                </Col>
+                                <Col md={6} className="mb-3">
+                                  <Form.Group>
+                                    <Form.Label>เบอร์โทร:</Form.Label>
+                                    <Form.Control
+                                      type="text"
+                                      name={`contacts.${index}.contact_phone`}
+                                      value={values.contacts[index].contact_phone}
+                                      onChange={handleChange}
+                                      placeholder="กรอกเบอร์โทร"
+                                      onBlur={handleBlur}
+                                      isInvalid={touched.contacts?.[index]?.contact_phone && !!errors.contacts?.[index]?.contact_phone}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{errors.contacts?.[index]?.contact_phone}</Form.Control.Feedback>
+                                  </Form.Group>
+                                </Col>
+                                <Col md={6} className="mb-3">
+                                  <Form.Group>
+                                    <Form.Label>อีเมล์:</Form.Label>
+                                    <Form.Control
+                                      type="email"
+                                      name={`contacts.${index}.contact_email`}
+                                      value={values.contacts[index].contact_email}
+                                      placeholder="กรอกอีเมล์"
+                                      onChange={handleChange}
+                                      onBlur={handleBlur}
+                                      isInvalid={touched.contacts?.[index]?.contact_email && !!errors.contacts?.[index]?.contact_email}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{errors.contacts?.[index]?.contact_email}</Form.Control.Feedback>
+                                  </Form.Group>
+                                </Col>
+                                <Col md={6} className="mb-3">
+                                  <Form.Group>
+                                    <Form.Label>ตำแหน่ง:</Form.Label>
+                                    <Form.Control
+                                      type="text"
+                                      name={`contacts.${index}.position`}
+                                      value={values.contacts[index].position}
+                                      onChange={handleChange}
+                                      placeholder="กรอกตำแหน่ง"
+                                      onBlur={handleBlur}
+                                      isInvalid={touched.contacts?.[index]?.position && !!errors.contacts?.[index]?.position}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{errors.contacts?.[index]?.position}</Form.Control.Feedback>
+                                  </Form.Group>
+                                </Col>
+
+                                {values.contacts.length > 1 && (
+                                  <Col md={12} className="d-flex align-items-end mb-3">
+                                    <Button variant="danger" onClick={() => remove(index)} size="sm">
+                                      <RiDeleteBin5Line style={{ fontSize: 16 }} className="me-2" /> ลบ
+                                    </Button>
+                                  </Col>
+                                )}
+                              </Row>
+                            </Card>
+                          ))}
+                          <Row className="ps-2 pe-2">
+                            <Col>
+                              <Button
+                                variant="outline-success"
+                                size="sm"
+                                onClick={() => push({ contact_name: '', contact_phone: '', contact_email: '', position: '' })}
+                              >
+                                <FaPlusCircle style={{ fontSize: 16 }} className="me-2" /> เพิ่มผู้ติดต่อ
+                              </Button>
+                            </Col>
+                          </Row>
+                        </>
+                      )}
+                    </FieldArray>
+                  </Col>
+                  <Col md={12}>
+                    <Form.Group className="mb-4">
+                      <Form.Label>เอกสารหนังสือรับรองบริษัท :</Form.Label>
+                      <div
+                        {...getRootProps()}
+                        style={{
+                          border: '2px dashed #04a9f5',
+                          borderRadius: '8px',
+                          padding: '50px 20px',
+                          textAlign: 'center',
+                          backgroundColor: isDragActive ? '#e6f7ff' : '#f8f9fa'
+                        }}
+                      >
+                        <input {...getInputProps()} />
+                        {isDragActive ? (
+                          <p style={{ marginBottom: 0 }}>Drop your files here...</p>
+                        ) : (
+                          <p style={{ marginBottom: 0 }}>Drag and drop files here, or click to select files (สูงสุด 5 ไฟล์, 5MB ต่อไฟล์)</p>
+                        )}
+                      </div>
+                      {errors.files && touched.files && <div className="invalid-feedback d-block">{errors.files}</div>}
                     </Form.Group>
+                    <ul className="mt-3">
+                      {files.map((file, index) => (
+                        <li key={index}>
+                          <i className="feather icon-file" style={{ marginRight: 12 }} />
+                          {file.name}
+                        </li>
+                      ))}
+                    </ul>
                   </Col>
                 </Row>
-                {/* Contacts Section */}
-                <FieldArray name="contacts">
-                  {({ push, remove }) => (
-                    <>
-                      <Row className="mt-2 mb-2">
-                        <Col>
-                          <h6>ข้อมูลผู้ติดต่อ</h6>
-                        </Col>
-                      </Row>
-                      {values.contacts.map((contact, index) => (
-                        <Card className="p-3 mb-2 pb-0 rounded">
-                          <Row key={index} className="ps-2 pe-2">
-                            <Col md={6} className="mb-3">
-                              <Form.Group>
-                                <Form.Label>ชื่อผู้ติดต่อ:</Form.Label>
-                                <Form.Control
-                                  type="text"
-                                  name={`contacts.${index}.contact_name`}
-                                  value={values.contacts[index].contact_name}
-                                  onChange={handleChange}
-                                  placeholder="กรอกชื่อผู้ติดต่อ"
-                                  onBlur={handleBlur}
-                                  isInvalid={touched.contacts?.[index]?.contact_name && !!errors.contacts?.[index]?.contact_name}
-                                />
-                                <Form.Control.Feedback type="invalid">{errors.contacts?.[index]?.contact_name}</Form.Control.Feedback>
-                              </Form.Group>
-                            </Col>
-                            <Col md={6} className="mb-3">
-                              <Form.Group>
-                                <Form.Label>เบอร์โทร:</Form.Label>
-                                <Form.Control
-                                  type="text"
-                                  name={`contacts.${index}.contact_phone`}
-                                  value={values.contacts[index].contact_phone}
-                                  onChange={handleChange}
-                                  placeholder="กรอกเบอร์โทร"
-                                  onBlur={handleBlur}
-                                  isInvalid={touched.contacts?.[index]?.contact_phone && !!errors.contacts?.[index]?.contact_phone}
-                                />
-                                <Form.Control.Feedback type="invalid">{errors.contacts?.[index]?.contact_phone}</Form.Control.Feedback>
-                              </Form.Group>
-                            </Col>
-                            <Col md={6} className="mb-3">
-                              <Form.Group>
-                                <Form.Label>อีเมล์:</Form.Label>
-                                <Form.Control
-                                  type="email"
-                                  name={`contacts.${index}.contact_email`}
-                                  value={values.contacts[index].contact_email}
-                                  placeholder="กรอกอีเมล์"
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  isInvalid={touched.contacts?.[index]?.contact_email && !!errors.contacts?.[index]?.contact_email}
-                                />
-                                <Form.Control.Feedback type="invalid">{errors.contacts?.[index]?.contact_email}</Form.Control.Feedback>
-                              </Form.Group>
-                            </Col>
-                            <Col md={6} className="mb-3">
-                              <Form.Group>
-                                <Form.Label>ตำแหน่ง:</Form.Label>
-                                <Form.Control
-                                  type="text"
-                                  name={`contacts.${index}.position`}
-                                  value={values.contacts[index].position}
-                                  onChange={handleChange}
-                                  placeholder="กรอกตำแหน่ง"
-                                  onBlur={handleBlur}
-                                  isInvalid={touched.contacts?.[index]?.position && !!errors.contacts?.[index]?.position}
-                                />
-                                <Form.Control.Feedback type="invalid">{errors.contacts?.[index]?.position}</Form.Control.Feedback>
-                              </Form.Group>
-                            </Col>
-
-                            {values.contacts.length > 1 && (
-                              <Col md={12} className="d-flex align-items-end mb-3">
-                                <Button variant="danger" onClick={() => remove(index)} size="sm">
-                                  <RiDeleteBin5Line style={{ fontSize: 16 }} className="me-2" /> ลบ
-                                </Button>
-                              </Col>
-                            )}
-                          </Row>
-                        </Card>
-                      ))}
-                      <Row className="ps-2 pe-2">
-                        <Col>
-                          <Button
-                            variant="outline-success"
-                            size="sm"
-                            onClick={() => push({ contact_name: '', contact_phone: '', contact_email: '', position: '' })}
-                          >
-                            <FaPlusCircle style={{ fontSize: 16 }} className="me-2" /> เพิ่มผู้ติดต่อ
-                          </Button>
-                        </Col>
-                      </Row>
-                    </>
-                  )}
-                </FieldArray>
 
                 <Row className="mt-3">
                   <Col>

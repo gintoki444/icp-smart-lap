@@ -1,60 +1,52 @@
+// TestResultsDashboard.jsx
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Row, Col, Form, Button, ButtonGroup } from 'react-bootstrap';
+import { Card, Button, Form, ButtonGroup } from 'react-bootstrap';
 
-import { Stack } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-
+import { Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { IoReload } from 'react-icons/io5';
 import { FiEdit } from 'react-icons/fi';
 import { RiDeleteBin5Line } from 'react-icons/ri';
 
-import { toast } from 'react-toastify';
-import { authenUser } from 'services/_api/authentication';
-import { deleteServiceRequests, getAllServiceRequests } from 'services/_api/serviceRequest';
+import * as testItemsRequest from 'services/_api/testItemsRequest';
 
 const TestItems = () => {
-  const [user, setUser] = useState([]);
-  const [serviceRequests, setServiceRequests] = useState([]);
+  const [testItems, setTestItems] = useState([]);
+
+  // โหลด filter จาก localStorage
   const [filterText, setFilterText] = useState(() => localStorage.getItem('filterText') || '');
-  const [rows, setRows] = useState(serviceRequests);
+  const [rows, setRows] = useState(testItems);
+  // const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   //   const [open, setOpen] = useState(false);
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      authenUser(token).then((response) => {
-        setUser(response.user);
-        getServiceRequests(response.user.user_id);
-      });
-    }
+    getTestItems();
   }, []);
 
   useEffect(() => {}, [rows]);
-  const getServiceRequests = () => {
-    getAllServiceRequests().then((result) => {
+  const getTestItems = () => {
+    testItemsRequest.getAllTestItems().then((result) => {
       if (result) {
-        const rows = result.map((service, index) => ({
-          id: service.request_id,
+        const rows = result.map((TestItems, index) => ({
+          id: TestItems.test_item_id,
           No: index + 1,
-          request_date: new Date(service.request_date).toLocaleString(),
-          request_no: service.request_no || '-',
-          user_id: service.user_id,
-          user_name: service.user_name,
-          customer_id: service.customer_id,
-          customer_name: service.customer_name,
-          sample_type_name: service.sample_type_name,
-          is_registration_analysis: service.is_registration_analysis,
-          is_quality_check_analysis: service.is_quality_check_analysis,
-          sample_type_id: service.sample_type_id,
-          notes: service.notes || '-',
-          created_at: new Date(service.created_at).toLocaleString(),
-          status: service.status,
-          sample_submissions: service.sample_submissions,
-          service_request_documents: service.service_request_documents
+          test_name: TestItems.test_name,
+          test_name_th: TestItems.test_name_th,
+          name_for_quotation: TestItems.name_for_quotation,
+          test_code: TestItems.test_code,
+          test_description: TestItems.test_description,
+          unit_price: TestItems.unit_price,
+          test_type: TestItems.test_type,
+          is_active: TestItems.is_active,
+          group_id: TestItems.group_id,
+          group_name_th: TestItems.group_name_th,
+          group_name_en: TestItems.group_name_en,
+          created_at: new Date(TestItems.created_at).toLocaleString()
+          //   status: TestItems.status
         }));
-        setServiceRequests(rows);
+        setTestItems(rows);
         setRows(rows);
       }
     });
@@ -62,47 +54,27 @@ const TestItems = () => {
 
   const columns = [
     { field: 'No', headerName: 'No.', width: 90, headerAlign: 'center', align: 'center' },
-    { field: 'customer_name', headerName: 'บริษัท', flex: 1 },
-    { field: 'user_name', headerName: 'ผู้ขอรับบริการ', flex: 1 },
-    { field: 'request_no', headerName: 'เลขที่คำขอ', flex: 0.8 },
-    { field: 'sample_type_name', headerName: 'ประเภทคำขอ', flex: 0.7 },
-    { field: 'request_date', headerName: 'วันที่สร้าง', flex: 1 },
-    { field: 'notes', headerName: 'โน้ต', flex: 1.2 },
-    {
-      field: 'status',
-      headerName: 'สถานะ',
-      width: 120,
-      headerAlign: 'center',
-      align: 'center',
-      renderCell: (params) => (
-        <Badge pill style={{}} bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
-          {params.row.status === 'pending' ? 'รออนุมัติ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
-        </Badge>
-      )
-    },
+    { field: 'test_name', headerName: 'ชื่อ', flex: 0.7 },
+    { field: 'test_name_th', headerName: 'ชื่อภาษาไทย', flex: 1.2 },
+    { field: 'name_for_quotation', headerName: 'ชื่อสำหรับใบเสนอราคา', flex: 1.2 },
+    { field: 'test_code', headerName: 'Code', flex: 0.5, headerAlign: 'center', align: 'center' },
+    { field: 'test_description', headerName: 'คำอธิบาย', flex: 1 },
+    { field: 'unit_price', headerName: 'ค่าบริการ', flex: 0.5, headerAlign: 'right', align: 'right' },
+    { field: 'group_name_th', headerName: 'กลุ่ม', flex: 1 },
     {
       field: 'actions',
-      headerName: 'การจัดการ',
+      headerName: 'Action',
       width: 200,
       headerAlign: 'center',
       align: 'center',
       renderCell: (params) => (
         <ButtonGroup>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => {
-              navigate('/admin/test-items/add', { state: { id: params.row.id } });
-            }}
-          >
-            <i className="feather icon-file-text m-0" />
-          </Button>
-          {/* <Button variant="info" size="sm" onClick={() => handleEdit(params.row)}>
+          <Button variant="info" size="sm" onClick={() => handleEdit(params.row.id)}>
             <FiEdit />
           </Button>
           <Button variant="outline-danger" size="sm" onClick={() => handleDelete(params.row.id)}>
             <RiDeleteBin5Line />
-          </Button> */}
+          </Button>
         </ButtonGroup>
       )
     }
@@ -124,46 +96,42 @@ const TestItems = () => {
     localStorage.removeItem('filterText');
   };
 
-  const handleEdit = (services) => {
-    navigate('/admin/request/edit/', { state: { id: services.id } });
+  const handleEdit = (id) => {
+    navigate('/admin/test-items/edit', { state: { id: id } });
     // alert(`คุณกำลังแก้ไขข้อมูล: ${row.fullName}`);
     // คุณสามารถใส่การนำทางไปหน้าแก้ไขหรือแสดง Modal แก้ไขที่นี่
   };
 
   const handleDelete = (id) => {
-    const confirmDelete = window.confirm(`คุณต้องการลบข้อมูลคำขอรับบริการ หรือไม่?`);
+    const confirmDelete = window.confirm(`คุณต้องการลบข้อมูลการทดสอบหรือไม่?`);
     if (confirmDelete) {
+      // alert(`ลบข้อมูลสำเร็จ (ID: ${id})`);
       // ที่นี่สามารถเพิ่มฟังก์ชันลบจากฐานข้อมูล
       try {
-        deleteServiceRequests(id).then(() => {
-          toast.success('ลบข้อมูลคำขอรับบริการสำเร็จ!', { autoClose: 3000 });
-          getServiceRequests(user.user_id);
+        testItemsRequest.deleteTestItems(id).then(() => {
+          getTestItems();
         });
       } catch (error) {
-        toast.error('ลบข้อมูลคำขอรับบริการไม่สำเร็จ!', { autoClose: 3000 });
+        alert(`ลบข้อมูลไม่สำเร็จ:`, error);
       }
     }
   };
   return (
-    <>
+    <div className="">
       <Card>
         <Card.Header>
-          <Row>
-            <Col>
-              <Card.Title as="h5">รายการคำขอรับบริการ</Card.Title>
-            </Col>
-          </Row>
+          <h5>ข้อมูลการทดสอบ</h5>
         </Card.Header>
-        <Card.Body>
+        <Card.Body className="p-10">
           <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
             <Form.Control type="text" placeholder="Search" value={filterText} onChange={(e) => setFilterText(e.target.value)} />
             <Button variant="primary" size="sm" color="secondary" onClick={handleClearFilter} disabled={!filterText}>
               <IoReload style={{ fontSize: 20 }} />
             </Button>
-            {/* <Button variant="success" size="sm" onClick={() => navigate('/admin/request/add', { state: { user: user } })}>
+            <Button variant="success" size="sm" onClick={() => navigate('/admin/test-items/add')}>
               <i className="feather icon-plus-circle" />
               เพิ่ม
-            </Button> */}
+            </Button>
           </Stack>
 
           <DataGrid
@@ -177,7 +145,7 @@ const TestItems = () => {
           />
         </Card.Body>
       </Card>
-    </>
+    </div>
   );
 };
 

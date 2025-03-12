@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form } from 'react-bootstrap';
 import Select from 'react-select';
-import { getAllFertilicerType } from 'services/_api/fertilizerTypes';
+import { getAllFertilicerType } from 'services/_api/fertilizerTypesRequest';
 
 const FertilicerTypeSelect = ({ name = 'fertilizer_type_id', onSelect, value, disables, showText, userId }) => {
   const [fertilizerTypes, setFertilizerTypes] = useState([]);

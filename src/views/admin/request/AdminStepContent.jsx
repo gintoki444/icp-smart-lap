@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Badge } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { getServiceRequestsByID } from 'services/_api/serviceRequest';
-// import { getAllTestItems } from 'services/_api/testItemsRequest';
+// import { getAllSampleReceiving } from 'services/_api/testItemsRequest';
 import { getAllPackagingType } from 'services/_api/packageingTypeRequest';
-import { getAllFertilicerType } from 'services/_api/fertilizerTypes';
+import { getAllFertilicerType } from 'services/_api/fertilizerTypesRequest';
 import { DataGrid } from '@mui/x-data-grid';
 import ReviewModal from './ReviewModal';
 import { Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
@@ -35,7 +35,7 @@ const AdminStepContent = ({ serviceId }) => {
   };
 
   const [packagingTypes, setPackagingTypes] = useState([]);
-  //   const [testItems, setTestItems] = useState([]);
+  //   const [testItems, setSampleReceiving] = useState([]);
 
   useEffect(() => {
     handleGetPackageType();

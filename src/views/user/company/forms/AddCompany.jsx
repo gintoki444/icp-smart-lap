@@ -13,6 +13,7 @@ import { postUserCustomerLinks } from 'services/_api/usersRequest';
 import { authenUser } from 'services/_api/authentication';
 import { RiDeleteBin5Line } from 'react-icons/ri';
 import { FaPlusCircle } from 'react-icons/fa';
+import { handleUploadFiles } from 'services/_api/uploadFileRequest';
 
 function AddCompany() {
   const [user, setUser] = useState({});
@@ -84,19 +85,29 @@ function AddCompany() {
           position: Yup.string().required('กรุณากรอกตำแหน่ง')
         })
       )
+      // เพิ่ม validation สำหรับ files
+      // files: Yup.array().min(1, 'กรุณาอัปโหลดเอกสารหนังสือรับรองบริษัทอย่างน้อย 1 ไฟล์').required('กรุณาอัปโหลดเอกสาร')
     });
 
   const handleSubmit = async (values, { setErrors, setStatus, setSubmitting }) => {
     try {
+      // เพิ่ม files เข้าไปใน values เพื่อให้ Yup ใช้ validate ได้
+      values.files = files;
+
+      // Validate ค่าก่อนดำเนินการ
+      const validationSchema = validateValue();
+      await validationSchema.validate(values, { abortEarly: false });
+
       values.special_conditions = specialConditions.find((x) => x.condition_id === Number(values.condition_id))?.description;
       const response = await customerRequest.postCustomer(values);
       if (response.company_id) {
+        // บันทึกเงื่อนไขพิเศษ
         await postCustomerSpecialConditions({
           company_id: response.company_id,
           condition_id: values.condition_id
         });
 
-        // Prepare and post contacts
+        // บันทึก contacts
         const contactsData = values.contacts.map((contact) => ({
           ...contact,
           company_id: response.company_id
@@ -104,6 +115,7 @@ function AddCompany() {
         const contactPromises = contactsData.map((contact) => customerRequest.postCustomerContacts(contact));
         await Promise.all(contactPromises);
 
+        // บันทึก user-customer link
         const data = {
           user_id: user.user_id,
           company_id: response.company_id,
@@ -112,34 +124,76 @@ function AddCompany() {
         };
         await postUserCustomerLinks(data);
 
-        // Handle file upload (if needed)
+        // อัปโหลดไฟล์ทั้งหมดไปที่ Firebase Storage
         if (files.length > 0) {
-          // Add file upload logic here (e.g., API call to upload files)
-          console.log('Uploading files:', files);
-          // Example: await customerRequest.uploadFiles(response.company_id, files);
+          const uploadResults = await handleUploadFiles(
+            files,
+            `customer-documents/${response.company_id}`,
+            `หนังสือรับรองบริษัท_${response.company_id}`
+          );
+          const documentPromises = uploadResults.map((fileResult) => {
+            const extractedFileName = fileResult.fileName.split('/').pop();
+            return customerRequest.postCustomerDocuments({
+              company_id: response.company_id,
+              document_name: `${extractedFileName}`,
+              document_type: 'ใบจดทะเบียน',
+              document_path: `/${fileResult.fileName}` // พาธไฟล์จาก Firebase Storage
+            });
+          });
+
+          await Promise.all(documentPromises);
         }
 
         toast.success('เพิ่มข้อมูลบริษัทและผู้ติดต่อสำเร็จ!', { autoClose: 3000 });
         navigate('/company');
       }
     } catch (err) {
-      toast.error(`เพิ่มข้อมูลไม่สำเร็จ: ${err.message}`, { autoClose: 3000 });
-      setStatus({ success: false });
-      setErrors({ submit: err.message });
+      if (err.name === 'ValidationError') {
+        const errors = err.inner.reduce((acc, error) => {
+          acc[error.path] = error.message;
+          return acc;
+        }, {});
+        setErrors(errors);
+      } else {
+        console.log('err.message :', err.message);
+        toast.error(`เพิ่มข้อมูลไม่สำเร็จ: ${err.message}`, { autoClose: 3000 });
+        setStatus({ success: false });
+        setErrors({ submit: err.message });
+      }
       setSubmitting(false);
     }
   };
 
   const navigate = useNavigate();
 
-  const onDrop = useCallback((acceptedFiles) => {
+  const onDrop = useCallback((acceptedFiles, fileRejections) => {
+    // เพิ่มไฟล์ที่ยอมรับ
     setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
+
+    // แสดง error หากมีไฟล์ที่ถูกปฏิเสธ
+    if (fileRejections.length > 0) {
+      fileRejections.forEach((file) => {
+        file.errors.forEach((err) => {
+          if (err.code === 'file-too-large') {
+            toast.error(`ไฟล์ ${file.file.name} มีขนาดใหญ่เกินไป (สูงสุด 5MB)`, { autoClose: 3000 });
+          } else if (err.code === 'file-invalid-type') {
+            toast.error(`ไฟล์ ${file.file.name} ไม่รองรับ (ต้องเป็น image หรือ PDF เท่านั้น)`, { autoClose: 3000 });
+          } else {
+            toast.error(`ไฟล์ ${file.file.name}: ${err.message}`, { autoClose: 3000 });
+          }
+        });
+      });
+    }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: 'image/*,application/pdf',
-    maxSize: 5 * 1024 * 1024
+    accept: {
+      'image/*': ['.jpeg', '.jpg', '.png'],
+      'application/pdf': ['.pdf']
+    },
+    maxSize: 5 * 1024 * 1024, // 5MB
+    maxFiles: 5 // จำกัดจำนวนไฟล์สูงสุดที่อัปโหลดได้
   });
 
   return (
@@ -300,7 +354,7 @@ function AddCompany() {
                       )}
                     </Form.Group>
                   </Col>
-                  <Col>
+                  <Col className="mb-2">
                     {/* Contacts Section */}
                     <FieldArray name="contacts">
                       {({ push, remove }) => (
@@ -401,7 +455,7 @@ function AddCompany() {
                   </Col>
                   <Col md={12}>
                     <Form.Group className="mb-4">
-                      <Form.Label>อัพโหลดเอกสาร :</Form.Label>
+                      <Form.Label>เอกสารหนังสือรับรองบริษัท :</Form.Label>
                       <div
                         {...getRootProps()}
                         style={{
@@ -416,9 +470,10 @@ function AddCompany() {
                         {isDragActive ? (
                           <p style={{ marginBottom: 0 }}>Drop your files here...</p>
                         ) : (
-                          <p style={{ marginBottom: 0 }}>Drag and drop files here, or click to select files</p>
+                          <p style={{ marginBottom: 0 }}>Drag and drop files here, or click to select files (สูงสุด 5 ไฟล์, 5MB ต่อไฟล์)</p>
                         )}
                       </div>
+                      {errors.files && touched.files && <div className="invalid-feedback d-block">{errors.files}</div>}
                     </Form.Group>
                     <ul className="mt-3">
                       {files.map((file, index) => (

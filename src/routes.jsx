@@ -141,16 +141,7 @@ const routes = [
           />
         )
       },
-      {
-        exact: 'true',
-        path: '/test-items',
-        element: lazy(() => import('./views/admin/test-items/TestItems'))
-      },
-      {
-        exact: 'true',
-        path: '/test-items/add',
-        element: lazy(() => import('./views/admin/test-items/AddTestItem'))
-      },
+
       {
         exact: 'true',
         path: '/lab-list',
@@ -269,6 +260,206 @@ const routes = [
         element: lazy(() => import('./views/user/UserLinkCostomer')),
         guard: (props) => (
           <ProtectedRoute role={['admin', 'super_admin', 'system']} position="supervisor" path="/admin/user-link-approve" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/sample-receiving',
+        element: lazy(() => import('./views/admin/sample-receiving/SampleReceiving'))
+      },
+      {
+        exact: 'true',
+        path: '/sample-receiving/add',
+        element: lazy(() => import('./views/admin/sample-receiving/AddTestItem'))
+      },
+      {
+        exact: 'true',
+        path: '/test-group',
+        element: lazy(() => import('./views/admin/test-group/TestGroups')),
+        guard: (props) => <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/test-group" {...props} />
+      },
+      {
+        exact: 'true',
+        path: '/test-group/add',
+        element: lazy(() => import('./views/admin/test-group/AddTestGroup')),
+        guard: (props) => <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/test-group/add" {...props} />
+      },
+      {
+        exact: 'true',
+        path: '/test-group/edit',
+        element: lazy(() => import('./views/admin/test-group/EditTestGroup')),
+        guard: (props) => <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/test-group/edit" {...props} />
+      },
+      {
+        exact: 'true',
+        path: '/fertilizer-main',
+        element: lazy(() => import('./views/admin/fertilizer-main/FertilizerMains')),
+        guard: (props) => <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/fertilizer-main" {...props} />
+      },
+      {
+        exact: 'true',
+        path: '/fertilizer-main/add',
+        element: lazy(() => import('./views/admin/fertilizer-main/AddFertilizerMain')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/fertilizer-main/add" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/fertilizer-main/edit',
+        element: lazy(() => import('./views/admin/fertilizer-main/EditeFertilizerMain')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/fertilizer-main/edit" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/test-items',
+        element: lazy(() => import('./views/admin/test-items/TestItems')),
+        guard: (props) => <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/test-items" {...props} />
+      },
+      {
+        exact: 'true',
+        path: '/test-items/add',
+        element: lazy(() => import('./views/admin/test-items/AddTestItem')),
+        guard: (props) => <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/test-items/add" {...props} />
+      },
+      {
+        exact: 'true',
+        path: '/test-items/edit',
+        element: lazy(() => import('./views/admin/test-items/EditTestItem')),
+        guard: (props) => <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/test-items/edit" {...props} />
+      },
+      {
+        exact: 'true',
+        path: '/fertilizer-certificate',
+        element: lazy(() => import('./views/admin/fertilizer-certificate/FertilizerCertificate')),
+        guard: (props) => <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/test-items" {...props} />
+      },
+      {
+        exact: 'true',
+        path: '/fertilizer-certificate/add',
+        element: lazy(() => import('./views/admin/fertilizer-certificate/AddFertilizerCertificate')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/fertilizer-certificate/add" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/fertilizer-certificate/edit',
+        element: lazy(() => import('./views/admin/fertilizer-certificate/EditFertilizerCertificate')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/fertilizer-certificate/edit" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/fertilizer-formulas',
+        element: lazy(() => import('./views/admin/fertilizer-formulas/FertilizerFormulas')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/fertilizer-formulas" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/fertilizer-formulas/add',
+        element: lazy(() => import('./views/admin/fertilizer-formulas/AddFertilizerFormulas')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/fertilizer-formulas/add" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/fertilizer-formulas/edit',
+        element: lazy(() => import('./views/admin/fertilizer-formulas/EditFertilizerFormulas')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/fertilizer-formulas/edit" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/base-fertilizers',
+        element: lazy(() => import('./views/admin/base-fertilizers/BaseFertilizers')),
+        guard: (props) => <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/base-fertilizers" {...props} />
+      },
+      {
+        exact: 'true',
+        path: '/base-fertilizers/add',
+        element: lazy(() => import('./views/admin/base-fertilizers/AddBaseFertilizers')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/base-fertilizers/add" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/base-fertilizers/edit',
+        element: lazy(() => import('./views/admin/base-fertilizers/EditBaseFertilizers')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/base-fertilizers/edit" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/fertilizer-types',
+        element: lazy(() => import('./views/admin/fertilizer-types/FertilizerTypes')),
+        guard: (props) => <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/fertilizer-types" {...props} />
+      },
+      {
+        exact: 'true',
+        path: '/fertilizer-types/add',
+        element: lazy(() => import('./views/admin/fertilizer-types/AddFertilizerTypes')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/fertilizer-types/add" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/fertilizer-types/edit',
+        element: lazy(() => import('./views/admin/fertilizer-types/EditFertilizerTypes')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/fertilizer-types/edit" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/packaging-types',
+        element: lazy(() => import('./views/admin/packaging-types/PackagingTypes')),
+        guard: (props) => <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/packaging-types" {...props} />
+      },
+      {
+        exact: 'true',
+        path: '/packaging-types/add',
+        element: lazy(() => import('./views/admin/packaging-types/AddPackagingTypes')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/packaging-types/add" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/packaging-types/edit',
+        element: lazy(() => import('./views/admin/packaging-types/EditPackagingTypes')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/packaging-types/edit" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/test-results',
+        element: lazy(() => import('./views/admin/test-results/TestResults')),
+        guard: (props) => <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/test-results" {...props} />
+      },
+      {
+        exact: 'true',
+        path: '/test-results/add',
+        element: lazy(() => import('./views/admin/test-results/AddTestResults')),
+        guard: (props) => <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/test-results/add" {...props} />
+      },
+      {
+        exact: 'true',
+        path: '/test-results/edit',
+        element: lazy(() => import('./views/admin/test-results/EditTestResults')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/test-results/edit" {...props} />
         )
       },
       {

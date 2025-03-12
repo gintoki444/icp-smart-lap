@@ -4,17 +4,20 @@ import { Row, Col, Card, Button, Form } from 'react-bootstrap';
 import { Formik, FieldArray } from 'formik';
 import { useDropzone } from 'react-dropzone';
 import * as Yup from 'yup';
-
-// api request
 import { toast } from 'react-toastify';
-import * as customerRequest from 'services/_api/customerRequest';
-import { getAllSpecialConditions } from 'services/_api/specialConditionsRequest';
 import { RiDeleteBin5Line } from 'react-icons/ri';
 import { FaPlusCircle } from 'react-icons/fa';
+
+// api request
+import { getAllSpecialConditions } from 'services/_api/specialConditionsRequest';
+import * as customerRequest from 'services/_api/customerRequest';
+import { deleteFileFromFirebase, handleUploadFiles } from 'services/_api/uploadFileRequest';
 
 function EditCompany() {
   const [initialValue, setInitialValue] = useState({});
   const [specialConditions, setSpecialConditions] = useState([]);
+  const [files, setFiles] = useState([]);
+  const [existingFiles, setExistingFiles] = useState([]);
   const location = useLocation();
   const companyFromState = location.state?.company || null;
 
@@ -72,7 +75,8 @@ function EditCompany() {
       const conditionId = specialData.find((x) => x.description === result.special_conditions)?.condition_id || '';
       // ดึงข้อมูล contacts และกำหนดค่าเริ่มต้นเป็น array ว่างหากไม่มี
       console.log('result:', result);
-      const contacts = result['customer-contacts'] || [];
+      const contacts = result.customer_contacts || [];
+      setExistingFiles(result.customer_documents || []);
       setInitialValue({
         company_id: result.company_id || '',
         company_code: result.company_code || '',
@@ -136,10 +140,36 @@ function EditCompany() {
           position: Yup.string().required('กรุณากรอกตำแหน่ง')
         })
       )
+      // เพิ่ม validation สำหรับ files
+      // files: Yup.array().min(1, 'กรุณาอัปโหลดเอกสารอย่างน้อย 1 ไฟล์').required('กรุณาอัปโหลดเอกสาร')
     });
+
+  const handleRemoveFile = async (indexToRemove, fileToRemove) => {
+    const isConfirmed = window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบไฟล์ "${fileToRemove.document_name}"?`);
+    console.log('fileToRemove.document_name:', fileToRemove.document_name);
+    if (isConfirmed) {
+      try {
+        // await deleteFileFromFirebase('/uploads/customer-documents/24/หนังสือรับรองบริษัท_24_1741616344994.pdf');
+        await deleteFileFromFirebase(fileToRemove.document_path);
+
+        await customerRequest.deleteCustomerDocuments(fileToRemove.document_id);
+        setExistingFiles(existingFiles.filter((_, index) => index !== indexToRemove));
+        toast.success('ลบไฟล์สำเร็จ');
+      } catch (error) {
+        toast.error('เกิดข้อผิดพลาดในการลบไฟล์ กรุณาลองใหม่');
+      }
+    }
+  };
 
   const handleSubmit = async (values, { setErrors, setStatus, setSubmitting }) => {
     try {
+      // เพิ่ม files เข้าไปใน values เพื่อให้ Yup ใช้ validate ได้
+      values.files = files;
+
+      // Validate ค่าก่อนดำเนินการ
+      const validationSchema = validateValue();
+      await validationSchema.validate(values, { abortEarly: false });
+
       values.special_conditions = specialConditions.find((x) => x.condition_id === Number(values.condition_id))?.description;
       const customerData = {
         company_id: values.company_id,
@@ -151,7 +181,10 @@ function EditCompany() {
         special_conditions: values.special_conditions
       };
 
+      console.log('values.company_id', values.company_id);
+      console.log('customerData', customerData);
       const response = await customerRequest.putCustomer(customerData, values.company_id);
+      console.log('response', response);
       if (response.message) {
         // Prepare and update contacts
         const existingContacts = values.contacts.filter((contact) => contact.contact_id);
@@ -167,37 +200,83 @@ function EditCompany() {
         );
         await Promise.all(newContactPromises);
 
-        // Handle file upload (if needed)
+        // Update customer-documents
         if (files.length > 0) {
-          // Add file upload logic here (e.g., API call to upload files)
-          console.log('Uploading files:', files);
-          // Example: await customerRequest.uploadFiles(values.company_id, files);
-        }
+          const uploadResults = await handleUploadFiles(
+            files,
+            `customer-documents/${values.company_id}`,
+            `หนังสือรับรองบริษัท_${values.company_id}`
+          );
 
+          const documentPromises = uploadResults.map((fileResult) =>
+            customerRequest.postCustomerDocuments({
+              company_id: values.company_id,
+              document_name: fileResult.fileName.split('/').pop(),
+              document_type: 'ใบจดทะเบียน',
+              document_path: `/${fileResult.fileName}`
+            })
+          );
+          await Promise.all(documentPromises);
+          // const documentPromises = files.map((file) => {
+          //   const documentData = {
+          //     company_id: values.company_id,
+          //     document_name: `${extractedFileName}`,
+          //     document_type: 'ใบจดทะเบียน',
+          //     document_path: `/documents/${values.company_id}/${file.name}`
+          //   };
+          //   return customerRequest.putCustomerDocuments(documentData, values.document_id);
+          // });
+          // await Promise.all(documentPromises);
+        }
         toast.success('แก้ไขข้อมูลบริษัทและผู้ติดต่อสำเร็จ!', { autoClose: 3000 });
         navigate('/company');
       }
     } catch (err) {
-      toast.error(`แก้ไขข้อมูลไม่สำเร็จ: ${err.message}`, { autoClose: 3000 });
-      setStatus({ success: false });
-      setErrors({ submit: err.message });
+      if (err.name === 'ValidationError') {
+        const errors = err.inner.reduce((acc, error) => {
+          acc[error.path] = error.message;
+          return acc;
+        }, {});
+        setErrors(errors);
+      } else {
+        toast.error(`แก้ไขข้อมูลไม่สำเร็จ: ${err.message}`, { autoClose: 3000 });
+        setStatus({ success: false });
+        setErrors({ submit: err.message });
+      }
       setSubmitting(false);
     }
   };
 
   const navigate = useNavigate();
-  const [files, setFiles] = useState([]);
-  const onDrop = useCallback((acceptedFiles) => {
+
+  const onDrop = useCallback((acceptedFiles, fileRejections) => {
+    // เพิ่มไฟล์ที่ยอมรับ
     setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
+
+    // แสดง error หากมีไฟล์ที่ถูกปฏิเสธ
+    if (fileRejections.length > 0) {
+      fileRejections.forEach((file) => {
+        file.errors.forEach((err) => {
+          if (err.code === 'file-too-large') {
+            toast.error(`ไฟล์ ${file.file.name} มีขนาดใหญ่เกินไป (สูงสุด 5MB)`, { autoClose: 3000 });
+          } else if (err.code === 'file-invalid-type') {
+            toast.error(`ไฟล์ ${file.file.name} ไม่รองรับ (ต้องเป็น image หรือ PDF เท่านั้น)`, { autoClose: 3000 });
+          } else {
+            toast.error(`ไฟล์ ${file.file.name}: ${err.message}`, { autoClose: 3000 });
+          }
+        });
+      });
+    }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': [],
-      'application/pdf': []
+      'image/*': ['.jpeg', '.jpg', '.png'],
+      'application/pdf': ['.pdf']
     },
-    maxSize: 5 * 1024 * 1024
+    maxSize: 5 * 1024 * 1024, // 5MB
+    maxFiles: 5 // จำกัดจำนวนไฟล์สูงสุดที่อัปโหลดได้
   });
 
   return (
@@ -361,6 +440,39 @@ function EditCompany() {
                     </Form.Group>
                   </Col>
                   <Col md={12}>
+                    <Row>
+                      <Col md={12}>
+                        <Form.Group>
+                          <Form.Label>ไฟล์ที่มีอยู่</Form.Label>
+                          <ul>
+                            {existingFiles.map((file, index) => (
+                              <li key={file.document_id}>
+                                <a href={file.document_path} target="_blank" rel="noopener noreferrer">
+                                  {file.document_name}
+                                </a>
+                                <Button variant="danger" size="sm" className="ms-2" onClick={() => handleRemoveFile(index, file)}>
+                                  <RiDeleteBin5Line /> ลบ
+                                </Button>
+                              </li>
+                            ))}
+                          </ul>
+                        </Form.Group>
+                      </Col>
+                      {/* <Col md={12}>
+                        <Form.Group>
+                          <Form.Label>อัพโหลดเอกสารใหม่</Form.Label>
+                          <div {...getRootProps()} style={{ border: '2px dashed #04a9f5', padding: '20px', textAlign: 'center' }}>
+                            <input {...getInputProps()} />
+                            <p>ลากและวางไฟล์ที่นี่ หรือคลิกเพื่อเลือกไฟล์ (PDF เท่านั้น, สูงสุด 5MB)</p>
+                          </div>
+                        </Form.Group>
+                        <ul className="mt-3">
+                          {files.map((file, index) => (
+                            <li key={index}>{file.name}</li>
+                          ))}
+                        </ul>
+                      </Col> */}
+                    </Row>
                     <Form.Group className="mb-4">
                       <Form.Label>อัพโหลดเอกสาร :</Form.Label>
                       <div
@@ -377,9 +489,10 @@ function EditCompany() {
                         {isDragActive ? (
                           <p style={{ marginBottom: 0 }}>Drop your files here...</p>
                         ) : (
-                          <p style={{ marginBottom: 0 }}>Drag and drop files here, or click to select files</p>
+                          <p style={{ marginBottom: 0 }}>Drag and drop files here, or click to select files (สูงสุด 5 ไฟล์, 5MB ต่อไฟล์)</p>
                         )}
                       </div>
+                      {errors.files && touched.files && <div className="invalid-feedback d-block">{errors.files}</div>}
                     </Form.Group>
                     <ul className="mt-3">
                       {files.map((file, index) => (
@@ -503,7 +616,7 @@ function EditCompany() {
                       )}
                     </Button>
 
-                    <Button variant="danger" onClick={() => navigate('/company/select')} className="ms-2">
+                    <Button variant="danger" onClick={() => navigate('/company')} className="ms-2">
                       <i className="feather icon-corner-up-left" /> ย้อนกลับ
                     </Button>
                   </Col>

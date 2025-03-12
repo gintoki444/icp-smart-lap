@@ -4,7 +4,7 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { getCustomerSpecialConditionsByID } from 'services/_api/specialConditionsRequest';
-import { getAllFertilicerType } from 'services/_api/fertilizerTypes';
+import { getAllFertilicerType } from 'services/_api/fertilizerTypesRequest';
 import Step1 from './Steps/Step1';
 import Step2 from './Steps/Step2';
 import Step3 from './Steps/Step3';
@@ -300,7 +300,7 @@ const EditSampleRequestForm = ({ userId }) => {
     );
   };
 
-  const compareTestItems = (originalItems, updatedItems) => {
+  const compareSampleReceiving = (originalItems, updatedItems) => {
     if (originalItems.length !== updatedItems.length) return true;
     return originalItems.some((orig, index) => {
       const upd = updatedItems[index];
@@ -329,7 +329,7 @@ const EditSampleRequestForm = ({ userId }) => {
     ];
     return (
       fieldsToCompare.some((field) => original[field] !== updated[field]) ||
-      compareTestItems(original.test_items || [], updated.test_items || [])
+      compareSampleReceiving(original.test_items || [], updated.test_items || [])
     );
   };
 
@@ -387,38 +387,40 @@ const EditSampleRequestForm = ({ userId }) => {
         }
 
         // ตรวจสอบการเปลี่ยนแปลงใน test_items
-        const originalTestItems = original.sample_submission_details || [];
-        const updatedTestItems = record.test_items || [];
+        const originalSampleReceiving = original.sample_submission_details || [];
+        const updatedSampleReceiving = record.test_items || [];
 
         // หา test_items ที่ถูกลบ
-        const deletedTestItems = originalTestItems.filter((orig) => !updatedTestItems.some((upd) => upd.detail_id === orig.detail_id));
-        const deleteTestItemPromises = deletedTestItems.map((deleted) =>
+        const deletedSampleReceiving = originalSampleReceiving.filter(
+          (orig) => !updatedSampleReceiving.some((upd) => upd.detail_id === orig.detail_id)
+        );
+        const deleteTestItemPromises = deletedSampleReceiving.map((deleted) =>
           deleted.detail_id ? deleteSampleSubmisDetail(deleted.detail_id) : Promise.resolve()
         );
         await Promise.all(deleteTestItemPromises);
-        deletedTestItems.forEach((deleted) => console.log(`Deleted test_item ID: ${deleted.detail_id}`));
+        deletedSampleReceiving.forEach((deleted) => console.log(`Deleted test_item ID: ${deleted.detail_id}`));
 
         // ตรวจสอบว่ามีการเปลี่ยนแปลงใน test_items หรือไม่
-        const hasTestItemsChanged =
-          originalTestItems.length !== updatedTestItems.length ||
-          originalTestItems.some((orig) =>
-            updatedTestItems.some((upd) => upd.detail_id === orig.detail_id && upd.test_percentage !== orig.test_percentage)
+        const hasSampleReceivingChanged =
+          originalSampleReceiving.length !== updatedSampleReceiving.length ||
+          originalSampleReceiving.some((orig) =>
+            updatedSampleReceiving.some((upd) => upd.detail_id === orig.detail_id && upd.test_percentage !== orig.test_percentage)
           ) ||
-          updatedTestItems.some((upd) => !upd.detail_id);
+          updatedSampleReceiving.some((upd) => !upd.detail_id);
 
-        if (hasTestItemsChanged) {
+        if (hasSampleReceivingChanged) {
           // ลบ test_items เดิมทั้งหมดก่อน
-          const deleteAllTestItemsPromises = originalTestItems.map((item) =>
+          const deleteAllSampleReceivingPromises = originalSampleReceiving.map((item) =>
             item.detail_id ? deleteSampleSubmisDetail(item.detail_id) : Promise.resolve()
           );
-          await Promise.all(deleteAllTestItemsPromises);
+          await Promise.all(deleteAllSampleReceivingPromises);
           console.log(`Cleared all existing test_items for submission ID: ${record.submission_id}`);
 
           // เพิ่ม test_items ใหม่ทั้งหมด
-          if (updatedTestItems.length > 0) {
+          if (updatedSampleReceiving.length > 0) {
             const newTestItemData = {
               submission_id: record.submission_id,
-              test_items: updatedTestItems.map((item) => ({
+              test_items: updatedSampleReceiving.map((item) => ({
                 test_item_id: item.test_item_id,
                 test_percentage: item.test_percentage
               }))

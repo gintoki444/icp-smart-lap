@@ -42,7 +42,7 @@ const __vite__mapDeps = (
       'assets/RequestDetails-88a3POrw.js',
       'assets/FirebaseImage-Cwvr5Es-.js',
       'assets/ServiceRequestDetail-CmkxPdiq.js',
-      'assets/TestItems-BhOTsA_I.js',
+      'assets/SampleReceiving-BhOTsA_I.js',
       'assets/AddTestItem-DDQIRHZT.js',
       'assets/react-pdf.browser-uVIzoZdJ.js',
       'assets/TestList-Dlf2btN7.js',
@@ -14568,12 +14568,14 @@ const h_ = () => {
         },
         {
           exact: 'true',
-          path: 'test-items',
-          element: m.lazy(() => M(() => import('./TestItems-BhOTsA_I.js'), __vite__mapDeps([39, 17, 3, 18, 19, 20, 21, 5, 22, 23, 24])))
+          path: 'sample-receiving',
+          element: m.lazy(() =>
+            M(() => import('./SampleReceiving-BhOTsA_I.js'), __vite__mapDeps([39, 17, 3, 18, 19, 20, 21, 5, 22, 23, 24]))
+          )
         },
         {
           exact: 'true',
-          path: 'test-items/add',
+          path: 'sample-receiving/add',
           element: m.lazy(() =>
             M(
               () => import('./AddTestItem-DDQIRHZT.js'),
@@ -15443,7 +15445,6 @@ var X_ = (e) => {
   }),
   K_ = x_(Y_('bounce', !0)),
   G_ = {
-    position: 'top-right',
     transition: K_,
     autoClose: 5e3,
     closeButton: !0,

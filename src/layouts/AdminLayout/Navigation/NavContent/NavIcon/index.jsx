@@ -4,13 +4,20 @@ import React from 'react';
 // import { BsBuilding } from 'react-icons/bs';
 import { FiHome, FiUserCheck } from 'react-icons/fi';
 import { LuBuilding } from 'react-icons/lu';
-import { RiScales2Line } from 'react-icons/ri';
+import { RiScales2Line, RiTestTubeLine } from 'react-icons/ri';
+import { VscGroupByRefType } from 'react-icons/vsc';
+import { LiaObjectGroup } from 'react-icons/lia';
+import { PiCertificate } from 'react-icons/pi';
 // สร้าง Mapping ระหว่างชื่อไอคอนกับ React Components
 const iconMap = {
   'lu icon-building': LuBuilding,
   'Bs icon-home': FiHome,
   'fi user-check': FiUserCheck,
-  'ri scales-2line': RiScales2Line
+  'ri scales-2line': RiScales2Line,
+  'ri test-tube-line': RiTestTubeLine,
+  'vsc group-by-reftype': VscGroupByRefType,
+  'lia object-group': LiaObjectGroup,
+  'pi certificate': PiCertificate
 };
 
 const NavIcon = ({ items }) => {

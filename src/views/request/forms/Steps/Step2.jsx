@@ -6,7 +6,7 @@ import { FiEdit } from 'react-icons/fi';
 import { RiDeleteBin5Line } from 'react-icons/ri';
 import Select from 'react-select';
 import { getAllPackagingType } from 'services/_api/packageingTypeRequest';
-import { getAllTestItemsByType } from 'services/_api/testItemsRequest';
+import { getAllSampleReceivingByType } from 'services/_api/sampleReceivingRequest';
 import * as Yup from 'yup';
 import { Divider } from '@mui/material';
 
@@ -77,7 +77,7 @@ const Step2 = ({ values, errors, touched, setFieldValue, fertilizerTypes, compan
 
   const [formData, setFormData] = useState(initialFormData);
   const [packagingTypes, setPackagingTypes] = useState([]);
-  const [testItems, setTestItems] = useState([]);
+  const [testItems, setSampleReceiving] = useState([]);
 
   const formDataSchema = Yup.object({
     fertilizerCategory: Yup.string()
@@ -156,7 +156,7 @@ const Step2 = ({ values, errors, touched, setFieldValue, fertilizerTypes, compan
 
   useEffect(() => {
     handleGetPackageType();
-    handleGetTestItems();
+    handleGetSampleReceiving();
   }, []);
 
   const handleGetPackageType = async () => {
@@ -164,14 +164,14 @@ const Step2 = ({ values, errors, touched, setFieldValue, fertilizerTypes, compan
     setPackagingTypes(response);
   };
 
-  const handleGetTestItems = async () => {
+  const handleGetSampleReceiving = async () => {
     try {
-      const response = await getAllTestItemsByType(sampleTypeId);
-      console.log('handleGetTestItems:', response);
-      setTestItems(response);
+      const response = await getAllSampleReceivingByType(sampleTypeId);
+      console.log('handleGetSampleReceiving:', response);
+      setSampleReceiving(response);
     } catch (error) {
       console.error('Error fetching test items:', error);
-      setTestItems([]);
+      setSampleReceiving([]);
     }
   };
 
@@ -229,19 +229,19 @@ const Step2 = ({ values, errors, touched, setFieldValue, fertilizerTypes, compan
   const requiresPercentage = (testItemId) => [1, 3, 5, 7, 10, 15].includes(testItemId);
 
   const handleTestItemChange = (testItemId, checked) => {
-    const updatedTestItems = checked
+    const updatedSampleReceiving = checked
       ? [...formData.test_items, { test_item_id: testItemId, test_percentage: '' }]
       : formData.test_items.filter((item) => item.test_item_id !== testItemId);
-    setFormData({ ...formData, test_items: updatedTestItems });
-    console.log('Updated test_items:', updatedTestItems);
+    setFormData({ ...formData, test_items: updatedSampleReceiving });
+    console.log('Updated test_items:', updatedSampleReceiving);
   };
 
   const handlePercentageChange = (testItemId, value) => {
-    const updatedTestItems = formData.test_items.map((item) =>
+    const updatedSampleReceiving = formData.test_items.map((item) =>
       item.test_item_id === testItemId ? { ...item, test_percentage: value } : item
     );
-    setFormData({ ...formData, test_items: updatedTestItems });
-    console.log('Updated test_items with percentage:', updatedTestItems);
+    setFormData({ ...formData, test_items: updatedSampleReceiving });
+    console.log('Updated test_items with percentage:', updatedSampleReceiving);
   };
 
   const getFertilizerCategoryLabel = (sample) => {

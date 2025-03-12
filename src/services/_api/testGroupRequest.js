@@ -1,6 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export const getAllFertilicerType = async () => {
+export const getAllTestGroups = async () => {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
   //   const raw = JSON.stringify(data);
@@ -12,11 +12,27 @@ export const getAllFertilicerType = async () => {
     redirect: 'follow'
   };
 
-  const response = await fetch(API_BASE_URL + '/fertilizer-types', requestOptions);
+  const response = await fetch(API_BASE_URL + '/test-groups', requestOptions);
   return await response.json();
 };
 
-export const postFertilicerType = async (data) => {
+export const getTestGroupsById = async (id) => {
+  const myHeaders = new Headers();
+  myHeaders.append('Content-Type', 'application/json');
+  //   const raw = JSON.stringify(data);
+
+  const requestOptions = {
+    method: 'GET',
+    headers: myHeaders,
+    // body: raw,
+    redirect: 'follow'
+  };
+
+  const response = await fetch(API_BASE_URL + '/test-groups/' + id, requestOptions);
+  return await response.json();
+};
+
+export const postTestGroups = async (data) => {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
   const raw = JSON.stringify(data);
@@ -28,7 +44,7 @@ export const postFertilicerType = async (data) => {
     redirect: 'follow'
   };
   try {
-    const response = await fetch(`${API_BASE_URL}/fertilizer-types`, requestOptions);
+    const response = await fetch(`${API_BASE_URL}/test-groups`, requestOptions);
 
     // ตรวจสอบว่าการร้องขอสำเร็จหรือไม่ (status 200-299)
     if (!response.ok) {
@@ -43,8 +59,7 @@ export const postFertilicerType = async (data) => {
   }
 };
 
-//  ✅ get Customer all
-export const getFertilicerTypeByID = async (id) => {
+export const getTestGroupsByID = async (id) => {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
   //   const raw = JSON.stringify(data);
@@ -56,11 +71,11 @@ export const getFertilicerTypeByID = async (id) => {
     redirect: 'follow'
   };
 
-  const response = await fetch(API_BASE_URL + '/fertilizer-types/' + id, requestOptions);
+  const response = await fetch(API_BASE_URL + '/test-groups/' + id, requestOptions);
   return await response.json();
 };
 
-export const putFertilicerType = async (data, id) => {
+export const putTestGroups = async (id, data) => {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
   const raw = JSON.stringify(data);
@@ -72,7 +87,7 @@ export const putFertilicerType = async (data, id) => {
     redirect: 'follow'
   };
   try {
-    const response = await fetch(`${API_BASE_URL}/fertilizer-types/` + id, requestOptions);
+    const response = await fetch(`${API_BASE_URL}/test-groups/` + id, requestOptions);
 
     // ตรวจสอบว่าการร้องขอสำเร็จหรือไม่ (status 200-299)
     if (!response.ok) {
@@ -87,8 +102,7 @@ export const putFertilicerType = async (data, id) => {
   }
 };
 
-//  ✅ get Customer all
-export const deleteFertilicerType = async (id) => {
+export const deleteTestGroups = async (id) => {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
   //   const raw = JSON.stringify(data);
@@ -100,6 +114,6 @@ export const deleteFertilicerType = async (id) => {
     redirect: 'follow'
   };
 
-  const response = await fetch(API_BASE_URL + '/fertilizer-types/' + id, requestOptions);
+  const response = await fetch(API_BASE_URL + '/test-groups/' + id, requestOptions);
   return await response.json();
 };

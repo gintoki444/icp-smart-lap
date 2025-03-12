@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, Button, Row, Col, Spinner, Badge } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getServiceRequestsByID, getServiceRequestsStatusByID } from 'services/_api/serviceRequest';
-import { getAllTestItems } from 'services/_api/testItemsRequest';
+import { getAllSampleReceiving } from 'services/_api/sampleReceivingRequest';
 import { getAllPackagingType } from 'services/_api/packageingTypeRequest';
-import { getAllFertilicerType } from 'services/_api/fertilizerTypes';
+import { getAllFertilicerType } from 'services/_api/fertilizerTypesRequest';
 import { DataGrid } from '@mui/x-data-grid';
 import ReviewModal from './ReviewModal';
 import { Stepper, Step, StepLabel, StepContent } from '@mui/material';
@@ -121,11 +121,11 @@ const FertilizerDetails = ({ title }) => {
   };
 
   const [packagingTypes, setPackagingTypes] = useState([]);
-  const [testItems, setTestItems] = useState([]);
+  const [testItems, setSampleReceiving] = useState([]);
 
   useEffect(() => {
     handleGetPackageType();
-    handleGetTestItems();
+    handleGetSampleReceiving();
     getFertilizerTypes();
   }, []);
 
@@ -134,13 +134,13 @@ const FertilizerDetails = ({ title }) => {
     setPackagingTypes(response);
   };
 
-  const handleGetTestItems = async () => {
+  const handleGetSampleReceiving = async () => {
     try {
-      const response = await getAllTestItems();
-      setTestItems(response);
+      const response = await getAllSampleReceiving();
+      setSampleReceiving(response);
     } catch (error) {
       console.error('Error fetching test items:', error);
-      setTestItems([]);
+      setSampleReceiving([]);
     }
   };
 
