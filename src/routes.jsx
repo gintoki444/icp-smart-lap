@@ -492,6 +492,11 @@ const routes = [
       },
       {
         exact: 'true',
+        path: '/profile/edit',
+        element: lazy(() => import('./views/user/profile/EditProfile'))
+      },
+      {
+        exact: 'true',
         path: '/company',
         element: lazy(() => import('./views/user/company/company'))
       },
@@ -523,7 +528,7 @@ const routes = [
       {
         exact: 'true',
         path: '/request/add',
-        element: lazy(() => import('./views/request/forms/AddRequest'))
+        element: lazy(() => import('./views/request/forms/AddServiceRequest'))
       },
       {
         exact: 'true',
@@ -537,7 +542,7 @@ const routes = [
       },
       {
         exact: 'true',
-        path: '/request/history',
+        path: '/request-history',
         element: lazy(() => import('./views/request/HistoryRequestPage'))
       },
       {

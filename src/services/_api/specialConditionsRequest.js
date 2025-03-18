@@ -58,3 +58,19 @@ export const getCustomerSpecialConditionsByID = async (id) => {
   const response = await fetch(API_BASE_URL + '/customer_special_conditions/' + id, requestOptions);
   return await response.json();
 };
+
+export const deleteCustomerSpecialConditions = async (id) => {
+  const myHeaders = new Headers();
+  myHeaders.append('Content-Type', 'application/json');
+  //   const raw = JSON.stringify(data);
+
+  const requestOptions = {
+    method: 'DELETE',
+    headers: myHeaders,
+    // body: raw,
+    redirect: 'follow'
+  };
+
+  const response = await fetch(API_BASE_URL + '/special_conditions/' + id, requestOptions);
+  return await response.json();
+};

@@ -10,6 +10,7 @@ import { IoCheckmarkSharp, IoClose, IoReload } from 'react-icons/io5';
 import * as userRequest from 'services/_api/usersRequest';
 import { toast } from 'react-toastify';
 import { authenUser } from 'services/_api/authentication';
+import { RiDeleteBin5Line } from 'react-icons/ri';
 
 const UserLinkCostomer = () => {
   const [user, setUser] = useState([]);
@@ -73,8 +74,8 @@ const UserLinkCostomer = () => {
       headerAlign: 'center',
       align: 'center',
       renderCell: (params) => (
-        <Badge pill style={{}} bg={params.row.status === 'pending' ? 'warning' : 'success'}>
-          {params.row.status === 'pending' ? 'รออนุมัติ' : 'อนุมัติ'}
+        <Badge pill style={{}} bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
+          {params.row.status === 'pending' ? 'รออนุมัติ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
         </Badge>
       )
     },
@@ -86,11 +87,14 @@ const UserLinkCostomer = () => {
       align: 'center',
       renderCell: (params) => (
         <ButtonGroup style={{ fontSize: 14 }}>
-          <Button variant="outline-info" size="sm" onClick={() => handleApprove(params.row.id, 'Y')}>
+          <Button variant="info" size="sm" disabled={params.row.status === 'approved'} onClick={() => handleApprove(params.row.id, 'Y')}>
             <IoCheckmarkSharp />
           </Button>
-          <Button variant="outline-danger" size="sm" onClick={() => handleApprove(params.row.id, 'N')}>
+          <Button variant="danger" size="sm" disabled={params.row.status === 'rejected'} onClick={() => handleApprove(params.row.id, 'N')}>
             <IoClose />
+          </Button>
+          <Button variant="outline-danger" size="sm" color="secondary" onClick={() => handleDelete(params.row.id)}>
+            <RiDeleteBin5Line />
           </Button>
         </ButtonGroup>
       )
@@ -114,19 +118,39 @@ const UserLinkCostomer = () => {
   };
 
   const handleApprove = (id, status) => {
-    const confirmDelete = window.confirm(`คุณต้องการอนุมัติคำขอใช้บริษัท หรือไม่?`);
+    const confirmDelete = window.confirm(`คุณต้องการ${status === 'N' ? 'ยกเลิก' : ''}อนุมัติคำขอใช้บริษัท หรือไม่?`);
     if (confirmDelete) {
       const data = {
         approved_by: user.user_id,
         status: status === 'Y' ? 'approved' : 'rejected'
       };
+      console.log(data);
       try {
         userRequest.putUserCustomerLinks(data, id).then(() => {
-          toast.success('อนุมัติสำเร็จ!', { autoClose: 3000 });
+          toast.success(status === 'N' ? 'ยกเลิกการอนุมัติสำเร็จ!' : 'อนุมัติสำเร็จ!', { autoClose: 3000 });
           getUserCustomerLink();
         });
       } catch (error) {
         toast.error(`อนุมัติไม่สำเร็จ: ${error}`, { autoClose: 3000 });
+      }
+    }
+  };
+
+  const handleDelete = (id, status) => {
+    const confirmDelete = window.confirm(`คุณต้องการลบอนุมัติคำขอใช้บริษัท หรือไม่?`);
+    if (confirmDelete) {
+      const data = {
+        approved_by: user.user_id,
+        status: status === 'Y' ? 'approved' : 'rejected'
+      };
+      console.log(data);
+      try {
+        userRequest.deleteUserCustomerLinks(id).then(() => {
+          toast.success('ลบการอนุมัติสำเร็จ!', { autoClose: 3000 });
+          getUserCustomerLink();
+        });
+      } catch (error) {
+        toast.error(`ลบการอนุมัติไม่สำเร็จ: ${error}`, { autoClose: 3000 });
       }
     }
   };
@@ -142,10 +166,10 @@ const UserLinkCostomer = () => {
             <Button variant="primary" size="sm" color="secondary" onClick={handleClearFilter} disabled={!filterText}>
               <IoReload style={{ fontSize: 20 }} />
             </Button>
-            <Button variant="success" size="sm" onClick={() => navigate('/admin/add')}>
+            {/* <Button variant="success" size="sm"  onClick={() => navigate('/admin/add')}>
               <i className="feather icon-plus-circle" />
               เพิ่ม
-            </Button>
+            </Button> */}
           </Stack>
 
           <DataGrid

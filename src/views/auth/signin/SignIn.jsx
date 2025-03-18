@@ -37,7 +37,7 @@ const Signin = () => {
               <p className="mb-1 text-muted">
                 Activate E-mal?{' '}
                 <NavLink to="/auth/activate-token" className="f-w-400">
-                  activate
+                  Activate
                 </NavLink>
               </p>
               <p className="mb-1 text-muted">

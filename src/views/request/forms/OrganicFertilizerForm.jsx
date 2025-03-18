@@ -140,7 +140,7 @@ export const OrganicFertilizerForm = ({ onHandleSave }) => {
                   <span className="form-stepper-circle">
                     <span style={{ fontSize: 24 }}>{step === 1 ? '1' : <i className="feather icon-check" />}</span>
                   </span>
-                  <div className="label">ข้อมูลบริษัท</div>
+                  <div className="label">ข้อมูลลูกค้า/บริษัท</div>
                 </a>
               </li>
               {/* Step 2 */}

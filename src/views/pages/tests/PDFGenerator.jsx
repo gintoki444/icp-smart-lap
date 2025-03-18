@@ -74,7 +74,7 @@ const PDFGenerator = () => {
 
 const QuotationHeader = () => (
   <View>
-    {/* โลโก้ + ข้อมูลบริษัท + หัวข้อใบเสนอราคา */}
+    {/* โลโก้ + ข้อมูลลูกค้า/บริษัท + หัวข้อใบเสนอราคา */}
     <View style={styles.headerContainer}>
       <View style={{ maxWidth: 50 }}>
         <Image src={logo} style={styles.logo} />

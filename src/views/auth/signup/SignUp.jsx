@@ -124,7 +124,7 @@ const SignUp1 = () => {
                         <Form.Group className="mb-3 text-start">
                           <Form.Control
                             type="text"
-                            placeholder="เบอร์โทรศัพท์"
+                            placeholder="ตัวอย่าง: 0812345678"
                             name="phone"
                             value={values.phone}
                             onChange={handleChange}

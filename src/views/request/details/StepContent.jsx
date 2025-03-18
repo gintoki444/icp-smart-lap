@@ -8,6 +8,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddTestTracking from './AddTestTracking';
+import { getAllFertilizerMain } from 'services/_api/fertilizerMainRequest';
 
 const ServiceStepContent = ({ serviceId, handleReload }) => {
   const navigate = useNavigate();
@@ -27,8 +28,19 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
 
   const [serviceData, setServiceData] = useState({});
   const [sampleList, setSampleList] = useState([]);
+  const [fertilizerFormulas, setFertilizerFormulas] = useState([]);
   const getServiceRequest = async (id) => {
     const response = await getServiceRequestsByID(id);
+
+    response.sample_submissions = response.sample_submissions.map((sub) => ({
+      ...sub,
+      reportMethod: [
+        sub.is_self_pickup ? 'is_self_pickup' : null,
+        sub.pdf_email ? 'pdf_email' : null,
+        sub.is_mail_delivery ? 'is_mail_delivery' : null
+      ].filter(Boolean)
+    }));
+    console.log('response.sample_submissions:', response.sample_submissions);
     setSampleList(response.sample_submissions);
     setServiceData(response);
   };
@@ -37,6 +49,7 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
   //   const [testItems, setSampleReceiving] = useState([]);
 
   useEffect(() => {
+    getFertilizerFormulas();
     handleGetPackageType();
     getFertilizerTypes();
   }, []);
@@ -56,11 +69,34 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
     }
   };
 
+  const getFertilizerFormulas = async () => {
+    try {
+      const result = await getAllFertilizerMain();
+      const formattedOptions = result.map((item) => ({
+        value: item.fertilizer_main_id,
+        label: item.fertilizer_main_name_th
+      }));
+      console.log('formattedOptions', formattedOptions);
+      setFertilizerFormulas(formattedOptions);
+    } catch (error) {
+      console.error('Error fetching fertilizer formulas:', error);
+      setFertilizerFormulas([]);
+    }
+  };
+
   const getFertilizerCategoryLabel = (sampleList, fertilizerCategoryOptions) => {
     const selectedKey = Object.keys(sampleList).find((key) => sampleList[key] === 1);
     const selectedOption = fertilizerCategoryOptions.find((option) => option.value === selectedKey);
     return selectedOption ? selectedOption.label : null;
   };
+
+  const unitOptions = [
+    { value: 'g', label: 'กรัม' },
+    { value: 'kg', label: 'กิโลกรัม' },
+    { value: 'oz', label: 'ออนซ์' },
+    { value: 'ml', label: 'มิลลิลิตร' },
+    { value: 'L', label: 'ลิตร' }
+  ];
 
   const columns = [
     { field: 'no', headerName: '#', width: 90, headerAlign: 'center', align: 'center' },
@@ -109,11 +145,14 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
     return setData;
   };
 
-  // const handleReload = (check) => {
-  //   if (check) {
-  //     getServiceRequest(serviceId);
-  //   }
-  // };
+  const reportMethodOptions = [
+    { value: 'is_self_pickup', label: 'รับด้วยตนเอง' },
+    { value: 'pdf_email', label: 'ต้องการไฟล์ pdf เพิ่มเติมทาง E-mail' },
+    { value: 'is_mail_delivery', label: 'ส่งทางไปรษณีย์' }
+  ];
+  const getReportMethodLabels = (methods) => {
+    return methods.map((method) => reportMethodOptions.find((opt) => opt.value === method)?.label || method).join(', ');
+  };
 
   return (
     <div>
@@ -205,12 +244,16 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
                       </AccordionSummary>
                       <AccordionDetails className="pb-0">
                         <Row>
-                          <Col md={6} className="mb-2">
-                            <p className="mb-0">
-                              ประเภทของปุ๋ย :{' '}
-                              <strong className="text-dark">{getFertilizerCategoryLabel(sample, fertilizerCategoryOptions)}</strong>
-                            </p>
-                          </Col>
+                          {sample.fertilizer_main_id && (
+                            <Col md={6} className="mb-2">
+                              <p className="mb-0">
+                                ประเภทของปุ๋ย :{' '}
+                                <strong className="text-dark">
+                                  {fertilizerFormulas.find((x) => x.value === sample.fertilizer_main_id)?.label}
+                                </strong>
+                              </p>
+                            </Col>
+                          )}
                           <Col md={6} className="mb-2">
                             <p className="mb-0">
                               ลักษณะปุ๋ย :{' '}
@@ -250,34 +293,62 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
                               <strong className="text-dark">{sample.supplier_country || '-'}</strong>
                             </p>
                           </Col>
-                          <Col md={6} className="mb-0">
+                          <Col md={6} className="mb-2">
                             <p className="mb-0">
-                              สถานะ :
-                              <Badge
-                                pill
-                                bg={
-                                  (sample.verification_status === 'No' && sample.is_job_accepted) ||
-                                  (sample.verification_status === 'No' && !sample.is_job_accepted) ||
-                                  (sample.verification_status === 'Yes' && !sample.is_job_accepted)
-                                    ? 'warning'
-                                    : sample.verification_status === 'Yes' && sample.is_job_accepted
-                                      ? 'success'
-                                      : 'danger'
-                                }
-                                style={{ marginLeft: 12 }}
-                              >
-                                {(sample.verification_status === 'No' && sample.is_job_accepted) ||
-                                (sample.verification_status === 'No' && !sample.is_job_accepted) ||
-                                (sample.verification_status === 'Yes' && !sample.is_job_accepted)
-                                  ? 'รอการตรวจสอบ'
-                                  : sample.verification_status === 'Yes' && sample.is_job_accepted
-                                    ? 'รับงาน'
-                                    : ' ไม่อนุมัติ'}
-                              </Badge>
+                              ปริมาณ : <strong className="text-dark">{sample.sample_weight || '-'}</strong>{' '}
+                              <strong className="text-dark">
+                                {unitOptions.find((unit) => unit.value === sample.sample_weight_unit)?.label || '-'}
+                              </strong>
                             </p>
                           </Col>
+                          <Col md={6} className="mb-2">
+                            <p className="mb-0">
+                              วัตถุส่วนประกอบของปุ๋ย : <strong className="text-dark">{sample.composition || '-'}</strong>
+                            </p>
+                          </Col>
+                          <Col md={6} className="mb-2">
+                            <p className="mb-0">
+                              ผู้ส่งตัวอย่าง : <strong className="text-dark">{sample.submitted_by || '-'}</strong>
+                            </p>
+                          </Col>
+                          <Col md={6} className="mb-2">
+                            <p className="mb-0">
+                              เบอร์โทรศัพท์ผู้ส่ง : <strong className="text-dark">{sample.phone || '-'}</strong>
+                            </p>
+                          </Col>
+                          <Col md={6} className="mb-3">
+                            {/* <p className="mb-0">
+                              วันที่ส่ง : <strong className="text-dark">{new Date(sample.submission_date).toLocaleString() || '-'}</strong>
+                            </p> */}
+                            <p className="mb-0">
+                              วันที่ส่ง :{' '}
+                              <strong className="text-dark">
+                                {new Date(sample.submission_date).toLocaleDateString('th-TH', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
+                                }) || '-'}
+                              </strong>
+                            </p>
+                          </Col>
+                          <Col md={12} className="mb-3">
+                            <h6 className="mb-3">ข้อมูลการขอรับผลการตรวจ</h6>
+                            <p className="mb-1">
+                              วิธีการรับรายงาน : <strong className="text-dark">{getReportMethodLabels(sample.reportMethod)}</strong>
+                            </p>
+                            {sample.reportMethod.includes('pdf_email') && (
+                              <p className="mb-1">
+                                E-mail สำหรับรับผลตรวจ : <strong className="text-dark">{sample.pdf_email || '-'}</strong>
+                              </p>
+                            )}
+                            {sample.reportMethod.includes('is_mail_delivery') && (
+                              <p className="mb-1">
+                                ที่อยู่จัดส่ง : <strong className="text-dark">{sample.mail_delivery_location || '-'}</strong>
+                              </p>
+                            )}
+                          </Col>
                           <Col md={12} className="mb-2">
-                            <h6 className="mb-3">ข้อมูลการทดสอบ</h6>
+                            <h6 className="mb-3">รายการทดสอบ</h6>
                             <div style={{ width: '100%' }}>
                               <DataGrid
                                 rows={handleSetDataGrid(sample.sample_submission_details)}
@@ -299,6 +370,8 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
                           submissionId={sample.submission_id}
                           handleTracking={handleReload}
                           trackingData={sample.sample_tracking}
+                          serviceRequestId={serviceId}
+                          sampleSubmissions={sampleList}
                         />
                       </Col>
                     </Col>

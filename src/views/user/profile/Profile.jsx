@@ -1,89 +1,69 @@
 // Profile.jsx
-import React, { useState } from 'react';
-import { Card, Row, Col, Button, Form, Modal } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Card, Row, Col, Button } from 'react-bootstrap';
+import { authenUser } from 'services/_api/authentication';
+import { getUserByID } from 'services/_api/usersRequest';
+import { FiEdit } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
-  const [showSettings, setShowSettings] = useState(false);
-  const [profile, setProfile] = useState({
-    name: 'Your Name',
-    email: 'yourname@gmail.com',
-    phone: 'Add number',
-    location: 'USA'
-  });
+  const [profile, setProfile] = useState({});
+  const navigate = useNavigate();
 
-  const handleSettingsClose = () => setShowSettings(false);
-  const handleSettingsShow = () => setShowSettings(true);
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      authenUser(token).then((response) => {
+        getUserByID(response.user.user_id).then((response) => {
+          console.log('getUserByID:', response);
+          setProfile(response);
+        });
+      });
+    }
+  }, [profile]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setProfile({ ...profile, [name]: value });
+  const handleEdit = (users) => {
+    navigate('/profile/edit', { state: { users } });
   };
-
   return (
-    <div className="container">
-      <Row className="justify-content-center">
-        <Col md={6} sm={12}>
-          <Card className="text-center">
-            <Card.Body>
-              <img src="https://placehold.co/100" alt="Profile" className="rounded-circle mb-3" />
-              <h4>{profile.name}</h4>
-              <p className="text-muted">{profile.email}</p>
-              <Button variant="primary" className="mb-3" onClick={handleSettingsShow}>
-                Settings
-              </Button>
+    <div className="">
+      <Card>
+        <Card.Header>
+          <h5>ข้อมูลโปรไฟล์</h5>
+        </Card.Header>
+        <Card.Body className="p-10">
+          <div className="container">
+            <Row className="justify-content-center">
+              <Col md={6} sm={12}>
+                <Card className="text-center">
+                  <Card.Body>
+                    <img src="https://placehold.co/100" alt="Profile" className="rounded-circle mb-3" />
+                    <h4>{profile.name}</h4>
+                    <h5 className="text-muted">{profile.email}</h5>
+                    <Card className="text-start mt-4 mb-0">
+                      <Card.Body>
+                        <h6>ชื่อ-นามสกุล</h6>
+                        <p>{profile.first_name + ' ' + profile.last_name}</p>
 
-              <Card className="text-start mt-3">
-                <Card.Body>
-                  <h6>Name</h6>
-                  <p>{profile.name}</p>
+                        <h6>อีเมล์</h6>
+                        <p>{profile.email}</p>
 
-                  <h6>Email account</h6>
-                  <p>{profile.email}</p>
+                        <h6>เบอร์โทรศัพท์</h6>
+                        <p>{profile.phone}</p>
 
-                  <h6>Mobile number</h6>
-                  <p>{profile.phone}</p>
-
-                  <h6>Location</h6>
-                  <p>{profile.location}</p>
-
-                  <Button variant="success">Save Changes</Button>
-                </Card.Body>
-              </Card>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Settings Modal */}
-      <Modal show={showSettings} onHide={handleSettingsClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Settings</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Theme</Form.Label>
-              <Form.Select defaultValue="Light">
-                <option>Light</option>
-                <option>Dark</option>
-              </Form.Select>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Language</Form.Label>
-              <Form.Select defaultValue="Eng">
-                <option>Eng</option>
-                <option>Thai</option>
-              </Form.Select>
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleSettingsClose}>
-            Close
-          </Button>
-          <Button variant="primary">Save Changes</Button>
-        </Modal.Footer>
-      </Modal>
+                        <Button variant="primary" onClick={() => handleEdit(profile)}>
+                          <FiEdit style={{ marginRight: 8 }} />
+                          แก้ไข
+                        </Button>
+                      </Card.Body>
+                    </Card>
+                  </Card.Body>
+                </Card>
+              </Col>
+            </Row>
+          </div>
+        </Card.Body>
+      </Card>
     </div>
   );
 };

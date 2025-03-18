@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Row, Col, Spinner, Badge } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getServiceRequestsByID, getServiceRequestsStatusByID } from 'services/_api/serviceRequest';
+import { getServiceRequestsByID } from 'services/_api/serviceRequest';
 import { getAllSampleReceiving } from 'services/_api/sampleReceivingRequest';
 import { getAllPackagingType } from 'services/_api/packageingTypeRequest';
 import { getAllFertilicerType } from 'services/_api/fertilizerTypesRequest';
@@ -42,19 +42,14 @@ const FertilizerDetails = ({ title }) => {
 
   const [serviceData, setServiceData] = useState({});
   const [sampleList, setSampleList] = useState([]);
-  const [serviceStatus, setServiceStatus] = useState({});
 
   const getServiceRequest = async (id) => {
     try {
       setIsLoading(true); // เริ่มโหลด
       const response = await getServiceRequestsByID(id);
-      const responseStatus = await getServiceRequestsStatusByID(id);
-
       setSampleList(response.sample_submissions || []);
-      setServiceStatus(responseStatus || {});
       setServiceData(response);
-
-      updateActiveStep(response, responseStatus);
+      updateActiveStep(response, {});
     } catch (error) {
       console.error('Error fetching service request:', error);
     } finally {
@@ -64,13 +59,10 @@ const FertilizerDetails = ({ title }) => {
 
   const updateActiveStep = (serviceData, serviceStatus) => {
     const sampleSubmissions = serviceData.sample_submissions || [];
-    const statusTracking =
-      serviceStatus.request_status_tracking && serviceStatus.request_status_tracking.length > 0
-        ? serviceStatus.request_status_tracking[0]
-        : {};
+    const statusLogs = serviceData.service_status_logs || {};
 
     for (let i = 0; i < steps.length; i++) {
-      if (isStepComplete(i, sampleSubmissions, statusTracking)) {
+      if (isStepComplete(i, sampleSubmissions, statusLogs)) {
         setActiveStep(i + 1);
       } else {
         setActiveStep(i);
@@ -104,98 +96,98 @@ const FertilizerDetails = ({ title }) => {
     }, 3000);
   };
 
-  const [packagingTypes, setPackagingTypes] = useState([]);
-  const [testItems, setSampleReceiving] = useState([]);
+  // const [packagingTypes, setPackagingTypes] = useState([]);
+  // const [testItems, setSampleReceiving] = useState([]);
 
   useEffect(() => {
-    handleGetPackageType();
-    handleGetSampleReceiving();
-    getFertilizerTypes();
+    // handleGetPackageType();
+    // handleGetSampleReceiving();
+    // getFertilizerTypes();
   }, []);
 
-  const handleGetPackageType = async () => {
-    const response = await getAllPackagingType();
-    setPackagingTypes(response);
-  };
+  // const handleGetPackageType = async () => {
+  //   const response = await getAllPackagingType();
+  //   setPackagingTypes(response);
+  // };
 
-  const handleGetSampleReceiving = async () => {
-    try {
-      const response = await getAllSampleReceiving();
-      setSampleReceiving(response);
-    } catch (error) {
-      console.error('Error fetching test items:', error);
-      setSampleReceiving([]);
-    }
-  };
+  // const handleGetSampleReceiving = async () => {
+  //   try {
+  //     const response = await getAllSampleReceiving();
+  //     setSampleReceiving(response);
+  //   } catch (error) {
+  //     console.error('Error fetching test items:', error);
+  //     setSampleReceiving([]);
+  //   }
+  // };
 
-  const [fertilizerTypes, setFertilizerTypes] = useState([]);
-  const getFertilizerTypes = async () => {
-    try {
-      const response = await getAllFertilicerType();
-      setFertilizerTypes(response);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  // const [fertilizerTypes, setFertilizerTypes] = useState([]);
+  // const getFertilizerTypes = async () => {
+  //   try {
+  //     const response = await getAllFertilicerType();
+  //     setFertilizerTypes(response);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
   const handleOpenNewTab = () => {
     const url = '/request/detial/quotation';
     window.open(url, '_blank');
   };
 
-  const getFertilizerCategoryLabel = (sampleList, fertilizerCategoryOptions) => {
-    const selectedKey = Object.keys(sampleList).find((key) => sampleList[key] === 1);
-    const selectedOption = fertilizerCategoryOptions.find((option) => option.value === selectedKey);
-    return selectedOption ? selectedOption.label : null;
-  };
+  // const getFertilizerCategoryLabel = (sampleList, fertilizerCategoryOptions) => {
+  //   const selectedKey = Object.keys(sampleList).find((key) => sampleList[key] === 1);
+  //   const selectedOption = fertilizerCategoryOptions.find((option) => option.value === selectedKey);
+  //   return selectedOption ? selectedOption.label : null;
+  // };
 
-  const columns = [
-    { field: 'no', headerName: '#', width: 90, headerAlign: 'center', align: 'center' },
-    {
-      field: 'test_code',
-      headerName: 'ทดสอบ',
-      flex: 1,
-      renderCell: (params) => {
-        if (!params || !params.row) return '-';
-        const { test_code, test_percentage } = params.row;
-        return `${test_code || ''}${test_percentage ? ` (${test_percentage})` : ''}`.trim();
-      }
-    },
-    {
-      field: 'status',
-      headerName: 'สถานะ',
-      headerAlign: 'center',
-      align: 'center',
-      flex: 1,
-      renderCell: (params) => (
-        <Badge pill bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
-          {params.row.status === 'pending' ? 'รออนุมัติ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
-        </Badge>
-      )
-    },
-    {
-      field: 'test_value',
-      headerName: 'ผลที่ได้',
-      flex: 1,
-      renderCell: (params) => params?.row?.test_value || '-'
-    },
-    {
-      field: 'test_date',
-      headerName: 'วันที่ทดสอบ',
-      flex: 1,
-      valueGetter: (params) => params?.row?.created_at || '-'
-    }
-  ];
+  // const columns = [
+  //   { field: 'no', headerName: '#', width: 90, headerAlign: 'center', align: 'center' },
+  //   {
+  //     field: 'test_code',
+  //     headerName: 'ทดสอบ',
+  //     flex: 1,
+  //     renderCell: (params) => {
+  //       if (!params || !params.row) return '-';
+  //       const { test_code, test_percentage } = params.row;
+  //       return `${test_code || ''}${test_percentage ? ` (${test_percentage})` : ''}`.trim();
+  //     }
+  //   },
+  //   {
+  //     field: 'status',
+  //     headerName: 'สถานะ',
+  //     headerAlign: 'center',
+  //     align: 'center',
+  //     flex: 1,
+  //     renderCell: (params) => (
+  //       <Badge pill bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
+  //         {params.row.status === 'pending' ? 'รออนุมัติ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
+  //       </Badge>
+  //     )
+  //   },
+  //   {
+  //     field: 'test_value',
+  //     headerName: 'ผลที่ได้',
+  //     flex: 1,
+  //     renderCell: (params) => params?.row?.test_value || '-'
+  //   },
+  //   {
+  //     field: 'test_date',
+  //     headerName: 'วันที่ทดสอบ',
+  //     flex: 1,
+  //     valueGetter: (params) => params?.row?.created_at || '-'
+  //   }
+  // ];
 
-  const handleSetDataGrid = (data) => {
-    const setData = data.map((test, idx) => ({
-      id: test.detail_id,
-      no: idx + 1,
-      ...test
-    }));
-    console.log('setData', setData);
-    return setData;
-  };
+  // const handleSetDataGrid = (data) => {
+  //   const setData = data.map((test, idx) => ({
+  //     id: test.detail_id,
+  //     no: idx + 1,
+  //     ...test
+  //   }));
+  //   console.log('setData', setData);
+  //   return setData;
+  // };
 
   const handleEdit = (id) => {
     navigate('/request/edit/', { state: { id } });
@@ -208,56 +200,57 @@ const FertilizerDetails = ({ title }) => {
   };
 
   const steps = [
-    { label: 'การขอรับบริการ', status: 'delivered_to_lab' },
-    { label: 'ส่งตัวอย่าง', status: 'received' },
-    { label: 'รับตัวอย่างเข้าระบบ', status: 'received_in_system' },
-    { label: 'ตรวจสอบข้อมูล', status: 'verification_status' },
+    { label: 'การขอรับบริการ', status: 'requested' },
+    { label: 'ลูกค้าส่งตัวอย่าง', status: 'sample_sent' },
+    { label: 'ทบทวนคำขอ', status: 'request_reviewed' },
+    { label: 'ตัวอย่างจัดส่งถึงแล็บ', status: 'sample_arrived_lab' },
+    { label: 'รับตัวอย่างเข้าระบบ', status: 'sample_received' },
+    { label: 'รอทดสอบบางรายการ', status: 'partial_testing' },
     { label: 'ออกใบเสนอราคา', status: 'quotation_issued' },
-    { label: 'ออก Invoice', status: 'invoice_requested' },
-    { label: 'ชำระเงิน', status: 'payment_received' }
+    { label: 'ขอใบแจ้งหนี้', status: 'invoice_requested' },
+    { label: 'รับชำระเงิน', status: 'payment_received' },
+    { label: 'หัก ณ ที่จ่าย', status: 'tax_withheld' },
+    { label: 'ออกใบเสร็จรับเงิน/ใบกำกับภาษี', status: 'receipt_issued' }
   ];
-  const isStepComplete = (index, sampleSubmissions, statusTracking) => {
+
+  const isStepComplete = (index, sampleSubmissions, statusLogs) => {
     const sampleCount = sampleSubmissions.length;
+    const stepStatus = steps[index].status;
 
     switch (index) {
       case 0: // การขอรับบริการ
-        return true;
+        return statusLogs.requested !== null; // ถ้า requested ไม่เป็น null ถือว่าเสร็จสิ้น
 
-      case 1: // ส่งตัวอย่าง
+      case 1: // ลูกค้าส่งตัวอย่าง
         if (sampleCount === 0) return false;
-        if (sampleCount === 1) {
-          // ตรวจสอบ sample_tracking ใน sampleSubmissions[0]
-          const tracking = sampleSubmissions[0].sample_tracking;
-          return tracking && tracking.length > 0 && tracking[0]?.status;
-        }
-        // ตรวจสอบว่าแต่ละ submission มี sample_tracking และ status เป็น 'received'
-        return sampleSubmissions.every((submission) => {
-          const tracking = submission.sample_tracking;
-          return (
-            tracking && tracking.length > 0 && tracking.some((track) => track.submission_id === submission.submission_id && track.status)
-          );
-        });
-      case 2: // รับตัวอย่างเข้าระบบ
-        return statusTracking.received_in_system === 'yes';
+        return statusLogs.sample_sent !== null; // ถ้า sample_sent ไม่เป็น null ถือว่าเสร็จสิ้น
 
-      case 3: // ตรวจสอบข้อมูล
-        if (sampleCount === 0) return false;
-        if (sampleCount === 1) {
-          return serviceStatus.verification_status && serviceStatus.verification_status[0]?.status === 'Yes';
-        }
-        if (!serviceStatus.verification_status || !Array.isArray(serviceStatus.verification_status)) return false;
-        return sampleSubmissions.every((submission) =>
-          serviceStatus.verification_status.some((verify) => verify.submission_id === submission.submission_id && verify.status === 'Yes')
-        );
+      case 2: // ทบทวนคำขอ
+        return statusLogs.request_reviewed !== null; // ถ้า request_reviewed ไม่เป็น null ถือว่าเสร็จสิ้น
 
-      case 4: // ออกใบเสนอราคา
-        return statusTracking.quotation_issued === 'yes';
+      case 3: // ตัวอย่างจัดส่งถึงแล็บ
+        return statusLogs.sample_arrived_lab !== null; // ถ้า sample_arrived_lab ไม่เป็น null ถือว่าเสร็จสิ้น
 
-      case 5: // ออก Invoice
-        return statusTracking.invoice_requested === 'yes';
+      case 4: // รับตัวอย่างเข้าระบบ
+        return statusLogs.sample_received !== null; // ถ้า sample_received ไม่เป็น null ถือว่าเสร็จสิ้น
 
-      case 6: // ชำระเงิน
-        return statusTracking.payment_received === 'yes';
+      case 5: // รอทดสอบบางรายการ
+        return statusLogs.partial_testing !== null; // ถ้า partial_testing ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      case 6: // ออกใบเสนอราคา
+        return statusLogs.quotation_issued !== null; // ถ้า quotation_issued ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      case 7: // ขอใบแจ้งหนี้
+        return statusLogs.invoice_requested !== null; // ถ้า invoice_requested ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      case 8: // รับชำระเงิน
+        return statusLogs.payment_received !== null; // ถ้า payment_received ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      case 9: // หัก ณ ที่จ่าย
+        return statusLogs.tax_withheld !== null; // ถ้า tax_withheld ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      case 10: // ออกใบเสร็จรับเงิน/ใบกำกับภาษี
+        return statusLogs.receipt_issued !== null; // ถ้า receipt_issued ไม่เป็น null ถือว่าเสร็จสิ้น
 
       default:
         return false;
@@ -285,7 +278,7 @@ const FertilizerDetails = ({ title }) => {
                 sx={{ width: '100%', margin: '0 auto', padding: '20px 0' }}
               >
                 {steps.map((step, index) => (
-                  <Step key={index} completed={isStepComplete(index, sampleList, serviceStatus.request_status_tracking?.[0] || {})}>
+                  <Step key={index} completed={isStepComplete(index, sampleList, serviceData.service_status_logs || {})}>
                     <StepLabel>{step.label}</StepLabel>
                     {orientation === 'vertical' && (
                       <StepContent>
@@ -306,7 +299,7 @@ const FertilizerDetails = ({ title }) => {
                       sx={{ width: '100%', margin: '0 auto', padding: '20px 0' }}
                     >
                       {steps.map((step, index) => (
-                        <Step key={index} completed={isStepComplete(index, sampleList, serviceStatus.request_status_tracking?.[0] || {})}>
+                        <Step key={index} completed={isStepComplete(index, sampleList, serviceData.service_status_logs || {})}>
                           <StepLabel>{step.label}</StepLabel>
                         </Step>
                       ))}

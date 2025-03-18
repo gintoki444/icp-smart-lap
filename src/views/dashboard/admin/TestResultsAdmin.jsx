@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 const TestResultsAdminDashboard = () => {
   const dateNow = format(new Date(), 'dd/MM/yyyy');
 
-  // ตัวอย่างข้อมูลบริษัท
+  // ตัวอย่างข้อมูลลูกค้า/บริษัท
   // สร้างหัวตารางจาก Test Item ที่มีค่า
   const headers = [
     'Customer Code',

@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, Form, Row, Col } from 'react-bootstrap';
 import CompanySelect from 'components/Selector/CompanySelect';
 
-const Step1 = ({ values, errors, touched, handleChange, setFieldValue, spacialCon, handleGetCusSpacialCon }) => {
+const Step1 = ({ values, errors, touched, handleChange, setFieldValue, company, spacialCon }) => {
   const analysisMethodOptions = [
     { value: 'is_registration_analysis', label: 'วิเคราะห์ขึ้นทะเบียน' },
     { value: 'is_quality_check_analysis', label: 'วิเคราะห์เพื่อตรวจสอบคุณภาพ' }
@@ -10,8 +10,35 @@ const Step1 = ({ values, errors, touched, handleChange, setFieldValue, spacialCo
   return (
     <Card className="m-0">
       <Card.Body className="pb-0">
-        <h6>ข้อมูลบริษัท</h6>
-        <Form.Group className="mb-3">
+        <h6>ข้อมูลผู้ขอขึ้นทะเบียน</h6>
+        <Row className="mb-4">
+          <Col md={6} className="mb-2">
+            <p className="mb-0">
+              ชื่อบริษัท : <strong className="text-dark">{company.company_name}</strong>
+            </p>
+          </Col>
+          <Col md={6} className="mb-2">
+            <p className="mb-0">
+              เลขที่ผู้เสียภาษี : <strong className="text-dark">{company.tax_id}</strong>
+            </p>
+          </Col>
+          <Col md={6} className="mb-2">
+            <p className="mb-0">
+              ที่อยู่ : <strong className="text-dark">{company.company_address}</strong>
+            </p>
+          </Col>
+          <Col md={6}>
+            <p className="mb-0">
+              เงื่อนไขพิเศษ :{' '}
+              <strong className="text-dark">
+                {spacialCon &&
+                  spacialCon.length > 0 &&
+                  spacialCon.map((x, index) => (index + 1 < spacialCon.length ? x.description : ` , ${x.description}`))}
+              </strong>
+            </p>
+          </Col>
+        </Row>
+        {/* <Form.Group className="mb-3">
           <CompanySelect
             name="company_id"
             value={values.company_id}
@@ -22,14 +49,18 @@ const Step1 = ({ values, errors, touched, handleChange, setFieldValue, spacialCo
               handleGetCusSpacialCon(value);
             }}
           />
-        </Form.Group>
+        </Form.Group> */}
 
-        {spacialCon.length > 0 && (
+        {/* {spacialCon.length > 0 && (
           <Form.Group className="mb-3">
             <Form.Label>เงื่อนไขพิเศษ :</Form.Label>
-            <Form.Control type="text" readOnly value={spacialCon.find((x) => x.company_id === values.company_id)?.description || ''} />
+            <Form.Control
+              type="text"
+              readOnly
+              value={spacialCon.map((x, index) => (index < spacialCon.length ? x.description : x.description + ' , '))}
+            />
           </Form.Group>
-        )}
+        )} */}
 
         <Form.Group className="mb-3">
           <Form.Label>วัตถุประสงค์การขอใช้บริการ</Form.Label>

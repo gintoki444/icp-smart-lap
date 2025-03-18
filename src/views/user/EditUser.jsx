@@ -149,7 +149,7 @@ function AddEdit() {
                       <Form.Control
                         type="text"
                         className="form-control"
-                        placeholder="เบอร์โทรศัพท์"
+                        placeholder="ตัวอย่าง: 0812345678"
                         name="phone"
                         value={values.phone}
                         onChange={handleChange}

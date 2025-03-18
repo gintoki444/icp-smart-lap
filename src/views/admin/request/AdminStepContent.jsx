@@ -278,7 +278,7 @@ const AdminStepContent = ({ serviceId }) => {
                             </p>
                           </Col>
                           <Col md={12} className="mb-2">
-                            <h6 className="mb-3">ข้อมูลการทดสอบ</h6>
+                            <h6 className="mb-3">รายการทดสอบ</h6>
                             <div style={{ width: '100%' }}>
                               <DataGrid
                                 rows={handleSetDataGrid(sample.sample_submission_details)}

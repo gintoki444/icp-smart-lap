@@ -1,11 +1,11 @@
-// ResendActovateToken.jsx
 import React from 'react';
 import { Card, Row, Col, Form, Button } from 'react-bootstrap';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify'; // เพิ่ม toast สำหรับแจ้งเตือน
 import logo from '../../../assets/images/logo/logo.png';
-import { activateEmail } from 'services/_api/authentication';
+import { resendActivatetoken } from 'services/_api/authentication'; // นำเข้า API resendActivatetoken
 
 const ResendActovateToken = () => {
   const navigate = useNavigate();
@@ -17,10 +17,23 @@ const ResendActovateToken = () => {
     validationSchema: Yup.object({
       email: Yup.string().email('รูปแบบอีเมล์ไม่ถูกต้อง').required('กรุณากรอกอีเมล์')
     }),
-    onSubmit: (values) => {
-      console.log('Reset Password:', values);
-      alert('รีเซ็ตรหัสผ่านสำเร็จ! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่');
-      navigate('/auth/signin');
+    onSubmit: async (values, { setSubmitting }) => {
+      try {
+        // เรียก API resendActivatetoken ด้วยข้อมูล email
+        const data = { email: values.email };
+        const response = await resendActivatetoken(data);
+
+        // ตรวจสอบการตอบกลับจาก API (สมมติว่าถ้าสำเร็จจะมี response หรือ status ที่ระบุ)
+        if (response) {
+          toast.success('ส่ง Token ใหม่สำเร็จ! กรุณาตรวจสอบอีเมล์ของคุณ', { autoClose: 3000 });
+          navigate('/auth/activate-token'); // เปลี่ยนเส้นทางไปที่ /auth/activate-token
+        }
+      } catch (error) {
+        console.error('Error resending activate token:', error);
+        toast.error(`เกิดข้อผิดพลาดในการส่ง Token: ${error.message || 'กรุณาลองใหม่'}`, { autoClose: 3000 });
+      } finally {
+        setSubmitting(false); // รีเซ็ตสถานะ submitting
+      }
     }
   });
 
@@ -41,8 +54,8 @@ const ResendActovateToken = () => {
                   <img className="img-fluid" src={logo} alt="logo" width={120} />
                 </div>
                 <Col md={12}>
-                  <h3 className="mb-4">Resend activate token</h3>
-                  <p className="mb-4">กรอกอีเมล์ที่สมัครสมาชิกเพื่อรับ token</p>
+                  <h3 className="mb-4">Resend Activate Token</h3>
+                  <p className="mb-4">กรอกอีเมล์ที่สมัครสมาชิกเพื่อรับ Token ใหม่</p>
                   <Form onSubmit={formik.handleSubmit}>
                     <Form.Group className="mb-3">
                       <Form.Control
@@ -52,12 +65,21 @@ const ResendActovateToken = () => {
                         value={formik.values.email}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
-                        isInvalid={!!formik.errors.v && formik.touched.email}
+                        isInvalid={formik.touched.email && !!formik.errors.email} // แก้ไขจาก formik.errors.v เป็น formik.errors.email
                       />
                       <Form.Control.Feedback type="invalid">{formik.errors.email}</Form.Control.Feedback>
                     </Form.Group>
-                    <Button variant="primary" type="submit" className="btn-block mb-4">
-                      Re-send
+                    <Button
+                      variant="primary"
+                      type="submit"
+                      className="btn-block mb-4"
+                      disabled={formik.isSubmitting} // ปิดปุ่มเมื่อกำลังส่งข้อมูล
+                    >
+                      {formik.isSubmitting ? (
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      ) : (
+                        'Re-send'
+                      )}
                     </Button>
                   </Form>
                   <p className="mb-1 text-muted">

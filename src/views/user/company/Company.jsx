@@ -77,8 +77,8 @@ const Company = () => {
       headerAlign: 'center',
       align: 'center',
       renderCell: (params) => (
-        <Badge pill style={{}} bg={params.row.status === 'pending' ? 'warning' : 'success'}>
-          {params.row.status === 'pending' ? 'รออนุมัติ' : 'อนุมัติ'}
+        <Badge pill style={{}} bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
+          {params.row.status === 'pending' ? 'รออนุมัติ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
         </Badge>
       )
     },
@@ -124,7 +124,7 @@ const Company = () => {
   };
 
   const handleDelete = (id) => {
-    const confirmDelete = window.confirm(`คุณต้องการลบข้อมูลบริษัทหรือไม่?`);
+    const confirmDelete = window.confirm(`คุณต้องการลบข้อมูลลูกค้า/บริษัทหรือไม่?`);
     if (confirmDelete) {
       try {
         customerRequest.deleteCustomer(id).then(() => {
@@ -141,7 +141,7 @@ const Company = () => {
         <Card.Header>
           <Row>
             <Col>
-              <Card.Title as="h5">รายการข้อมูลบริษัท</Card.Title>
+              <Card.Title as="h5">รายการข้อมูลลูกค้า/บริษัท</Card.Title>
               <span className="d-block m-t-5">
                 บริษัทที่ผู้ใช้งานดูแล
                 {/* <code>Table</code> component */}
@@ -166,16 +166,18 @@ const Company = () => {
               เพิ่ม
             </Button>
           </Stack>
-          <DataGrid
-            rows={filteredRows}
-            columns={columns}
-            pageSize={5}
-            rowsPerPageOptions={[5, 10, 20]}
-            pagination
-            disableSelectionOnClick
-            hideFooterSelectedRowCount
-            style={{ fontSize: 16 }}
-          />
+          <div>
+            <DataGrid
+              rows={filteredRows}
+              columns={columns}
+              pageSize={5}
+              rowsPerPageOptions={[5, 10, 20]}
+              pagination
+              disableSelectionOnClick
+              hideFooterSelectedRowCount
+              style={{ fontSize: 16 }}
+            />
+          </div>
         </Card.Body>
       </Card>
 

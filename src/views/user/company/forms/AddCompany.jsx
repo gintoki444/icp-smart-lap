@@ -4,8 +4,6 @@ import { Row, Col, Card, Button, Form } from 'react-bootstrap';
 import { Formik, FieldArray } from 'formik';
 import { useDropzone } from 'react-dropzone';
 import * as Yup from 'yup';
-
-// api request
 import { toast } from 'react-toastify';
 import * as customerRequest from 'services/_api/customerRequest';
 import { getAllSpecialConditions, postCustomerSpecialConditions } from 'services/_api/specialConditionsRequest';
@@ -14,11 +12,13 @@ import { authenUser } from 'services/_api/authentication';
 import { RiDeleteBin5Line } from 'react-icons/ri';
 import { FaPlusCircle } from 'react-icons/fa';
 import { handleUploadFiles } from 'services/_api/uploadFileRequest';
+import SpecialConditionSelect from 'components/Selector/SpecialConditionSelect';
 
 function AddCompany() {
   const [user, setUser] = useState({});
   const [specialConditions, setSpecialConditions] = useState([]);
   const [files, setFiles] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -42,14 +42,14 @@ function AddCompany() {
   };
 
   const initialValue = {
-    company_code: '',
+    company_code: 'C',
     company_name: '',
     company_address: '',
     document_address: '',
     tax_id: '',
     email: '',
     phone: '',
-    condition_id: '',
+    condition_id: [], // เปลี่ยนเป็น array เพื่อรองรับ multi-select
     special_conditions: '',
     contacts: [
       {
@@ -58,12 +58,12 @@ function AddCompany() {
         contact_email: '',
         position: ''
       }
-    ]
+    ],
+    files: []
   };
 
   const validateValue = () =>
     Yup.object({
-      company_code: Yup.string().min(3, 'รหัสบริษัทต้องมีอย่างน้อย 3 ตัวอักษร').required('กรุณากรอกรหัสบริษัท'),
       company_name: Yup.string().required('กรุณากรอกชื่อบริษัท'),
       tax_id: Yup.string()
         .matches(/^[0-9]{10,13}$/, 'เลขที่ผู้เสียภาษีต้องมี 10 ถึง 13 หลัก')
@@ -74,7 +74,7 @@ function AddCompany() {
       phone: Yup.string()
         .matches(/^[0-9]{10}$/, 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (10 หลัก)')
         .required('กรุณากรอกเบอร์โทรศัพท์'),
-      condition_id: Yup.string().required('กรุณาเลือกเงื่อนไขพิเศษ'),
+      condition_id: Yup.array().min(1, 'กรุณาเลือกเงื่อนไขพิเศษอย่างน้อย 1 รายการ').required('กรุณาเลือกเงื่อนไขพิเศษ'), // ปรับเป็น array
       contacts: Yup.array().of(
         Yup.object({
           contact_name: Yup.string().required('กรุณากรอกชื่อผู้ติดต่อ'),
@@ -84,28 +84,45 @@ function AddCompany() {
           contact_email: Yup.string().email('รูปแบบอีเมล์ไม่ถูกต้อง').required('กรุณากรอกอีเมล์'),
           position: Yup.string().required('กรุณากรอกตำแหน่ง')
         })
+      ),
+      files: Yup.array().test(
+        'fileFormat',
+        'รองรับเฉพาะไฟล์ PDF หรือรูปภาพเท่านั้น',
+        (value) => !value || value.every((file) => file.type === 'application/pdf' || file.type?.startsWith('image/'))
       )
-      // เพิ่ม validation สำหรับ files
-      // files: Yup.array().min(1, 'กรุณาอัปโหลดเอกสารหนังสือรับรองบริษัทอย่างน้อย 1 ไฟล์').required('กรุณาอัปโหลดเอกสาร')
     });
+
+  const handleRemoveNewFile = (indexToRemove) => {
+    setFiles((prevFiles) => prevFiles.filter((_, index) => index !== indexToRemove));
+    // toast.success('ลบไฟล์สำเร็จ', { autoClose: 3000 });
+  };
 
   const handleSubmit = async (values, { setErrors, setStatus, setSubmitting }) => {
     try {
-      // เพิ่ม files เข้าไปใน values เพื่อให้ Yup ใช้ validate ได้
       values.files = files;
+      values.company_code = values.company_code + values.tax_id;
 
-      // Validate ค่าก่อนดำเนินการ
+      console.log('values', values);
+
       const validationSchema = validateValue();
       await validationSchema.validate(values, { abortEarly: false });
 
-      values.special_conditions = specialConditions.find((x) => x.condition_id === Number(values.condition_id))?.description;
-      const response = await customerRequest.postCustomer(values);
+      // ไม่ต้องแปลง condition_id เป็น number เดียว เพราะต้องการเก็บทั้ง array
+      const customerData = { ...values };
+      delete customerData.contacts;
+      delete customerData.files;
+      delete customerData.condition_id; // ลบ condition_id ออกจาก customerData เพราะจะบันทึกแยก
+
+      const response = await customerRequest.postCustomer(customerData);
       if (response.company_id) {
-        // บันทึกเงื่อนไขพิเศษ
-        await postCustomerSpecialConditions({
-          company_id: response.company_id,
-          condition_id: values.condition_id
-        });
+        // บันทึกเงื่อนไขพิเศษหลายรายการ
+        const conditionPromises = values.condition_id.map((conditionId) =>
+          postCustomerSpecialConditions({
+            company_id: response.company_id,
+            condition_id: conditionId
+          })
+        );
+        await Promise.all(conditionPromises);
 
         // บันทึก contacts
         const contactsData = values.contacts.map((contact) => ({
@@ -124,7 +141,7 @@ function AddCompany() {
         };
         await postUserCustomerLinks(data);
 
-        // อัปโหลดไฟล์ทั้งหมดไปที่ Firebase Storage
+        // อัปโหลดไฟล์
         if (files.length > 0) {
           const uploadResults = await handleUploadFiles(
             files,
@@ -135,17 +152,16 @@ function AddCompany() {
             const extractedFileName = fileResult.fileName.split('/').pop();
             return customerRequest.postCustomerDocuments({
               company_id: response.company_id,
-              document_name: `${extractedFileName}`,
+              document_name: extractedFileName,
               document_type: 'ใบจดทะเบียน',
-              document_path: `/${fileResult.fileName}` // พาธไฟล์จาก Firebase Storage
+              document_path: `/${fileResult.fileName}`
             });
           });
-
           await Promise.all(documentPromises);
         }
 
-        toast.success('เพิ่มข้อมูลบริษัทและผู้ติดต่อสำเร็จ!', { autoClose: 3000 });
-        navigate('/company');
+        toast.success('เพิ่มข้อมูลลูกค้า/บริษัทและผู้ติดต่อสำเร็จ!', { autoClose: 3000 });
+        navigate('/company/');
       }
     } catch (err) {
       if (err.name === 'ValidationError') {
@@ -164,13 +180,9 @@ function AddCompany() {
     }
   };
 
-  const navigate = useNavigate();
-
   const onDrop = useCallback((acceptedFiles, fileRejections) => {
-    // เพิ่มไฟล์ที่ยอมรับ
     setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
 
-    // แสดง error หากมีไฟล์ที่ถูกปฏิเสธ
     if (fileRejections.length > 0) {
       fileRejections.forEach((file) => {
         file.errors.forEach((err) => {
@@ -192,8 +204,8 @@ function AddCompany() {
       'image/*': ['.jpeg', '.jpg', '.png'],
       'application/pdf': ['.pdf']
     },
-    maxSize: 5 * 1024 * 1024, // 5MB
-    maxFiles: 5 // จำกัดจำนวนไฟล์สูงสุดที่อัปโหลดได้
+    maxSize: 5 * 1024 * 1024,
+    maxFiles: 5
   });
 
   return (
@@ -202,33 +214,15 @@ function AddCompany() {
         <Card.Header>
           <Row>
             <Col>
-              <Card.Title as="h5">เพิ่มข้อมูลบริษัท</Card.Title>
+              <Card.Title as="h5">เพิ่มข้อมูลลูกค้า/บริษัท</Card.Title>
             </Col>
           </Row>
         </Card.Header>
         <Card.Body>
           <Formik initialValues={initialValue} validationSchema={validateValue} onSubmit={handleSubmit}>
-            {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+            {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting, setFieldValue }) => (
               <Form onSubmit={handleSubmit}>
                 <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-2">
-                      <Form.Label>รหัสบริษัท:</Form.Label>
-                      <Form.Control
-                        type="text"
-                        className="form-control"
-                        placeholder="รหัสบริษัท"
-                        name="company_code"
-                        value={values.company_code}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        isInvalid={touched.company_code && !!errors.company_code}
-                      />
-                      {touched.company_code && errors.company_code && (
-                        <Form.Control.Feedback type="invalid">{errors.company_code}</Form.Control.Feedback>
-                      )}
-                    </Form.Group>
-                  </Col>
                   <Col md={6}>
                     <Form.Group className="mb-2">
                       <Form.Label>ชื่อบริษัท :</Form.Label>
@@ -321,7 +315,7 @@ function AddCompany() {
                       <Form.Control
                         type="text"
                         className="form-control"
-                        placeholder="เบอร์โทรศัพท์"
+                        placeholder="ตัวอย่าง: 0812345678"
                         name="phone"
                         value={values.phone}
                         onChange={handleChange}
@@ -332,30 +326,15 @@ function AddCompany() {
                     </Form.Group>
                   </Col>
                   <Col md={6}>
-                    <Form.Group className="mb-2">
-                      <Form.Label>เงื่อนไขพิเศษ :</Form.Label>
-                      <Form.Select
-                        name="condition_id"
-                        style={{ padding: '10px 20px' }}
-                        value={values.condition_id}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        isInvalid={touched.condition_id && !!errors.condition_id}
-                      >
-                        <option value="">เลือกเงื่อนไขพิเศษ</option>
-                        {specialConditions.map((role) => (
-                          <option key={role.condition_id} value={role.condition_id}>
-                            {role.description}
-                          </option>
-                        ))}
-                      </Form.Select>
-                      {touched.condition_id && errors.condition_id && (
-                        <Form.Control.Feedback type="invalid">{errors.condition_id}</Form.Control.Feedback>
-                      )}
-                    </Form.Group>
+                    <SpecialConditionSelect
+                      name="condition_id"
+                      value={values.condition_id}
+                      onSelect={setFieldValue}
+                      isMulti // เพิ่ม prop เพื่อให้เป็น multi-select
+                    />
+                    {touched.condition_id && errors.condition_id && <div className="invalid-feedback d-block">{errors.condition_id}</div>}
                   </Col>
-                  <Col className="mb-2">
-                    {/* Contacts Section */}
+                  <Col md={12} className="mb-2">
                     <FieldArray name="contacts">
                       {({ push, remove }) => (
                         <>
@@ -427,7 +406,6 @@ function AddCompany() {
                                     <Form.Control.Feedback type="invalid">{errors.contacts?.[index]?.position}</Form.Control.Feedback>
                                   </Form.Group>
                                 </Col>
-
                                 {values.contacts.length > 1 && (
                                   <Col md={12} className="d-flex align-items-end mb-3">
                                     <Button variant="danger" onClick={() => remove(index)} size="sm">
@@ -455,7 +433,7 @@ function AddCompany() {
                   </Col>
                   <Col md={12}>
                     <Form.Group className="mb-4">
-                      <Form.Label>เอกสารหนังสือรับรองบริษัท :</Form.Label>
+                      <Form.Label>เอกสารประกอบการขึ้นทะเบียน (ตย. หนังสือรับรองบริษัท, ภพ.20, บัตรประชาชนกรรมการบริษัท) :</Form.Label>
                       <div
                         {...getRootProps()}
                         style={{
@@ -480,12 +458,14 @@ function AddCompany() {
                         <li key={index}>
                           <i className="feather icon-file" style={{ marginRight: 12 }} />
                           {file.name}
+                          <Button variant="danger" size="sm" className="ms-2" onClick={() => handleRemoveNewFile(index)}>
+                            <RiDeleteBin5Line style={{ fontSize: 16 }} />
+                          </Button>
                         </li>
                       ))}
                     </ul>
                   </Col>
                 </Row>
-
                 <Row className="mt-3">
                   <Col>
                     <Button variant="primary" type="submit" disabled={isSubmitting}>
@@ -497,8 +477,7 @@ function AddCompany() {
                         </>
                       )}
                     </Button>
-
-                    <Button variant="danger" onClick={() => navigate('/company/select')} className="ms-2">
+                    <Button variant="danger" onClick={() => navigate('/company/')} className="ms-2">
                       <i className="feather icon-corner-up-left" /> ย้อนกลับ
                     </Button>
                   </Col>

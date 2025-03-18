@@ -174,7 +174,7 @@ export const putUserCustomerLinks = async (data, id) => {
   };
 
   try {
-    const response = await fetch(API_BASE_URL + '/user-customer-links/user/' + id, requestOptions);
+    const response = await fetch(API_BASE_URL + '/user-customer-links/' + id, requestOptions);
 
     if (!response.ok) {
       const errorData = await response.json(); // ดึง error message จากเซิร์ฟเวอร์
@@ -185,4 +185,19 @@ export const putUserCustomerLinks = async (data, id) => {
   } catch (error) {
     throw error;
   }
+};
+
+//  ✅ get Role By id
+export const deleteUserCustomerLinks = async (id) => {
+  const myHeaders = new Headers();
+  myHeaders.append('Content-Type', 'application/json');
+
+  const requestOptions = {
+    method: 'DELETE',
+    headers: myHeaders,
+    redirect: 'follow'
+  };
+
+  const response = await fetch(API_BASE_URL + '/user-customer-links/' + id, requestOptions);
+  return await response.json();
 };

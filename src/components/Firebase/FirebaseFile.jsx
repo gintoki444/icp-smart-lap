@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Button, ListGroup, Spinner } from 'react-bootstrap';
 import { ref, getDownloadURL } from 'firebase/storage';
-import { storage } from 'your-firebase-config'; // ปรับ path ตามไฟล์ config ของคุณ
+import { storage } from '../../services/_api/firebaseConfig';
 
-const FirebaseFile = ({ filePath, fileName }) => {
+const FirebaseFile = ({ filePath, fileName, onDelete }) => {
   const [fileUrl, setFileUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -41,7 +41,7 @@ const FirebaseFile = ({ filePath, fileName }) => {
     if (fileUrl) {
       const link = document.createElement('a');
       link.href = fileUrl;
-      link.download = displayName; // ใช้ชื่อไฟล์ในการดาวน์โหลด
+      link.download = displayName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -52,6 +52,13 @@ const FirebaseFile = ({ filePath, fileName }) => {
   const handlePreview = () => {
     if (fileUrl) {
       window.open(fileUrl, '_blank');
+    }
+  };
+
+  // ฟังก์ชันสำหรับลบไฟล์
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(filePath, fileName); // เรียกฟังก์ชัน onDelete ที่ส่งมาจาก parent
     }
   };
 
@@ -74,14 +81,17 @@ const FirebaseFile = ({ filePath, fileName }) => {
 
   if (fileUrl) {
     return (
-      <ListGroup.Item className="d-flex justify-content-between align-items-center">
+      <ListGroup.Item className="mb-2 ps-2 pe-2">
         <span>{displayName}</span>
-        <div>
+        <div className="d-flex justify-content align-items-center mt-2">
           <Button variant="outline-primary" size="sm" onClick={handlePreview} className="me-2">
             Preview
           </Button>
-          <Button variant="outline-success" size="sm" onClick={handleDownload}>
+          <Button variant="outline-success" size="sm" onClick={handleDownload} className="me-2">
             Download
+          </Button>
+          <Button variant="outline-danger" size="sm" onClick={handleDelete}>
+            Delete
           </Button>
         </div>
       </ListGroup.Item>

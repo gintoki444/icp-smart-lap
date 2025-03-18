@@ -221,22 +221,61 @@ const FertilizerDetails = ({ title }) => {
   };
 
   const steps = [
-    { label: 'ตัวอย่างจัดส่งถึงแลป', status: 'delivered_to_lab' },
-    { label: 'รับตัวอย่างเข้าระบบ', status: 'received_in_system' },
-    { label: 'ทดสอบบางรายการ', status: 'pending_test' },
+    { label: 'การขอรับบริการ', status: 'requested' },
+    { label: 'ลูกค้าส่งตัวอย่าง', status: 'sample_sent' },
+    { label: 'ทบทวนคำขอ', status: 'request_reviewed' },
+    { label: 'ตัวอย่างจัดส่งถึงแล็บ', status: 'sample_arrived_lab' },
+    { label: 'รับตัวอย่างเข้าระบบ', status: 'sample_received' },
+    { label: 'รอทดสอบบางรายการ', status: 'partial_testing' },
     { label: 'ออกใบเสนอราคา', status: 'quotation_issued' },
     { label: 'ขอใบแจ้งหนี้', status: 'invoice_requested' },
     { label: 'รับชำระเงิน', status: 'payment_received' },
-    { label: 'หัก ณ ที่จ่าย', status: 'withholding_tax_deducted' },
-    { label: 'ออกใบเสร็จรับเงิน', status: 'receipt_issued' }
+    { label: 'หัก ณ ที่จ่าย', status: 'tax_withheld' },
+    { label: 'ออกใบเสร็จรับเงิน/ใบกำกับภาษี', status: 'receipt_issued' }
   ];
 
-  // ฟังก์ชันตรวจสอบว่า step นี้เสร็จสิ้นหรือไม่
-  const isStepComplete = (index) => {
-    console.log('isStepComplete :', index);
-    if (!serviceStatus.request_status_tracking || !serviceStatus.request_status_tracking[0]) return false;
-    const statusTracking = serviceStatus.request_status_tracking[0];
-    return statusTracking[steps[index].status] === 'yes';
+  const isStepComplete = (index, sampleSubmissions, statusLogs) => {
+    const sampleCount = sampleSubmissions.length;
+    const stepStatus = steps[index].status;
+
+    switch (index) {
+      case 0: // การขอรับบริการ
+        return statusLogs.requested !== null; // ถ้า requested ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      case 1: // ลูกค้าส่งตัวอย่าง
+        if (sampleCount === 0) return false;
+        return statusLogs.sample_sent !== null; // ถ้า sample_sent ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      case 2: // ทบทวนคำขอ
+        return statusLogs.request_reviewed !== null; // ถ้า request_reviewed ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      case 3: // ตัวอย่างจัดส่งถึงแล็บ
+        return statusLogs.sample_arrived_lab !== null; // ถ้า sample_arrived_lab ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      case 4: // รับตัวอย่างเข้าระบบ
+        return statusLogs.sample_received !== null; // ถ้า sample_received ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      case 5: // รอทดสอบบางรายการ
+        return statusLogs.partial_testing !== null; // ถ้า partial_testing ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      case 6: // ออกใบเสนอราคา
+        return statusLogs.quotation_issued !== null; // ถ้า quotation_issued ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      case 7: // ขอใบแจ้งหนี้
+        return statusLogs.invoice_requested !== null; // ถ้า invoice_requested ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      case 8: // รับชำระเงิน
+        return statusLogs.payment_received !== null; // ถ้า payment_received ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      case 9: // หัก ณ ที่จ่าย
+        return statusLogs.tax_withheld !== null; // ถ้า tax_withheld ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      case 10: // ออกใบเสร็จรับเงิน/ใบกำกับภาษี
+        return statusLogs.receipt_issued !== null; // ถ้า receipt_issued ไม่เป็น null ถือว่าเสร็จสิ้น
+
+      default:
+        return false;
+    }
   };
   return (
     <div>
@@ -245,7 +284,7 @@ const FertilizerDetails = ({ title }) => {
           <h5>{title}</h5>
         </Card.Header>
         <Card.Body>
-          {/* ข้อมูลบริษัท */}
+          {/* ข้อมูลลูกค้า/บริษัท */}
 
           {/* MUI Stepper */}
           {orientation === 'vertical' ? (
@@ -260,9 +299,13 @@ const FertilizerDetails = ({ title }) => {
               }}
             >
               {steps.map((step, index) => (
-                <Step key={index} completed={isStepComplete(index)}>
+                <Step key={index} completed={isStepComplete(index, sampleList, serviceData.service_status_logs || {})}>
                   <StepLabel>{step.label}</StepLabel>
-                  {orientation === 'vertical' && <StepContent>{/* <AdminStepContent serviceId={serviceData.request_id} /> */}</StepContent>}
+                  {orientation === 'vertical' && (
+                    <StepContent>
+                      <ServiceStepContent serviceId={id} handleReload={handleReload} />
+                    </StepContent>
+                  )}
                 </Step>
               ))}
             </Stepper>
@@ -281,8 +324,13 @@ const FertilizerDetails = ({ title }) => {
                     }}
                   >
                     {steps.map((step, index) => (
-                      <Step key={index} completed={isStepComplete(index)}>
+                      <Step key={index} completed={isStepComplete(index, sampleList, serviceData.service_status_logs || {})}>
                         <StepLabel>{step.label}</StepLabel>
+                        {orientation === 'vertical' && (
+                          <StepContent>
+                            <ServiceStepContent serviceId={id} handleReload={handleReload} />
+                          </StepContent>
+                        )}
                       </Step>
                     ))}
                   </Stepper>
@@ -449,7 +497,7 @@ const FertilizerDetails = ({ title }) => {
                                 </p>
                               </Col>
                               <Col md={12} className="mb-2">
-                                <h6 className="mb-3">ข้อมูลการทดสอบ</h6>
+                                <h6 className="mb-3">รายการทดสอบ</h6>
                                 <div style={{ width: '100%' }}>
                                   <DataGrid
                                     rows={handleSetDataGrid(sample.sample_submission_details)}

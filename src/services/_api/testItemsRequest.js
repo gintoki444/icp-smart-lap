@@ -32,6 +32,22 @@ export const getTestItemsById = async (id) => {
   return await response.json();
 };
 
+export const getTestItemsByTypeId = async (id) => {
+  const myHeaders = new Headers();
+  myHeaders.append('Content-Type', 'application/json');
+  //   const raw = JSON.stringify(data);
+
+  const requestOptions = {
+    method: 'GET',
+    headers: myHeaders,
+    // body: raw,
+    redirect: 'follow'
+  };
+
+  const response = await fetch(API_BASE_URL + '/test-items/type/' + id, requestOptions);
+  return await response.json();
+};
+
 export const postTestItems = async (data) => {
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');

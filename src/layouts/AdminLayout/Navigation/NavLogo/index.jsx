@@ -18,9 +18,9 @@ const NavLogo = () => {
   return (
     <React.Fragment>
       <div className="navbar-brand header-logo">
-        <Link to="#" className="b-brand">
+        <Link to="/" className="b-brand">
           <div className="b-bg">
-            <img src={logo} className="feather icon-trending-up" style={{transform:'none',opacity:1}} width={30} alt="Smart Lap" />
+            <img src={logo} className="feather icon-trending-up" style={{ transform: 'none', opacity: 1 }} width={30} alt="Smart Lap" />
             {/* <i className="feather icon-trending-up" /> */}
           </div>
           <span className="b-title b">Smart Lap</span>

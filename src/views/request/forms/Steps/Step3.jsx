@@ -4,8 +4,8 @@ import { useDropzone } from 'react-dropzone';
 import { deleteFileFromFirebase } from 'services/_api/uploadFileRequest';
 import { deleteServiceRequestDocuments } from 'services/_api/serviceRequest';
 
-const Step3 = ({ values, errors, touched, handleChange, handleBlur, setFieldValue, companyData }) => {
-  const company = companyData.find((x) => x.company_id === values.company_id);
+const Step3 = ({ values, errors, touched, handleChange, handleBlur, setFieldValue, company }) => {
+  // const company = companyData.find((x) => x.company_id === values.company_id);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: (acceptedFiles) => {

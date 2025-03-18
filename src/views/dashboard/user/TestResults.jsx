@@ -4,33 +4,33 @@ import { Card, Row, Col } from 'react-bootstrap';
 import { Chart } from 'react-google-charts';
 
 const TestResultsDashboard = () => {
-  // ตัวอย่างข้อมูลบริษัท
+  // ตัวอย่างข้อมูลลูกค้า/บริษัท
   const testResults = [
-    {
-      customerCode: '109',
-      sampleNo: '24111203',
-      testItems: { pH: 7.7, MC: 1.0, TN: 21.1 }
-    },
-    {
-      customerCode: '02',
-      sampleNo: '24111301',
-      testItems: { pH: 6.5, MC: 0.8, TN: 13.0, TP: 7.9 }
-    },
-    {
-      customerCode: '003',
-      sampleNo: '24111302',
-      testItems: { pH: 7.0, MC: 0.9, TN: 15.5, TP: 6.2 }
-    },
-    {
-      customerCode: '004',
-      sampleNo: '24111303',
-      testItems: { pH: 5.5, MC: 0.7, TN: 12.0, TP: 7.1 }
-    },
-    {
-      customerCode: '005',
-      sampleNo: '24111304',
-      testItems: { pH: 6.8, MC: 1.1, TN: 18.0 }
-    }
+    // {
+    //   customerCode: '109',
+    //   sampleNo: '24111203',
+    //   testItems: { pH: 7.7, MC: 1.0, TN: 21.1 }
+    // },
+    // {
+    //   customerCode: '02',
+    //   sampleNo: '24111301',
+    //   testItems: { pH: 6.5, MC: 0.8, TN: 13.0, TP: 7.9 }
+    // },
+    // {
+    //   customerCode: '003',
+    //   sampleNo: '24111302',
+    //   testItems: { pH: 7.0, MC: 0.9, TN: 15.5, TP: 6.2 }
+    // },
+    // {
+    //   customerCode: '004',
+    //   sampleNo: '24111303',
+    //   testItems: { pH: 5.5, MC: 0.7, TN: 12.0, TP: 7.1 }
+    // },
+    // {
+    //   customerCode: '005',
+    //   sampleNo: '24111304',
+    //   testItems: { pH: 6.8, MC: 1.1, TN: 18.0 }
+    // }
   ];
 
   // การเตรียมข้อมูลสำหรับแสดงผลใน Dashboard
@@ -84,9 +84,7 @@ const TestResultsDashboard = () => {
           </Row> */}
 
           <Row>
-            <Col>
-              <Chart chartType="ComboChart" data={chartData} options={chartOptions} width="100%" height="400px" />
-            </Col>
+            <Col>{/* <Chart chartType="ComboChart" data={chartData} options={chartOptions} width="100%" height="400px" /> */}</Col>
           </Row>
         </Card.Body>
       </Card>

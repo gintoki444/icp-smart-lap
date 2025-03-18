@@ -41,7 +41,8 @@ const Customer = () => {
           phone: customer.phone,
           special_conditions: customer.special_conditions,
           created_at: new Date(customer.created_at).toLocaleString(),
-          customer_contacts: customer.customer_contacts
+          customer_contacts: customer['customer-contacts']
+          // customer_documents: customer.customer_documents
           //   status: customer.status
         }));
         setcustomer(rows);
@@ -104,7 +105,7 @@ const Customer = () => {
   };
 
   const handleDelete = (id) => {
-    const confirmDelete = window.confirm(`คุณต้องการลบข้อมูลบริษัทหรือไม่?`);
+    const confirmDelete = window.confirm(`คุณต้องการลบข้อมูลลูกค้า/บริษัทหรือไม่?`);
     if (confirmDelete) {
       // alert(`ลบข้อมูลสำเร็จ (ID: ${id})`);
       // ที่นี่สามารถเพิ่มฟังก์ชันลบจากฐานข้อมูล
@@ -121,7 +122,7 @@ const Customer = () => {
     <div className="">
       <Card>
         <Card.Header>
-          <h5>ข้อมูลบริษัท</h5>
+          <h5>ข้อมูลลูกค้า/บริษัท</h5>
         </Card.Header>
         <Card.Body className="p-10">
           <Stack direction="row" spacing={1} sx={{ mb: 2 }}>

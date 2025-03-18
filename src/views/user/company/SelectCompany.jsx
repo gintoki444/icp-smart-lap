@@ -12,7 +12,7 @@ function SelectCompany() {
         <Card.Header>
           <Row>
             <Col>
-              <Card.Title as="h5">เพิ่มข้อมูลบริษัท</Card.Title>
+              <Card.Title as="h5">เพิ่มข้อมูลลูกค้า/บริษัท</Card.Title>
               <span className="d-block m-t-5">ลูกค้าเคยลงทะเบียนขอรับบริการในนามบริษัทหรือไม่</span>
             </Col>
           </Row>

@@ -1,28 +1,34 @@
-import React from 'react';
-import { Card, Row, Col, Form, Button, Alert } from 'react-bootstrap'; // เพิ่ม Alert
+import React, { useEffect, useState } from 'react'; // เพิ่ม useEffect และ useState
+import { Card, Row, Col, Form, Button, Alert } from 'react-bootstrap';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'; // เพิ่ม useLocation
 import logo from '../../../assets/images/logo/logo.png';
 import { activateEmail } from 'services/_api/authentication';
 
 const ActivateToken = () => {
   const navigate = useNavigate();
+  const location = useLocation(); // ใช้ useLocation เพื่อดึง URL
+  const [serverError, setServerError] = useState(null); // state สำหรับเก็บ error จาก server
+
+  // ดึงค่า token จาก query string
+  const queryParams = new URLSearchParams(location.search);
+  const tokenFromUrl = queryParams.get('token') || ''; // ดึงค่า token จาก URL ถ้าไม่มีให้เป็น string ว่าง
 
   const formik = useFormik({
     initialValues: {
-      token: '',
-      submit: null // เพิ่ม field สำหรับเก็บ error จาก server
+      token: tokenFromUrl, // ใช้ค่า token จาก URL เป็นค่าเริ่มต้น
+      submit: null
     },
     validationSchema: Yup.object({
-      token: Yup.string().length(4, 'Token ต้องมี 4 ตัวอักษร').required('กรุณากรอก Token')
+      token: Yup.string().length(4, 'Token ต้องมี 4 ตัวอักษร').required('กรุณากรอก Token') // ปรับตามความยาวของ 29994
     }),
     onSubmit: async (values, { setErrors, setSubmitting }) => {
       setSubmitting(true);
+      setServerError(null); // รีเซ็ต error ก่อน submit
       try {
         const response = await activateEmail(values.token);
         if (response.message === 'Account activated successfully. You can now log in.') {
-          alert('ยืนยันอีเมล์สำเร็จ!');
           navigate('/auth/activate-success');
         }
       } catch (error) {
@@ -34,12 +40,20 @@ const ActivateToken = () => {
         } else if (error.message.includes('500')) {
           errorMessage = 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่ภายหลัง';
         }
-        setErrors({ submit: errorMessage }); // ใช้ setErrors เพื่อเก็บข้อความ error
+        setErrors({ submit: errorMessage });
+        setServerError(errorMessage); // เก็บ error ไว้ใน state
       } finally {
         setSubmitting(false);
       }
     }
   });
+
+  // ตรวจสอบ token ทันทีเมื่อหน้าโหลด ถ้ามี token ใน URL
+  useEffect(() => {
+    if (tokenFromUrl) {
+      formik.handleSubmit(); // เรียก submit ทันทีที่มี token
+    }
+  }, [tokenFromUrl]); // ทำงานเมื่อ tokenFromUrl เปลี่ยน
 
   return (
     <React.Fragment>
@@ -78,9 +92,9 @@ const ActivateToken = () => {
                     </Form.Group>
 
                     {/* แสดงข้อความ error จาก server */}
-                    {formik.errors.submit && (
+                    {serverError && (
                       <Alert variant="danger" className="mb-3">
-                        {formik.errors.submit}
+                        {serverError}
                       </Alert>
                     )}
 

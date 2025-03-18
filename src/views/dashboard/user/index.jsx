@@ -12,29 +12,29 @@ import TestResultsDashboard from './TestResults';
 const dashSalesData = [
   {
     title: 'จำวนคำขอใช้บริการทั้งหมด',
-    amount: '3',
+    amount: '0',
     unit: 'รายการ',
     icon: '',
     iconNew: <GrDocumentTest className="text-c-green" style={{ marginRight: 12 }} />,
-    value: 100,
+    value: 0,
     class: 'progress-c-theme'
   },
   {
     title: 'จำนวนการทดสอบกำลังทดสอบ',
-    amount: '1',
+    amount: '0',
     unit: 'รายการ',
     icon: '',
     iconNew: <TbTestPipe className="text-c-blue" style={{ marginRight: 12 }} />,
-    value: 30,
+    value: 0,
     class: 'progress-c-theme2'
   },
   {
     title: 'จำนวนการทดสอบที่ยังไม่ทดสอบ',
-    amount: '2',
+    amount: '0',
     unit: 'รายการ',
     icon: '',
     iconNew: <TbTestPipeOff className="text-c-red" style={{ marginRight: 12 }} />,
-    value: 70,
+    value: 0,
     color: 'progress-c-theme'
   }
 ];

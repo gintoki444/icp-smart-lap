@@ -9,15 +9,24 @@ import { getAllPackagingType } from 'services/_api/packageingTypeRequest';
 import { getAllSampleReceivingByType } from 'services/_api/sampleReceivingRequest';
 import * as Yup from 'yup';
 import { Divider } from '@mui/material';
+import { getTestItemsByTypeId } from 'services/_api/testItemsRequest';
 
-const Step2 = ({ values, errors, touched, setFieldValue, fertilizerTypes, companyData, spacialCon, handleChange, handleBlur }) => {
+import { useDropzone } from 'react-dropzone';
+import { deleteFileFromFirebase } from 'services/_api/uploadFileRequest';
+import { deleteServiceRequestDocuments } from 'services/_api/serviceRequest';
+const Step2 = ({ values, errors, touched, setFieldValue, fertilizerTypes, company, spacialCon, handleChange, handleBlur }) => {
   console.log('Values:', values);
 
   const [showModal, setShowModal] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
   const [formErrors, setFormErrors] = useState({});
-  const company = companyData.find((x) => x.company_id === values.company_id);
+  // const company = companyData.find((x) => x.company_id === values.company_id);
   console.log('Special Conditions:', spacialCon);
+
+  const analysisMethodOptions = [
+    { value: 'is_registration_analysis', label: 'วิเคราะห์ขึ้นทะเบียน' },
+    { value: 'is_quality_check_analysis', label: 'วิเคราะห์เพื่อตรวจสอบคุณภาพ' }
+  ];
 
   const fertilizerCategoryOptions = [
     { value: 'is_single_fertilizer', label: 'เชิงเดี่ยว' },
@@ -100,6 +109,7 @@ const Step2 = ({ values, errors, touched, setFieldValue, fertilizerTypes, compan
     composition: Yup.string().required('กรุณากรอกวัตถุส่วนประกอบของปุ๋ย'),
     sample_weight: Yup.number().typeError('ปริมาณต้องเป็นตัวเลข').required('กรุณากรอกปริมาณ'),
     sample_weight_unit: Yup.string().required('กรุณากรอกหน่วย'),
+    files: Yup.array().min(1, 'กรุณาอัปโหลดเอกสารอย่างน้อยหนึ่งไฟล์').of(Yup.mixed()),
     test_items: Yup.array()
       .min(1, 'กรุณาเลือกอย่างน้อยหนึ่งรายการทดสอบ')
       .of(
@@ -166,7 +176,8 @@ const Step2 = ({ values, errors, touched, setFieldValue, fertilizerTypes, compan
 
   const handleGetSampleReceiving = async () => {
     try {
-      const response = await getAllSampleReceivingByType(sampleTypeId);
+      getTestItemsByTypeId;
+      const response = await getTestItemsByTypeId(sampleTypeId);
       console.log('handleGetSampleReceiving:', response);
       setSampleReceiving(response);
     } catch (error) {
@@ -286,11 +297,46 @@ const Step2 = ({ values, errors, touched, setFieldValue, fertilizerTypes, compan
     console.log('Updated reportMethod:', newValue);
   };
 
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: (acceptedFiles) => {
+      const currentFiles = Array.isArray(values.files) ? values.files : [];
+      setFieldValue('files', [...currentFiles, ...acceptedFiles]);
+    },
+    accept: {
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
+      'application/pdf': ['.pdf']
+    }
+  });
+
+  const handleRemoveFile = async (indexToRemove) => {
+    const fileToRemove = values.files[indexToRemove];
+    const isConfirmed = window.confirm(
+      'คุณแน่ใจหรือไม่ว่าต้องการลบไฟล์ "' + fileToRemove.name + '"? การลบนี้จะลบไฟล์ออกจากระบบทันทีและไม่สามารถกู้คืนได้'
+    );
+
+    if (isConfirmed) {
+      try {
+        // ถ้ามี document_id (ไฟล์ที่อัปโหลดแล้ว) ลบจาก Firebase และ DB
+        if (fileToRemove.document_id) {
+          await deleteFileFromFirebase(fileToRemove.path);
+          await deleteServiceRequestDocuments(fileToRemove.document_id);
+          console.log(`Deleted file ID: ${fileToRemove.document_id} from Firebase and DB`);
+        }
+        // อัปเดต state โดยลบไฟล์ออกจาก array
+        const updatedFiles = values.files.filter((_, index) => index !== indexToRemove);
+        setFieldValue('files', updatedFiles);
+      } catch (error) {
+        console.error('Error removing file:', error);
+        alert('เกิดข้อผิดพลาดในการลบไฟล์ กรุณาลองใหม่');
+      }
+    }
+  };
   return (
     <Row>
       <Col>
         <Card className="m-0">
           <Card.Body className="pb-2 pt-4">
+            <h6>ข้อมูลผู้ขอขึ้นทะเบียน</h6>
             <Row className="mb-4">
               <Col md={6} className="mb-2">
                 <p className="mb-0">
@@ -310,10 +356,49 @@ const Step2 = ({ values, errors, touched, setFieldValue, fertilizerTypes, compan
               <Col md={6}>
                 <p className="mb-0">
                   เงื่อนไขพิเศษ :{' '}
-                  <strong className="text-dark">{spacialCon.find((x) => x.company_id === values.company_id)?.description || '-'}</strong>
+                  <strong className="text-dark">
+                    {spacialCon.map((x, index) => (index + 1 < spacialCon.length ? x.description : ` , ${x.description}`))}
+                  </strong>
                 </p>
               </Col>
             </Row>
+            <Form.Group className="mb-3">
+              <Form.Label>วัตถุประสงค์การขอใช้บริการ</Form.Label>
+              <Form.Group>
+                {analysisMethodOptions.map((option, idx) => (
+                  <Form.Check
+                    inline
+                    type="radio"
+                    name="analysisMethod"
+                    value={option.value}
+                    key={idx}
+                    label={option.label}
+                    checked={values.analysisMethod === option.value}
+                    onChange={handleChange}
+                    id={`reportCheck${idx}`}
+                  />
+                ))}
+              </Form.Group>
+              {errors.analysisMethod && (
+                <Form.Control.Feedback type="invalid" style={{ display: 'block' }}>
+                  {errors.analysisMethod}
+                </Form.Control.Feedback>
+              )}
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>ความต้องการอื่น</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                name="notes"
+                placeholder="กรอกความต้องการอื่น"
+                value={values.notes}
+                onChange={handleChange}
+                isInvalid={touched.notes && !!errors.notes}
+              />
+              <Form.Control.Feedback type="invalid">{errors.notes}</Form.Control.Feedback>
+            </Form.Group>
             <h6 className="mb-3">ข้อมูลตัวอย่าง</h6>
             {values.fertilizerRecords.length === 0 ? (
               <p className="text-muted">ยังไม่มีข้อมูลตัวอย่าง</p>
@@ -472,6 +557,55 @@ const Step2 = ({ values, errors, touched, setFieldValue, fertilizerTypes, compan
               </Row>
             )}
             {errors.fertilizerRecords && <div className="text-danger mb-4">{errors.fertilizerRecords}</div>}
+
+            <Row>
+              <Col md={12}>
+                <h6 className="mb-2">ข้อมูลเอกสาร</h6>
+                <Form.Group className="mb-3 mt-2">
+                  <Form.Label>อัพโหลดเอกสาร :</Form.Label>
+                  <div
+                    {...getRootProps()}
+                    style={{
+                      border: '2px dashed #04a9f5',
+                      borderRadius: '8px',
+                      padding: '20px',
+                      textAlign: 'center',
+                      backgroundColor: isDragActive ? '#e6f7ff' : '#f8f9fa'
+                    }}
+                  >
+                    <input {...getInputProps()} />
+                    {isDragActive ? (
+                      <p style={{ marginBottom: 0 }}>Drop your files here...</p>
+                    ) : (
+                      <p style={{ marginBottom: 0 }}>Drag and drop files here, or click to select files</p>
+                    )}
+                  </div>
+                  <ul className="mt-3">
+                    {values.files &&
+                      values.files.map((file, index) => (
+                        <li key={index} style={{ display: 'flex', alignItems: 'center' }}>
+                          <i className="feather icon-file" style={{ marginRight: 12 }} />
+                          {file.name}
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="text-danger"
+                            style={{ marginLeft: 10 }}
+                            onClick={() => handleRemoveFile(index)}
+                          >
+                            <i className="feather icon-trash-2" />
+                          </Button>
+                        </li>
+                      ))}
+                  </ul>
+                  {touched.files && errors.files && (
+                    <Form.Control.Feedback type="invalid" style={{ display: 'block' }}>
+                      {errors.files}
+                    </Form.Control.Feedback>
+                  )}
+                </Form.Group>
+              </Col>
+            </Row>
             <Button variant="primary" onClick={handleAdd} className="mt-3">
               <i className="feather icon-plus" /> เพิ่ม
             </Button>
@@ -944,7 +1078,7 @@ const Step2 = ({ values, errors, touched, setFieldValue, fertilizerTypes, compan
                     <Form.Control
                       type="text"
                       name="submitted_phone"
-                      placeholder="เบอร์โทรศัพท์"
+                      placeholder="ตัวอย่าง: 0812345678"
                       value={formData.submitted_phone}
                       onChange={(e) => {
                         setFormData({ ...formData, submitted_phone: e.target.value });

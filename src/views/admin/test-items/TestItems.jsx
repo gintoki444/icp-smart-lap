@@ -103,7 +103,7 @@ const TestItems = () => {
   };
 
   const handleDelete = (id) => {
-    const confirmDelete = window.confirm(`คุณต้องการลบข้อมูลการทดสอบหรือไม่?`);
+    const confirmDelete = window.confirm(`คุณต้องการลบรายการทดสอบหรือไม่?`);
     if (confirmDelete) {
       // alert(`ลบข้อมูลสำเร็จ (ID: ${id})`);
       // ที่นี่สามารถเพิ่มฟังก์ชันลบจากฐานข้อมูล
@@ -120,7 +120,7 @@ const TestItems = () => {
     <div className="">
       <Card>
         <Card.Header>
-          <h5>ข้อมูลการทดสอบ</h5>
+          <h5>รายการทดสอบ</h5>
         </Card.Header>
         <Card.Body className="p-10">
           <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
