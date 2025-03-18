@@ -1,381 +1,276 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Button, Row, Col, Spinner, Badge } from 'react-bootstrap';
+import { Card, Button, Form, Modal, Row, Col } from 'react-bootstrap';
+// import { ChemicalFertilizerForm } from './ChemicalFertilizerForm';
+// import { OrganicFertilizerForm } from './OrganicFertilizerForm';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getServiceRequestsByID, putServiceRequestStatusTracking, deleteServiceRequestStatusTracking } from 'services/_api/serviceRequest';
-import { getAllSampleReceiving } from 'services/_api/sampleReceivingRequest';
-import { getAllPackagingType } from 'services/_api/packageingTypeRequest';
-import { getAllFertilicerType } from 'services/_api/fertilizerTypesRequest';
-import { DataGrid } from '@mui/x-data-grid';
-import { FiEdit } from 'react-icons/fi';
-import SampleSubmissionModal from './SampleSubmissionModal';
-import { Stepper, Step, StepLabel, StepContent } from '@mui/material';
-import ServiceStepContent from './StepContent';
+import { GiFertilizerBag, GiChemicalTank } from 'react-icons/gi';
+import { postServiceRequests, postServiceRequestDocuments, putServiceRequestStatusTracking } from 'services/_api/serviceRequest';
+import { postSampleSubmisDetail, postSampleSubmissions } from 'services/_api/sampleSubmissionsRequest';
+import { handleUploadFiles } from 'services/_api/uploadFileRequest';
+import SampleRequestForm from './SampleRequestForm';
+import { authenUser } from 'services/_api/authentication';
+import { toast } from 'react-toastify';
+import { getCustomerSpecialConditionsByID } from 'services/_api/specialConditionsRequest';
+import { getCustomerByID } from 'services/_api/customerRequest';
 
-const FertilizerDetails = ({ title }) => {
-  const location = useLocation();
-  const id = location.state?.id || null;
-  console.log('id', id);
+const AddServiceRequest = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(2);
-  const [quotation, setQuotation] = useState(false);
-  const [confirmRequest, setConfirmRequest] = useState(false);
-  const [tracking, setTracking] = useState(false);
-  const [billing, setBilling] = useState(false);
-  const fertilizerCategoryOptions = [
-    { value: 'is_single_fertilizer', label: 'เชิงเดี่ยว' },
-    { value: 'is_compound_fertilizer', label: 'เชิงประกอบ' },
-    { value: 'is_mixed_fertilizer', label: 'เชิงผสม' },
-    { value: 'is_secondary_nutrient_fertilizer', label: 'ธาตุอาหารรอง-อาหารเสริม' }
-  ];
-  const [orientation, setOrientation] = useState('horizontal');
-  const [activeStep, setActiveStep] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [selectedForm, setSelectedForm] = useState(null);
+  const [samepleSelected, setSamepleSelected] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const location = useLocation();
+  const usersFromState = location.state?.user || null;
+  const customerFromState = location.state?.customer || null;
+  const [spacialCon, setSpacialCon] = useState({});
+  const [customer, setCustomer] = useState({});
 
+  const [user, setUser] = useState([]);
   useEffect(() => {
-    if (id) {
-      getServiceRequest(id);
-    } else {
-      navigate('/request/');
+    const token = localStorage.getItem('authToken');
+    handleGetCusSpacialCon(customerFromState?.id);
+    getCustomersByID(customerFromState?.id);
+    if (token) {
+      authenUser(token).then((response) => {
+        setUser(response.user);
+      });
     }
-  }, [id, navigate]);
+  }, []);
 
-  const [serviceData, setServiceData] = useState({});
-  const [sampleList, setSampleList] = useState([]);
+  const handleFormSelection = (formType) => {
+    setSelectedForm(formType);
+    if (formType === 'organic') {
+      setSamepleSelected(1);
+    } else if (formType === 'chemical') {
+      setSamepleSelected(2);
+    }
+  };
 
-  const getServiceRequest = async (id) => {
+  const getCustomersByID = async (companyId) => {
     try {
-      setIsLoading(true);
-      const response = await getServiceRequestsByID(id);
-      setSampleList(response.sample_submissions || []);
-      setServiceData(response);
-      updateActiveStep(response, {});
+      const response = await getCustomerByID(companyId);
+      console.log('getCustomerByID:', response);
+
+      setCustomer(response);
     } catch (error) {
-      console.error('Error fetching service request:', error);
-    } finally {
-      setIsLoading(false);
+      console.error(error);
+      setCustomer([]);
     }
   };
 
-  const updateActiveStep = (serviceData, serviceStatus) => {
-    const sampleSubmissions = serviceData.sample_submissions || [];
-    const statusLogs = serviceData.service_status_logs || {};
-
-    for (let i = 0; i < steps.length; i++) {
-      if (isStepComplete(i, sampleSubmissions, statusLogs)) {
-        setActiveStep(i + 1);
-      } else {
-        setActiveStep(i);
-        break;
-      }
+  const handleGetCusSpacialCon = async (companyId) => {
+    try {
+      const response = await getCustomerSpecialConditionsByID(companyId);
+      setSpacialCon(Array.isArray(response) ? response : []);
+    } catch (error) {
+      console.error(error);
+      setSpacialCon([]);
     }
   };
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth <= 768) {
-        setOrientation('vertical');
-      } else {
-        setOrientation('horizontal');
-      }
+  // useEffect(() => {
+  //   if (usersFromState === null) {
+  //     navigate('/request/');
+  //   }
+  // }, []);
+  const handleSave = async (data) => {
+    console.log(data);
+    // ข้อมูลจาก Step 1
+    const step1 = {
+      user_id: user.user_id,
+      customer_id: data.company_id,
+      is_registration_analysis: data.analysisMethod === 'is_registration_analysis' ? 1 : 0,
+      is_quality_check_analysis: data.analysisMethod === 'is_quality_check_analysis' ? 1 : 0,
+      sample_type_id: data.sample_type_id,
+      sr_is_self_pickup: (data.reportMethod || []).includes('is_self_pickup') ? 1 : 0,
+      sr_pdf_email: (data.reportMethod || []).includes('pdf_email') ? data.email : '',
+      sr_is_mail_delivery: (data.reportMethod || []).includes('is_self_pickup') ? 1 : 0,
+      sr_mail_delivery_location: '-',
+      notes: data.notes
     };
 
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    console.log(step1);
+    let sampleSubmissionsData = [];
+    data.fertilizerRecords.forEach((record) => {
+      const step2 = {
+        request_id: null,
+        is_single_fertilizer: record.fertilizer_main_id === 1 ? 1 : 0,
+        is_compound_fertilizer: record.fertilizer_main_id === 2 ? 1 : 0,
+        is_mixed_fertilizer: record.fertilizer_main_id === 3 ? 1 : 0,
+        is_secondary_nutrient_fertilizer: record.fertilizer_main_id === 4 ? 1 : 0,
+        fertilizer_type_id: record.fertilizer_type_id,
+        color: record.color,
+        fertilizer_formula: record.fertilizer_formula,
+        packaging_other: record.packaging_other,
+        common_name: record.common_name,
+        trade_name: record.trade_name,
+        trademark: record.trademark,
+        manufacturer: record.manufacturer,
+        manufacturer_country: record.manufacturer_country,
+        supplier: record.supplier,
+        supplier_country: record.supplier_country,
+        composition: record.composition,
+        sample_weight: record.sample_weight,
+        sample_weight_unit: record.sample_weight_unit,
+        packaging_id: record.packaging_id,
+        is_self_pickup: (record.reportMethod || []).includes('is_self_pickup') ? 1 : 0,
+        pdf_email: (record.reportMethod || []).includes('pdf_email') ? record.email : '',
+        is_self_pickup: (record.reportMethod || []).includes('is_self_pickup') ? 1 : 0,
+        is_mail_delivery: (record.reportMethod || []).includes('pdf_email') ? 1 : 0,
+        mail_delivery_location: record.mail_delivery_location,
+        test_all_items: record.test_all_items,
+        is_lab_dispose_sample: record.sampleDisposal === 'is_lab_dispose_sample' ? 1 : 0,
+        is_collect_within_3_months: record.sampleDisposal === 'is_collect_within_3_months' ? 1 : 0,
+        is_return_sample: record.sampleDisposal === 'is_return_sample' ? 1 : 0,
+        submitted_by: record.submitted_by,
+        phone: record.submitted_phone,
+        test_items: record.test_items,
+        formula_id: record.formula_id,
+        fertilizer_main_id: record.fertilizer_main_id
+      };
+      sampleSubmissionsData.push(step2);
+    });
+    console.log(sampleSubmissionsData);
 
-  const [loading, setLoading] = useState(false);
-
-  const handleDownload = () => {
-    setLoading(true);
-    handleOpenNewTab();
-    setTimeout(() => {
-      setLoading(false);
-      alert('ดาวน์โหลดเอกสารสำเร็จ!');
-    }, 3000);
-  };
-
-  const [packagingTypes, setPackagingTypes] = useState([]);
-  const [testItems, setSampleReceiving] = useState([]);
-
-  useEffect(() => {
-    handleGetPackageType();
-    handleGetSampleReceiving();
-    getFertilizerTypes();
-  }, []);
-
-  const handleGetPackageType = async () => {
-    const response = await getAllPackagingType();
-    setPackagingTypes(response);
-  };
-
-  const handleGetSampleReceiving = async () => {
+    // ข้อมูลไฟล์จาก Step ที่เก็บใน data.files
+    const fileData = data.files;
+    // if (data === 999999) {
     try {
-      const response = await getAllSampleReceiving();
-      setSampleReceiving(response);
-    } catch (error) {
-      console.error('Error fetching test items:', error);
-      setSampleReceiving([]);
-    }
-  };
+      console.log('step1:', step1);
+      const responseService = await postServiceRequests(step1);
+      if (responseService.request_id) {
+        // ทำการส่งข้อมูล sampleSubmissionsData
 
-  const [fertilizerTypes, setFertilizerTypes] = useState([]);
-  const getFertilizerTypes = async () => {
-    try {
-      const response = await getAllFertilicerType();
-      setFertilizerTypes(response);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+        for (const record of sampleSubmissionsData) {
+          record.request_id = responseService.request_id;
+          const responseSample = await postSampleSubmissions(record);
+          console.log('responseSample:', responseSample);
+          if (responseSample.submission_id) {
+            const sampleDataDetail = {
+              submission_id: responseSample.submission_id,
+              test_items: record.test_items
+            };
+            const responseTestItem = await postSampleSubmisDetail(sampleDataDetail);
+            console.log('responseTestItem:', responseTestItem);
+          }
+        }
 
-  const handleOpenNewTab = () => {
-    const url = '/request/detial/quotation';
-    window.open(url, '_blank');
-  };
+        // อัปโหลดไฟล์ทั้งหมด และรับผลลัพธ์
+        const uploadResults = await handleUploadFiles(fileData, 'service-requests', 'service_');
 
-  const getFertilizerCategoryLabel = (sampleList, fertilizerCategoryOptions) => {
-    const selectedKey = Object.keys(sampleList).find((key) => sampleList[key] === 1);
-    const selectedOption = fertilizerCategoryOptions.find((option) => option.value === selectedKey);
-    return selectedOption ? selectedOption.label : null;
-  };
+        // สำหรับแต่ละไฟล์ที่อัปโหลด ให้ส่งข้อมูลไปยัง /service-request-documents
+        for (const fileResult of uploadResults) {
+          const extractedFileName = fileResult.fileName.split('/').pop();
+          const documentData = {
+            request_id: responseService.request_id,
+            uploaded_by: user.user_id,
+            file_name: extractedFileName,
+            file_path: `/${fileResult.fileName}`
+          };
 
-  const columns = [
-    { field: 'no', headerName: '#', width: 90, headerAlign: 'center', align: 'center' },
-    {
-      field: 'test_code',
-      headerName: 'ทดสอบ',
-      flex: 1,
-      renderCell: (params) => {
-        if (!params || !params.row) return '-';
-        const { test_code, test_percentage } = params.row;
-        return `${test_code || ''}${test_percentage ? ` (${test_percentage})` : ''}`.trim();
-      }
-    },
-    {
-      field: 'status',
-      headerName: 'สถานะ',
-      headerAlign: 'center',
-      align: 'center',
-      flex: 1,
-      renderCell: (params) => (
-        <Badge pill bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
-          {params.row.status === 'pending' ? 'รออนุมัติ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
-        </Badge>
-      )
-    },
-    {
-      field: 'test_value',
-      headerName: 'ผลที่ได้',
-      flex: 1,
-      renderCell: (params) => params?.row?.test_value || '-'
-    },
-    {
-      field: 'test_date',
-      headerName: 'วันที่ทดสอบ',
-      flex: 1,
-      valueGetter: (params) => params?.row?.created_at || '-'
-    }
-  ];
+          // เรียก API เพิ่มข้อมูลเอกสาร
+          await postServiceRequestDocuments(documentData);
+        }
 
-  const handleSetDataGrid = (data) => {
-    const setData = data.map((test, idx) => ({
-      id: test.detail_id,
-      no: idx + 1,
-      ...test
-    }));
-    console.log('setData', setData);
-    return setData;
-  };
-
-  const handleEdit = (id) => {
-    navigate('/request/edit/', { state: { id } });
-  };
-
-  const handleReload = async (check) => {
-    if (check) {
-      await getServiceRequest(id); // อัปเดตข้อมูลก่อนตรวจสอบ
-      const sampleSubmissions = serviceData.sample_submissions || [];
-      const statusLogs = serviceData.service_status_logs || {};
-
-      // ตรวจสอบขั้นตอน "ลูกค้าส่งตัวอย่าง" (index 1)
-      const isSampleSentComplete = isStepComplete(1, sampleSubmissions, statusLogs);
-
-      if (isSampleSentComplete && statusLogs.sample_sent === null) {
-        // ถ้าขั้นตอนสมบูรณ์แต่ยังไม่มีสถานะ 'sample_sent' ให้อัปเดต
         const reqStatusTracking = {
-          newStatusTracking: 'sample_sent'
+          newStatusTracking: 'requested'
         };
-        await putServiceRequestStatusTracking(id, reqStatusTracking);
-        await getServiceRequest(id); // อัปเดตข้อมูลหลังจากเปลี่ยนสถานะ
-      } else if (!isSampleSentComplete && statusLogs.sample_sent !== null) {
-        // ถ้าขั้นตอนไม่สมบูรณ์แต่มีสถานะ 'sample_sent' ให้ลบ
-        const reqStatusTracking = {
-          StatusTracking: 'sample_sent'
-        };
-        await deleteServiceRequestStatusTracking(id, reqStatusTracking);
-        await getServiceRequest(id); // อัปเดตข้อมูลหลังจากลบสถานะ
+        await putServiceRequestStatusTracking(responseService.request_id, reqStatusTracking);
+        toast.success('เพิ่มข้อมูลคำขอรับบริการสำเร็จ!', { autoClose: 3000 });
+        navigate('/request/detial', { state: { id: responseService.request_id } });
+        setShowSuccessModal(true);
       }
+    } catch (error) {
+      console.log('Error:', error);
+      toast.error('เพิ่มข้อมูลคำขอรับบริการไม่สำเร็จ!', { autoClose: 3000 });
+      alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล:', error);
     }
+    // }
   };
-
-  const steps = [
-    { label: 'การขอรับบริการ', status: 'requested' },
-    { label: 'ลูกค้าส่งตัวอย่าง', status: 'sample_sent' },
-    { label: 'ทบทวนคำขอ', status: 'request_reviewed' },
-    { label: 'ตัวอย่างจัดส่งถึงแล็บ', status: 'sample_arrived_lab' },
-    { label: 'รับตัวอย่างเข้าระบบ', status: 'sample_received' },
-    { label: 'รอทดสอบบางรายการ', status: 'partial_testing' },
-    { label: 'ออกใบเสนอราคา', status: 'quotation_issued' },
-    { label: 'ขอใบแจ้งหนี้', status: 'invoice_requested' },
-    { label: 'รับชำระเงิน', status: 'payment_received' },
-    { label: 'หัก ณ ที่จ่าย', status: 'tax_withheld' },
-    { label: 'ออกใบเสร็จรับเงิน/ใบกำกับภาษี', status: 'receipt_issued' }
-  ];
-
-  const isStepComplete = (index, sampleSubmissions, statusLogs) => {
-    const sampleCount = sampleSubmissions.length;
-    const stepStatus = steps[index].status;
-
-    switch (index) {
-      case 0: // การขอรับบริการ
-        return statusLogs.requested !== null;
-
-      case 1: // ลูกค้าส่งตัวอย่าง
-        if (sampleCount === 0) return false;
-        // ตรวจสอบว่าแต่ละ submission มี sample_tracking และ status เป็น 'received' และจำนวนต้องเท่ากัน
-        const receivedCount = sampleSubmissions.reduce((count, submission) => {
-          const tracking = submission.sample_tracking || [];
-          return (
-            count + (tracking.some((track) => track.submission_id === submission.submission_id && track.status === 'received') ? 1 : 0)
-          );
-        }, 0);
-        return receivedCount === sampleCount;
-
-      case 2: // ทบทวนคำขอ
-        return statusLogs.request_reviewed !== null;
-
-      case 3: // ตัวอย่างจัดส่งถึงแล็บ
-        return statusLogs.sample_arrived_lab !== null;
-
-      case 4: // รับตัวอย่างเข้าระบบ
-        return statusLogs.sample_received !== null;
-
-      case 5: // รอทดสอบบางรายการ
-        return statusLogs.partial_testing !== null;
-
-      case 6: // ออกใบเสนอราคา
-        return statusLogs.quotation_issued !== null;
-
-      case 7: // ขอใบแจ้งหนี้
-        return statusLogs.invoice_requested !== null;
-
-      case 8: // รับชำระเงิน
-        return statusLogs.payment_received !== null;
-
-      case 9: // หัก ณ ที่จ่าย
-        return statusLogs.tax_withheld !== null;
-
-      case 10: // ออกใบเสร็จรับเงิน/ใบกำกับภาษี
-        return statusLogs.receipt_issued !== null;
-
-      default:
-        return false;
-    }
-  };
-
   return (
-    <div>
-      <Card>
-        <Card.Header>
-          <h5>{title}</h5>
-        </Card.Header>
-        <Card.Body>
-          <div>
-            {isLoading ? (
-              <div className="text-center">
-                <Spinner animation="border" variant="primary" />
-                <p>กำลังโหลดข้อมูล...</p>
-              </div>
-            ) : orientation === 'vertical' ? (
-              <Stepper
-                activeStep={activeStep}
-                orientation={orientation}
-                alternativeLabel={orientation === 'horizontal'}
-                sx={{ width: '100%', margin: '0 auto', padding: '20px 0' }}
+    <>
+      {selectedForm === null && (
+        <Card>
+          <Card.Header>
+            <h5>เลือกการขอรับบริการ</h5>
+          </Card.Header>
+          <Card.Body>
+            <Row className="mb-4">
+              <Col md={6} className="mb-2">
+                <p className="mb-0">
+                  ชื่อบริษัท : <strong className="text-dark">{customerFromState.company_name}</strong>
+                </p>
+              </Col>
+              <Col md={6} className="mb-2">
+                <p className="mb-0">
+                  เลขที่ผู้เสียภาษี : <strong className="text-dark">{customerFromState.tax_id}</strong>
+                </p>
+              </Col>
+              <Col md={6} className="mb-2">
+                <p className="mb-0">
+                  ที่อยู่ : <strong className="text-dark">{customerFromState.company_address}</strong>
+                </p>
+              </Col>
+              {spacialCon && spacialCon.length > 0 && (
+                <Col md={6}>
+                  <p className="mb-0">
+                    เงื่อนไขพิเศษ :{' '}
+                    <strong className="text-dark">
+                      {spacialCon.map((x, index) => (index + 1 < spacialCon.length ? x.description : ` , ${x.description}`))}
+                    </strong>
+                  </p>
+                </Col>
+              )}
+            </Row>
+            <div className="d-flex justify-content-center">
+              <Button
+                variant="info"
+                className="w-50 py-4 d-flex align-items-center justify-content-center flex-column"
+                onClick={() => handleFormSelection('organic')}
+                style={{ fontSize: 18 }}
               >
-                {steps.map((step, index) => (
-                  <Step key={index} completed={isStepComplete(index, sampleList, serviceData.service_status_logs || {})}>
-                    <StepLabel>
-                      {step.label}
-                      {serviceData.service_status_logs && serviceData.service_status_logs[step.status] && (
-                        <div style={{ fontSize: '0.8rem', color: 'gray' }}>
-                          {new Date(serviceData.service_status_logs[step.status]).toLocaleDateString('th-TH', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </div>
-                      )}
-                    </StepLabel>
-                    {orientation === 'vertical' && (
-                      <StepContent>
-                        <ServiceStepContent serviceId={id} handleReload={handleReload} />
-                      </StepContent>
-                    )}
-                  </Step>
-                ))}
-              </Stepper>
-            ) : (
-              <>
-                <Card style={{ borderRadius: 10, marginBottom: 10 }}>
-                  <Card.Body style={{ padding: '8px 20px 3px' }}>
-                    <Stepper
-                      activeStep={activeStep}
-                      orientation={orientation}
-                      alternativeLabel={orientation === 'horizontal'}
-                      sx={{ width: '100%', margin: '0 auto', padding: '20px 0' }}
-                    >
-                      {steps.map((step, index) => (
-                        <Step key={index} completed={isStepComplete(index, sampleList, serviceData.service_status_logs || {})}>
-                          <StepLabel>
-                            {step.label}
-                            {serviceData.service_status_logs && serviceData.service_status_logs[step.status] && (
-                              <div style={{ fontSize: '0.8rem', color: 'gray' }}>
-                                {new Date(serviceData.service_status_logs[step.status]).toLocaleDateString('th-TH', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
-                                })}
-                              </div>
-                            )}
-                          </StepLabel>
-                        </Step>
-                      ))}
-                    </Stepper>
-                  </Card.Body>
-                </Card>
-                <ServiceStepContent serviceId={id} handleReload={handleReload} />
-              </>
-            )}
-          </div>
-        </Card.Body>
-        <Card.Footer className="text-start">
-          <SampleSubmissionModal service={serviceData} />
-          <Button variant="primary" onClick={() => handleEdit(id)}>
-            <FiEdit style={{ marginRight: 8 }} /> แก้ไขข้อมูล
+                <GiFertilizerBag size={45} className="mb-2" />
+                แบบฟอร์มนำส่งตัวอย่างปุ๋ยอินทรีย์
+              </Button>
+              <Button
+                variant="success"
+                className="w-50  py-4 d-flex align-items-center justify-content-center flex-column"
+                onClick={() => handleFormSelection('chemical')}
+                style={{ fontSize: 18 }}
+              >
+                <GiChemicalTank size={45} className="mb-2" />
+                แบบฟอร์มนำส่งตัวอย่างปุ๋ยเคมีเพื่อขึ้นทะเบียนปุ๋ย
+              </Button>
+            </div>
+          </Card.Body>
+        </Card>
+      )}
+      {/* {selectedForm === 'organic' && <OrganicFertilizerForm onHandleSave={setShowSuccessModal} />}
+      {selectedForm === 'chemical' && <ChemicalFertilizerForm onHandleSave={handleSave} userId={usersFromState.user_id} />} */}
+
+      {selectedForm !== null && (
+        <SampleRequestForm
+          userId={user.user_id}
+          onHandleSave={handleSave}
+          sampleType={samepleSelected}
+          company={customer}
+          spacialCon={spacialCon}
+        />
+      )}
+      <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered>
+        <Modal.Body className="text-center">
+          <i className="text-success" style={{ fontSize: '3rem' }}>
+            &#10004;
+          </i>
+          <h5 className="mt-3">ลงทะเบียนขอรับบริการสำเร็จ</h5>
+          <p>กรุณารอผลการตรวจสอบคำขอใช้บริการ</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={() => navigate('/request/')}>
+            ปิด
           </Button>
-          <Button variant="danger" onClick={() => navigate('/request/')}>
-            <i className="feather icon-corner-up-left" /> กลับหน้าหลัก
-          </Button>
-        </Card.Footer>
-      </Card>
-    </div>
+        </Modal.Footer>
+      </Modal>
+    </>
   );
 };
 
-const RequestDetailPage = () => {
-  return <FertilizerDetails title="รายละเอียดข้อมูลนำส่งตัวอย่างปุ๋ย" />;
-};
-
-export default RequestDetailPage;
+export default AddServiceRequest;
