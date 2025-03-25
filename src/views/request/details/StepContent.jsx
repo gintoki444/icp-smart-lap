@@ -9,9 +9,14 @@ import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddTestTracking from './AddTestTracking';
 import { getAllFertilizerMain } from 'services/_api/fertilizerMainRequest';
+import { getCustomerByID } from 'services/_api/customerRequest';
+import { getCustomerSpecialConditionsByID } from 'services/_api/specialConditionsRequest';
+import CountrySelect from 'components/Selector/CountrySelect';
 
 const ServiceStepContent = ({ serviceId, handleReload }) => {
   const navigate = useNavigate();
+  const [customer, setCustomer] = useState({});
+  const [spacialCon, setSpacialCon] = useState({});
 
   const fertilizerCategoryOptions = [
     { value: 'is_single_fertilizer', label: 'เชิงเดี่ยว' },
@@ -31,16 +36,22 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
   const [fertilizerFormulas, setFertilizerFormulas] = useState([]);
   const getServiceRequest = async (id) => {
     const response = await getServiceRequestsByID(id);
-
+    await getCustomersByID(response.customer_id);
     response.sample_submissions = response.sample_submissions.map((sub) => ({
       ...sub,
       reportMethod: [
         sub.is_self_pickup ? 'is_self_pickup' : null,
         sub.pdf_email ? 'pdf_email' : null,
         sub.is_mail_delivery ? 'is_mail_delivery' : null
-      ].filter(Boolean)
+      ].filter(Boolean),
+      sampleDisposal: sub.is_lab_dispose_sample
+        ? 'is_lab_dispose_sample'
+        : sub.is_collect_within_3_months
+          ? 'is_collect_within_3_months'
+          : 'is_return_sample'
     }));
     console.log('response.sample_submissions:', response.sample_submissions);
+
     setSampleList(response.sample_submissions);
     setServiceData(response);
   };
@@ -48,6 +59,27 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
   const [packagingTypes, setPackagingTypes] = useState([]);
   //   const [testItems, setSampleReceiving] = useState([]);
 
+  const getCustomersByID = async (companyId) => {
+    try {
+      const response = await getCustomerByID(companyId);
+      console.log('getCustomerByID:', response);
+      await handleGetCusSpacialCon(companyId);
+      setCustomer(response);
+    } catch (error) {
+      console.error(error);
+      setCustomer([]);
+    }
+  };
+
+  const handleGetCusSpacialCon = async (companyId) => {
+    try {
+      const response = await getCustomerSpecialConditionsByID(companyId);
+      setSpacialCon(Array.isArray(response) ? response : []);
+    } catch (error) {
+      console.error(error);
+      setSpacialCon([]);
+    }
+  };
   useEffect(() => {
     getFertilizerFormulas();
     handleGetPackageType();
@@ -154,6 +186,12 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
     return methods.map((method) => reportMethodOptions.find((opt) => opt.value === method)?.label || method).join(', ');
   };
 
+  const sampleDisposalOptions = [
+    { value: 'is_lab_dispose_sample', label: 'ให้ห้องปฏิบัติการจำหน่ายตัวอย่าง' },
+    { value: 'is_collect_within_3_months', label: 'มารับตัวอย่างคืนภายใน 3 เดือน' },
+    { value: 'is_return_sample', label: 'ให้ห้องปฏิบัติการจัดส่งตัวอย่างคืน' }
+  ];
+
   return (
     <div>
       <Card style={{ borderRadius: 10, marginBottom: 0 }}>
@@ -172,15 +210,47 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
             </Col>
             <Col md={6} className="mb-2">
               <p className="mb-0">
-                บริษัท : <strong className="text-dark">{serviceData.customer_name}</strong>
+                รหัสลูกค้า : <strong className="text-dark">{customer.company_code}</strong>
               </p>
             </Col>
             <Col md={6} className="mb-2">
               <p className="mb-0">
-                ประเภทคำขอ :
+                ชื่อบริษัท : <strong className="text-dark">{customer.company_name}</strong>
+              </p>
+            </Col>
+            <Col md={6} className="mb-2">
+              <p className="mb-0">
+                เลขที่ผู้เสียภาษี : <strong className="text-dark">{customer.tax_id}</strong>
+              </p>
+            </Col>
+            <Col md={6} className="mb-2">
+              <p className="mb-0">
+                ที่อยู่ : <strong className="text-dark">{customer.company_address}</strong>
+              </p>
+            </Col>
+            <Col md={6}>
+              <p className="mb-0">
+                เงื่อนไขพิเศษ :{' '}
                 <strong className="text-dark">
-                  {serviceData.is_quality_check_analysis === 1 ? 'วิเคราะห์เพื่อตรวจสอบคุณภาพ' : 'วิเคราะห์ขึ้นทะเบียน'}
+                  {spacialCon.length > 0
+                    ? spacialCon.map((x, index) => `${x.description}${index < spacialCon.length - 1 ? ', ' : ''}`)
+                    : '-'}
                 </strong>
+              </p>
+            </Col>
+            {serviceData.sample_type_id === 1 && (
+              <Col md={6} className="mb-2">
+                <p className="mb-0">
+                  วัตถุประสงค์การขอรับบริการ :{' '}
+                  <strong className="text-dark">
+                    {serviceData.is_quality_check_analysis === 1 ? 'วิเคราะห์เพื่อตรวจสอบคุณภาพ' : 'วิเคราะห์ขึ้นทะเบียน'}
+                  </strong>
+                </p>
+              </Col>
+            )}
+            <Col md={6} className="mb-2">
+              <p className="mb-0">
+                ประเภทคำขอ : <strong className="text-dark">{serviceData.sample_type_name}</strong>
               </p>
             </Col>
             <Col md={6} className="mb-2">
@@ -214,11 +284,16 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
                               </strong>{' '}
                             </>
                           )}
-                          สูตรปุ๋ย : <strong className="text-dark">{sample.fertilizer_formula || '-'}</strong> ( ชื่อสามัญ :{' '}
-                          <strong className="text-dark" style={{ fontWeight: 'bold' }}>
-                            {sample.common_name || '-'}
-                          </strong>
-                          ) สถานะ :
+                          {sample.sample_type_id === 2 && (
+                            <>
+                              สูตรปุ๋ย : <strong className="text-dark">{sample.fertilizer_formula || '-'}</strong> ( ชื่อสามัญ :{' '}
+                              <strong className="text-dark" style={{ fontWeight: 'bold' }}>
+                                {sample.common_name || '-'}
+                              </strong>
+                              ){' '}
+                            </>
+                          )}
+                          สถานะ :
                           <Badge
                             pill
                             bg={
@@ -270,6 +345,144 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
                           </Col>
                           <Col md={6} className="mb-2">
                             <p className="mb-0">
+                              ชื่อการค้า : <strong className="text-dark">{sample.trade_name || '-'}</strong>
+                            </p>
+                          </Col>
+                          <Col md={6} className="mb-2">
+                            <p className="mb-0">
+                              เครื่องหมายการค้า : <strong className="text-dark">{sample.trademark || '-'}</strong>
+                            </p>
+                          </Col>
+                          <Col md={6} className="mb-2">
+                            <p className="mb-0">
+                              ผู้ผลิต (บริษัท/ห้าง/ร้าน) : <strong className="text-dark">{sample.manufacturer || '-'}</strong> ประเทศ :{' '}
+                              <CountrySelect
+                                name="country"
+                                label="ประเทศ"
+                                value={sample.manufacturer_country || '-'}
+                                onChange={(name, value) => console.log(name, value)}
+                                showText={true}
+                              />
+                            </p>
+                          </Col>
+                          <Col md={6} className="mb-2">
+                            <p className="mb-0">
+                              สั่งจาก (บริษัท/ห้าง/ร้าน) : <strong className="text-dark">{sample.supplier || '-'}</strong> ประเทศ :{' '}
+                              <CountrySelect
+                                name="country"
+                                label="ประเทศ"
+                                value={sample.supplier_country || '-'}
+                                onChange={(name, value) => console.log(name, value)}
+                                showText={true}
+                              />
+                            </p>
+                          </Col>
+                          <Col md={6} className="mb-2">
+                            <p className="mb-0">
+                              วัตถุส่วนประกอบของปุ๋ย : <strong className="text-dark">{sample.composition || '-'}</strong>
+                            </p>
+                          </Col>
+                          <Col md={6} className="mb-2">
+                            <p className="mb-0">
+                              ปริมาณ : <strong className="text-dark">{sample.sample_weight || '-'}</strong>{' '}
+                              <strong className="text-dark">
+                                {unitOptions.find((unit) => unit.value === sample.sample_weight_unit)?.label || '-'}
+                              </strong>
+                            </p>
+                          </Col>
+                          <Col md={6} className="mb-2">
+                            <p className="mb-0">
+                              ภาชนะบรรจุ :{' '}
+                              <strong className="text-dark">
+                                {packagingTypes.find((type) => type.packaging_type_id === sample.packaging_id)?.packaging_type_name || '-'}
+                              </strong>
+                            </p>
+                          </Col>
+                          <Col md={12} className="mb-4">
+                            <Col>
+                              รายการทดสอบ :{' '}
+                              <div style={{ width: '100%' }}>
+                                <DataGrid
+                                  rows={handleSetDataGrid(sample.sample_submission_details)}
+                                  columns={columns}
+                                  pageSize={5}
+                                  rowsPerPageOptions={[5, 10, 20]}
+                                  pagination
+                                  disableSelectionOnClick
+                                  hideFooterSelectedRowCount
+                                />
+                              </div>
+                            </Col>
+                          </Col>
+                          {/* <h6 className="mb-2 mt-2">การรับรายงานผล</h6> */}
+                          <Col md={12} className="mb-2 ">
+                            <p className="mb-1">
+                              การรับรายงานผล : <strong className="text-dark">{getReportMethodLabels(sample.reportMethod)}</strong>
+                            </p>
+                            {sample.reportMethod.includes('pdf_email') && (
+                              <p className="mb-1">
+                                E-mail สำหรับรับผลตรวจ : <strong className="text-dark">{sample.pdf_email || '-'}</strong>
+                              </p>
+                            )}
+                            {sample.reportMethod.includes('is_mail_delivery') && (
+                              <p className="mb-1">
+                                ที่อยู่จัดส่ง : <strong className="text-dark">{sample.mail_delivery_location || '-'}</strong>
+                              </p>
+                            )}
+                          </Col>
+                          <Col md={6} className="mb-1">
+                            วิธีการจำหน่ายตัวอย่าง :{' '}
+                            <strong className="text-dark">
+                              {sampleDisposalOptions.find((opt) => opt.value === sample.sampleDisposal)?.label || '-'}
+                            </strong>
+                          </Col>
+                          <Col md={12} className="mb-1">
+                            ความต้องการอื่น : <strong className="text-dark">{sample.other_requirements || '-'}</strong>
+                          </Col>
+                          <Col md={6} className="mb-2">
+                            <p className="mb-0">
+                              ผู้ส่งตัวอย่าง : <strong className="text-dark">{sample.submitted_by || '-'}</strong>
+                            </p>
+                          </Col>
+                          <Col md={6} className="mb-2">
+                            <p className="mb-0">
+                              เบอร์โทรศัพท์ผู้ส่ง : <strong className="text-dark">{sample.phone || '-'}</strong>
+                            </p>
+                          </Col>
+                          <Col md={6} className="mb-2">
+                            <p className="mb-0">
+                              วันที่ส่ง : {''}
+                              <strong className="text-dark">{new Date(sample.submission_date).toLocaleDateString('th-TH') || '-'}</strong>
+                            </p>
+                          </Col>
+                        </Row>
+                        {/* <Row>
+                          {sample.fertilizer_main_id && (
+                            <Col md={6} className="mb-2">
+                              <p className="mb-0">
+                                ประเภทของปุ๋ย :{' '}
+                                <strong className="text-dark">
+                                  {fertilizerFormulas.find((x) => x.value === sample.fertilizer_main_id)?.label}
+                                </strong>
+                              </p>
+                            </Col>
+                          )}
+                          <Col md={6} className="mb-2">
+                            <p className="mb-0">
+                              ลักษณะปุ๋ย :{' '}
+                              <strong className="text-dark">
+                                {fertilizerTypes.find((type) => type.fertilizer_type_id === sample.fertilizer_type_id)
+                                  ?.fertilizer_type_name || '-'}
+                              </strong>
+                            </p>
+                          </Col>
+                          <Col md={6} className="mb-2">
+                            <p className="mb-0">
+                              สี : <strong className="text-dark">{sample.color || '-'}</strong>
+                            </p>
+                          </Col>
+                          <Col md={6} className="mb-2">
+                            <p className="mb-0">
                               ภาชนะบรรจุ :{' '}
                               <strong className="text-dark">
                                 {packagingTypes.find((type) => type.packaging_type_id === sample.packaging_id)?.packaging_type_name || '-'}
@@ -283,14 +496,26 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
                           </Col>
                           <Col md={6} className="mb-2">
                             <p className="mb-0">
-                              ผู้ผลิต (บริษัท/ห้าง/ร้าน) : <strong className="text-dark">{sample.manufacturer || '-'}</strong> ประเทศ :{' '}
-                              <strong className="text-dark">{sample.manufacturer_country || '-'}</strong>
+                              ผู้ผลิต (บริษัท/ห้าง/ร้าน) : <strong className="text-dark">{sample.manufacturer || '-'}</strong> ประเทศ :
+                              <CountrySelect
+                                name="country"
+                                label="ประเทศ"
+                                value={sample.manufacturer_country || '-'}
+                                onChange={(name, value) => console.log(name, value)}
+                                showText={true}
+                              />
                             </p>
                           </Col>
                           <Col md={6} className="mb-2">
                             <p className="mb-0">
-                              สั่งจาก (บริษัท/ห้าง/ร้าน) : <strong className="text-dark">{sample.supplier || '-'}</strong> ประเทศ :{' '}
-                              <strong className="text-dark">{sample.supplier_country || '-'}</strong>
+                              สั่งจาก (บริษัท/ห้าง/ร้าน) : <strong className="text-dark">{sample.supplier || '-'}</strong> ประเทศ :
+                              <CountrySelect
+                                name="country"
+                                label="ประเทศ"
+                                value={sample.manufacturer_country || '-'}
+                                onChange={(name, value) => console.log(name, value)}
+                                showText={true}
+                              />
                             </p>
                           </Col>
                           <Col md={6} className="mb-2">
@@ -317,18 +542,9 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
                             </p>
                           </Col>
                           <Col md={6} className="mb-3">
-                            {/* <p className="mb-0">
-                              วันที่ส่ง : <strong className="text-dark">{new Date(sample.submission_date).toLocaleString() || '-'}</strong>
-                            </p> */}
                             <p className="mb-0">
                               วันที่ส่ง :{' '}
-                              <strong className="text-dark">
-                                {new Date(sample.submission_date).toLocaleDateString('th-TH', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
-                                }) || '-'}
-                              </strong>
+                              <strong className="text-dark">{new Date(sample.submission_date).toLocaleDateString('th-TH') || '-'}</strong>
                             </p>
                           </Col>
                           <Col md={12} className="mb-3">
@@ -361,7 +577,7 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
                               />
                             </div>
                           </Col>
-                        </Row>
+                        </Row> */}
                       </AccordionDetails>
                     </Accordion>
                     <Col style={{ padding: '0 16px 16px' }}>

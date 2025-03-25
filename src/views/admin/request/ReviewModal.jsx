@@ -4,9 +4,11 @@ import { Formik } from 'formik';
 import * as Yup from 'yup';
 import TextField from '@mui/material/TextField';
 import { putSampleSubmissions } from 'services/_api/sampleSubmissionsRequest';
+import { putServiceRequestStatusTracking, deleteServiceRequestStatusTracking } from 'services/_api/serviceRequest';
+import { getSampleSubmisRequestByID } from 'services/_api/sampleSubmissionsRequest';
 import { toast } from 'react-toastify';
 
-const ReviewModal = ({ sampleSubmissions, onSubmitReview }) => {
+const ReviewModal = ({ sampleSubmissions, onSubmitReview, serviceRequestId }) => {
   const [show, setShow] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
@@ -58,7 +60,7 @@ const ReviewModal = ({ sampleSubmissions, onSubmitReview }) => {
     review_date: '',
     approved_by: '',
     approved_date: '',
-    verification_status: 'No'
+    verification_status: sampleSubmissions.verification_status || 'No'
   };
 
   const handleSubmit = async (values, { setSubmitting, setErrors }) => {
@@ -68,21 +70,42 @@ const ReviewModal = ({ sampleSubmissions, onSubmitReview }) => {
 
       const reviewData = {
         is_sample_normal: values.is_sample_normal ? 1 : 0,
-        is_sample_abnormal: values.is_sample_abnormal,
-        sample_abnormal_desc: values.sample_abnormal_desc ? 1 : 0,
+        is_sample_abnormal: values.is_sample_abnormal ? 1 : 0,
+        sample_abnormal_desc: values.sample_abnormal_desc || '',
         is_staff_ready: values.is_staff_ready ? 1 : 0,
         is_staff_not_ready: values.is_staff_not_ready ? 1 : 0,
         is_equipment_ready: values.is_equipment_ready ? 1 : 0,
         is_equipment_not_ready: values.is_equipment_not_ready ? 1 : 0,
         is_job_accepted: values.is_job_accepted ? 1 : 0,
         is_job_rejected: values.is_job_rejected ? 1 : 0
-        // sample_submissions: sampleSubmissions
+        // verification_status: values.is_job_rejected ? 'No' : 'Yes' // ตั้งค่า verification_status ตาม is_job_rejected
       };
+      console.log('reviewData', reviewData);
+      console.log('sampleSubmissions.submission_id', sampleSubmissions.submission_id);
 
-      // await putSampleSubmissions(verificationStatus, sampleSubmissions.submission_id);
       const response = await putSampleSubmissions(reviewData, sampleSubmissions.submission_id);
 
       if (response.message === 'อัปเดตข้อมูลตัวอย่างสำเร็จ') {
+        // ตรวจสอบ verification_status หลังจากอัปเดต
+        const sampleSubmissionsList = await getSampleSubmisRequestByID(serviceRequestId);
+        const sampleSubmissionsCount = sampleSubmissionsList.length;
+        const verifiedCount = sampleSubmissionsList.reduce((count, submission) => {
+          return count + (submission.verification_status === 'Yes' ? 1 : 0);
+        }, 0);
+
+        if (verifiedCount >= sampleSubmissionsCount) {
+          const reqStatusTracking = { newStatusTracking: 'request_reviewed' };
+          await putServiceRequestStatusTracking(serviceRequestId, reqStatusTracking);
+          toast.success('สถานะอัปเดต: การทบทวนคำขอเสร็จสิ้น', { autoClose: 3000 });
+        }
+
+        // ถ้าเลือก is_job_rejected ให้ลบสถานะ request_reviewed และตั้ง verification_status เป็น No
+        if (values.is_job_rejected) {
+          const reqStatusTracking = { StatusTracking: 'request_reviewed' };
+          await deleteServiceRequestStatusTracking(serviceRequestId, reqStatusTracking);
+          toast.info('สถานะถูกลบ: การทบทวนคำขอถูกยกเลิก', { autoClose: 3000 });
+        }
+
         setSubmitting(false);
         setShow(false);
         onSubmitReview(true);
@@ -90,7 +113,6 @@ const ReviewModal = ({ sampleSubmissions, onSubmitReview }) => {
       } else {
         toast.error(response.message, { autoClose: 3000 });
       }
-      // onSubmitReview(reviewData); // ส่งข้อมูลไปยัง parent component
     } catch (error) {
       toast.error('Validation error:' + error, { autoClose: 3000 });
       console.error('Validation error:', error);
@@ -108,22 +130,62 @@ const ReviewModal = ({ sampleSubmissions, onSubmitReview }) => {
     }
   };
 
+  const handleCancelReview = async () => {
+    const confirmCancel = window.confirm('คุณต้องการยกเลิกการทบทวนคำขอนี้หรือไม่?');
+    if (confirmCancel) {
+      try {
+        const reviewData = {
+          is_sample_normal: null,
+          is_sample_abnormal: null,
+          sample_abnormal_desc: null,
+          is_staff_ready: null,
+          is_staff_not_ready: null,
+          is_equipment_ready: null,
+          is_equipment_not_ready: null,
+          is_job_accepted: null,
+          is_job_rejected: null
+          // verification_status: 'No'
+        };
+        console.log('reviewData', reviewData);
+
+        await putSampleSubmissions(reviewData, sampleSubmissions.submission_id);
+
+        const reqStatusTracking = { StatusTracking: 'request_reviewed' };
+        await deleteServiceRequestStatusTracking(serviceRequestId, reqStatusTracking);
+
+        toast.success('ยกเลิกการทบทวนสำเร็จ!', { autoClose: 3000 });
+        onSubmitReview(true);
+        setShow(false);
+      } catch (error) {
+        toast.error('เกิดข้อผิดพลาดในการยกเลิกการทบทวน: ' + error, { autoClose: 3000 });
+      }
+    }
+  };
+
   return (
     <>
-      <Button variant="info" onClick={() => setShow(true)}>
-        <i className="feather icon-eye" /> ทบทวน
-      </Button>
+      {sampleSubmissions.verification_status === 'Yes' ? (
+        <Button variant="warning" onClick={() => setShow(true)}>
+          <i className="feather icon-edit" /> ยกเลิก/แก้ไขการทบทวน
+        </Button>
+      ) : (
+        <Button variant="info" onClick={() => setShow(true)}>
+          <i className="feather icon-eye" /> ทบทวนคำขอ
+        </Button>
+      )}
 
       <Modal show={show} onHide={() => setShow(false)} size="lg" centered>
         <Modal.Header closeButton>
-          <Modal.Title>การทวนคำขอรับบริการ</Modal.Title>
+          <Modal.Title>
+            <h6>การทวนคำขอรับบริการ</h6>
+          </Modal.Title>
         </Modal.Header>
         <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleSubmit}>
           {({ values, errors, touched, handleChange, handleBlur, handleSubmit, setFieldValue, isSubmitting }) => (
             <Form onSubmit={handleSubmit}>
               <Modal.Body>
                 {errorMessage && <div className="text-danger mb-3">{errorMessage}</div>}
-                <h6>การทวนคำขอรับบริการ</h6>
+                <h6>สถานะการขอรับบริการ</h6>
                 <Row className="ps-4 pe-4">
                   <Col md={6}>
                     <Form.Group className="mb-3">
@@ -139,7 +201,7 @@ const ReviewModal = ({ sampleSubmissions, onSubmitReview }) => {
                           onChange={() => {
                             setFieldValue('is_sample_normal', true);
                             setFieldValue('is_sample_abnormal', false);
-                            setFieldValue('sample_abnormal_desc', ''); // รีเซ็ตเมื่อเลือกปกติ
+                            setFieldValue('sample_abnormal_desc', '');
                           }}
                           isInvalid={touched.is_sample_normal && !!errors.is_sample_normal}
                         />
@@ -373,8 +435,13 @@ const ReviewModal = ({ sampleSubmissions, onSubmitReview }) => {
                 </Row>
               </Modal.Body>
               <Modal.Footer className="justify-content-center">
-                <Button variant="danger" onClick={() => setShow(false)} disabled={isSubmitting}>
-                  ยกเลิก
+                {sampleSubmissions.verification_status === 'Yes' && (
+                  <Button variant="danger" onClick={handleCancelReview} disabled={isSubmitting}>
+                    ยกเลิกการทบทวน
+                  </Button>
+                )}
+                <Button variant="secondary" onClick={() => setShow(false)} disabled={isSubmitting}>
+                  ปิด
                 </Button>
                 <Button variant="primary" type="submit" disabled={isSubmitting}>
                   บันทึกการทบทวน

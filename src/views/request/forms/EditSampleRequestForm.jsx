@@ -94,6 +94,7 @@ const EditSampleRequestForm = ({ userId: propUserId }) => {
                 : null,
         fertilizer_main_id: sub.fertilizer_main_id,
         fertilizer_type_id: sub.fertilizer_type_id,
+        fertilizer_other: sub.fertilizer_other,
         color: sub.color || '',
         formula_id: sub.formula_id,
         fertilizer_formula: sub.fertilizer_formula || '',
@@ -131,7 +132,8 @@ const EditSampleRequestForm = ({ userId: propUserId }) => {
         test_all_items: firstSubmission.test_all_items !== null ? !!firstSubmission.test_all_items : true,
         submitted_by: firstSubmission.submitted_by || '',
         submitted_date: firstSubmission.submission_date ? new Date(firstSubmission.submission_date).toISOString().split('T')[0] : '',
-        submitted_phone: firstSubmission.phone || ''
+        submitted_phone: firstSubmission.phone || '',
+        other_requirements: firstSubmission.other_requirements
       })),
       files: (apiData.service_request_documents || []).map((doc) => ({
         name: doc.file_name,
@@ -140,76 +142,6 @@ const EditSampleRequestForm = ({ userId: propUserId }) => {
       }))
     };
   };
-  // const mapApiToFormValues = (apiData, companyData) => {
-  //   console.log('apiData:', apiData);
-  //   const submissions = apiData.sample_submissions || [];
-  //   const firstSubmission = submissions[0] || {};
-  //   return {
-  //     user_id: userId || apiData.user_id,
-  //     company_id: apiData.customer_id,
-  //     analysisMethod: apiData.is_registration_analysis ? 'is_registration_analysis' : 'is_quality_check_analysis',
-  //     notes: apiData.notes || '',
-  //     sample_type_id: apiData.sample_type_id,
-  //     fertilizerRecords: submissions.map((sub) => ({
-  //       request_id: sub.request_id,
-  //       fertilizerCategory: sub.is_single_fertilizer
-  //         ? 'is_single_fertilizer'
-  //         : sub.is_compound_fertilizer
-  //           ? 'is_compound_fertilizer'
-  //           : sub.is_mixed_fertilizer
-  //             ? 'is_mixed_fertilizer'
-  //             : sub.is_secondary_nutrient_fertilizer
-  //               ? 'is_secondary_nutrient_fertilizer'
-  //               : null,
-  //       fertilizer_main_id: sub.fertilizer_main_id,
-  //       fertilizer_type_id: sub.fertilizer_type_id,
-  //       color: sub.color || '',
-  //       formula_id: sub.formula_id,
-  //       fertilizer_formula: sub.fertilizer_formula || '',
-  //       common_name: sub.common_name || '',
-  //       trade_name: sub.trade_name || '',
-  //       trademark: sub.trademark || '',
-  //       manufacturer: sub.manufacturer || '',
-  //       manufacturer_country: sub.manufacturer_country || 'TH',
-  //       supplier: sub.supplier || '',
-  //       supplier_country: sub.supplier_country || 'TH',
-  //       composition: sub.composition || '',
-  //       sample_weight: sub.sample_weight ? parseFloat(sub.sample_weight) : null,
-  //       sample_weight_unit: sub.sample_weight_unit || '',
-  //       packaging_id: sub.packaging_id || null,
-  //       packaging_other: sub.packaging_other || '',
-  //       submission_id: sub.submission_id,
-  //       test_items: (sub.sample_submission_details || []).map((detail) => ({
-  //         test_item_id: detail.test_item_id,
-  //         test_percentage: detail.test_percentage || ''
-  //       })),
-  //       reportMethod: [
-  //         sub.is_self_pickup ? 'is_self_pickup' : null,
-  //         sub.pdf_email ? 'pdf_email' : null,
-  //         sub.is_mail_delivery ? 'is_mail_delivery' : null
-  //       ].filter(Boolean),
-  //       email: sub.pdf_email || '',
-  //       sameAddress: apiData.mail_delivery_location === companyData?.document_address,
-  //       mail_delivery_location: apiData.mail_delivery_location || '',
-  //       phone: firstSubmission.phone || '',
-  //       sampleDisposal: firstSubmission.is_lab_dispose_sample
-  //         ? 'is_lab_dispose_sample'
-  //         : firstSubmission.is_collect_within_3_months
-  //           ? 'is_collect_within_3_months'
-  //           : 'is_return_sample',
-  //       test_all_items: firstSubmission.test_all_items !== null ? !!firstSubmission.test_all_items : true,
-  //       submitted_by: firstSubmission.submitted_by || '',
-  //       submitted_date: firstSubmission.submission_date ? new Date(firstSubmission.submission_date).toISOString().split('T')[0] : '',
-  //       submitted_phone: firstSubmission.phone || ''
-  //     })),
-  //     files: (apiData.service_request_documents || []).map((doc) => ({
-  //       name: doc.file_name,
-  //       path: doc.file_path,
-  //       document_id: doc.document_id
-  //     }))
-  //   };
-  // };
-
   // โหลดข้อมูลจาก API
   const getServiceRequest = async (id) => {
     try {
@@ -357,6 +289,7 @@ const EditSampleRequestForm = ({ userId: propUserId }) => {
         is_secondary_nutrient_fertilizer: record.fertilizerCategory === 'is_secondary_nutrient_fertilizer' ? 1 : 0,
         fertilizer_main_id: record.fertilizer_main_id,
         fertilizer_type_id: record.fertilizer_type_id,
+        fertilizer_other: record.fertilizer_other,
         color: record.color,
         fertilizer_formula: record.fertilizer_formula,
         common_name: record.common_name,
@@ -382,7 +315,8 @@ const EditSampleRequestForm = ({ userId: propUserId }) => {
         submitted_by: record.submitted_by,
         phone: record.submitted_phone,
         submission_date: record.submitted_date,
-        formula_id: record.formula_id
+        formula_id: record.formula_id,
+        other_requirements: record.other_requirements
       };
 
       if (record.submission_id) {
@@ -638,7 +572,7 @@ const EditSampleRequestForm = ({ userId: propUserId }) => {
               {successMessage && <div className="text-success mb-2">{successMessage}</div>}
               {errorMessage && <div className="text-danger mb-2">{errorMessage}</div>}
               <Button variant="primary" type="submit" disabled={values.isSubmitting}>
-                <i className="feather icon-save" /> แก้ไข
+                <i className="feather icon-save" /> บันทึก
               </Button>
               <Button variant="danger" onClick={() => navigate('/request')}>
                 <i className="feather icon-corner-up-left" /> ยกเลิก

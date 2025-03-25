@@ -11,7 +11,7 @@ import { getAllFertilicerType } from 'services/_api/fertilizerTypesRequest';
 import { DataGrid } from '@mui/x-data-grid';
 import SampleReceivingModal from './SampleReceivingModal';
 import { authenUser } from 'services/_api/authentication';
-import CreateQuotation from './CreateQuotation';
+import CreateQuotation from '../quotations/CreateQuotation';
 import GenerateQuotation from '../quotations/GenerateQuotation';
 import { Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';

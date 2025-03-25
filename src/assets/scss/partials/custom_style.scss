@@ -288,9 +288,38 @@ span > .Mui-completed {
 .MuiBox-root {
   padding: 0 !important;
 }
+.MuiAccordion-root.MuiAccordion-rounded::before {
+  opacity: 0 !important;
+}
+.MuiPaper-root.MuiPaper-rounded,
+.MuiAccordion-heading > .MuiButtonBase-root {
+  border-radius: 10px;
+}
+
+.custom-select,
+.form-control {
+  color: #000;
+  font-size: 15px !important;
+}
 
 .MuiStepLabel-iconContainer {
   padding-right: 10px;
+}
+.btn-outline:hover {
+  background-color: rgba(139, 69, 19, 0.1); /* สำหรับปุ๋ยอินทรีย์ */
+}
+.btn-outline:hover {
+  background-color: rgba(40, 167, 69, 0.1); /* สำหรับปุ๋ยเคมี */
+}
+
+.logo-fertilizer-style {
+  width: 200px;
+  height: 200px;
+  margin-bottom: 10px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Responsive adjustments */

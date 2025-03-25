@@ -58,8 +58,8 @@ const FertilicerTypeSelect = ({ name = 'fertilizer_type_id', onSelect, value, di
           styles={{
             control: (provided) => ({
               ...provided,
-              padding: '8px 20px',
-              fontSize: 14
+              padding: '7px 20px',
+              fontSize: 15
             })
           }}
         />

@@ -10,6 +10,10 @@ import ReviewModal from './ReviewModal';
 import { Stepper, Step, StepLabel, StepContent } from '@mui/material';
 import AdminStepContent from './AdminStepContent';
 import { FiEdit } from 'react-icons/fi';
+import { LuMailQuestion } from 'react-icons/lu';
+import { CircularProgress, Box } from '@mui/material';
+import EmailForm from 'components/Email/EmailForm';
+import CreateServiceRequest from 'components/PDF/CreateServiceRequest';
 
 const FertilizerDetails = ({ title }) => {
   const location = useLocation();
@@ -21,7 +25,9 @@ const FertilizerDetails = ({ title }) => {
   const [tracking, setTracking] = useState(false);
   const [billing, setBilling] = useState(false);
   const [orientation, setOrientation] = useState('horizontal');
-  const [activeStep, setActiveStep] = useState(0); // ใช้สำหรับควบคุม step ที่ active
+  const [activeStep, setActiveStep] = useState(0);
+  const [loading, setLoading] = useState(true); // ควบคุมสถานะ loading
+  const [pendingRequests, setPendingRequests] = useState(0); // นับจำนวนการโหลดที่รอดำเนินการ
 
   const fertilizerCategoryOptions = [
     { value: 'is_single_fertilizer', label: 'เชิงเดี่ยว' },
@@ -39,6 +45,24 @@ const FertilizerDetails = ({ title }) => {
     { value: 'is_collect_within_3_months', label: 'มารับตัวอย่างคืนภายใน 3 เดือน' },
     { value: 'is_return_sample', label: 'ให้ห้องปฏิบัติการจัดส่งตัวอย่างคืน' }
   ];
+
+  // ฟังก์ชันสำหรับเริ่มการโหลด
+  const startLoading = () => {
+    setPendingRequests((prev) => {
+      const newCount = prev + 1;
+      setLoading(newCount > 0); // ถ้ามีการโหลดอย่างน้อย 1 รายการ ให้แสดง loading
+      return newCount;
+    });
+  };
+
+  // ฟังก์ชันสำหรับหยุดการโหลด
+  const stopLoading = () => {
+    setPendingRequests((prev) => {
+      const newCount = Math.max(prev - 1, 0); // ไม่ให้ต่ำกว่า 0
+      setLoading(newCount > 0); // ถ้าไม่มีรายการโหลดแล้ว ให้ซ่อน loading
+      return newCount;
+    });
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -60,160 +84,37 @@ const FertilizerDetails = ({ title }) => {
       getServiceRequest(id);
     } else {
       navigate('/admin/request');
+      setLoading(false);
     }
   }, [id, navigate]);
 
   const [serviceData, setServiceData] = useState({});
   const [sampleList, setSampleList] = useState([]);
-  const [serviceStatus, setServiceStatus] = useState([]);
+
   const getServiceRequest = async (id) => {
-    const response = await getServiceRequestsByID(id);
-    const responseStatus = await getServiceRequestsStatusByID(id);
-    console.log('response', response);
-    console.log('sample_submissions', response.sample_submissions);
-    setSampleList(response.sample_submissions);
-    setServiceData(response);
-
-    // ตรวจสอบว่ามีข้อมูล request_status_tracking หรือไม่
-    if (responseStatus && responseStatus.request_status_tracking.length > 0) {
-      const statusTracking = responseStatus.request_status_tracking[0];
-
-      // Map ค่าสถานะเป็นลำดับของ Step
-      const stepsStatus = steps.map((step) => statusTracking[step.status] === 'yes');
-
-      // หา step ล่าสุดที่เสร็จสิ้น
-      const completedSteps = stepsStatus.lastIndexOf(true);
-
-      // ตั้งค่า activeStep ตามสถานะล่าสุด (ถ้าไม่มี ให้เริ่มที่ 0)
-      setActiveStep(completedSteps >= 0 ? completedSteps + 1 : 0);
-      setServiceStatus(responseStatus);
-    }
-  };
-
-  const nextStep = () => {
-    setStep(step + 1);
-  };
-
-  const prevStep = () => {
-    setStep(step - 1);
-    if (step === 1) {
-      resetStep();
-    }
-  };
-
-  const resetStep = () => {
-    setStep(2);
-    setQuotation(false);
-    setConfirmRequest(false);
-    setTracking(false);
-    setBilling(false);
-  };
-
-  const [loading, setLoading] = useState(false);
-
-  const handleDownload = () => {
-    setLoading(true);
-    handleOpenNewTab();
-    setTimeout(() => {
-      setLoading(false);
-      alert('ดาวน์โหลดเอกสารสำเร็จ!');
-    }, 3000);
-  };
-
-  const [packagingTypes, setPackagingTypes] = useState([]);
-  const [testItems, setSampleReceiving] = useState([]);
-
-  useEffect(() => {
-    handleGetPackageType();
-    handleGetSampleReceiving();
-    getFertilizerTypes();
-  }, []);
-
-  const handleGetPackageType = async () => {
-    const response = await getAllPackagingType();
-    setPackagingTypes(response);
-  };
-
-  const handleGetSampleReceiving = async () => {
     try {
-      const response = await getAllSampleReceiving();
-      setSampleReceiving(response);
+      startLoading(); // เริ่มการโหลด
+      const response = await getServiceRequestsByID(id);
+      console.log('response', response);
+      setSampleList(response.sample_submissions || []);
+      setServiceData(response);
+
+      // const responseStatus = await getServiceRequestsStatusByID(id);
+      // console.log('sample_submissions', response.sample_submissions);
+
+      // if (responseStatus && responseStatus.request_status_tracking.length > 0) {
+      //   const statusTracking = responseStatus.request_status_tracking[0];
+      //   const stepsStatus = steps.map((step) => statusTracking[step.status] === 'yes');
+      //   const completedSteps = stepsStatus.lastIndexOf(true);
+      //   setActiveStep(completedSteps >= 0 ? completedSteps + 1 : 0);
+      //   setServiceStatus(responseStatus);
+      // }
     } catch (error) {
-      console.error('Error fetching test items:', error);
-      setSampleReceiving([]);
+      console.error('Error fetching service request:', error);
+      navigate('/admin/request');
+    } finally {
+      stopLoading(); // หยุดการโหลด
     }
-  };
-
-  const [fertilizerTypes, setFertilizerTypes] = useState([]);
-  const getFertilizerTypes = async () => {
-    try {
-      const response = await getAllFertilicerType();
-      setFertilizerTypes(response);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const handleOpenNewTab = () => {
-    const url = '/request/detial/quotation';
-    window.open(url, '_blank');
-  };
-
-  const getFertilizerCategoryLabel = (sampleList, fertilizerCategoryOptions) => {
-    const selectedKey = Object.keys(sampleList).find((key) => sampleList[key] === 1);
-    const selectedOption = fertilizerCategoryOptions.find((option) => option.value === selectedKey);
-    return selectedOption ? selectedOption.label : null;
-  };
-
-  const columns = [
-    { field: 'no', headerName: '#', width: 90, headerAlign: 'center', align: 'center' },
-    {
-      field: 'test_code',
-      headerName: 'ทดสอบ',
-      flex: 1,
-      renderCell: (params) => {
-        if (!params || !params.row) return '-';
-        const { test_code, test_percentage } = params.row;
-        return `${test_code || ''}${test_percentage ? ` (${test_percentage})` : ''}`.trim();
-      }
-    },
-    {
-      field: 'status',
-      headerName: 'สถานะ',
-      headerAlign: 'center',
-      align: 'center',
-      flex: 1,
-      renderCell: (params) => (
-        <Badge pill bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
-          {params.row.status === 'pending' ? 'รออนุมัติ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
-        </Badge>
-      )
-    },
-    {
-      field: 'test_value',
-      headerName: 'ผลที่ได้',
-      flex: 1,
-      renderCell: (params) => params?.row?.test_value || '-'
-    },
-    {
-      field: 'test_date',
-      headerName: 'วันที่ทดสอบ',
-      flex: 1,
-      valueGetter: (params) => params?.row?.created_at || '-'
-    }
-  ];
-
-  const handleSetDataGrid = (data) => {
-    const setData = data.map((test, idx) => ({
-      id: test.detail_id,
-      no: idx + 1,
-      ...test
-    }));
-    return setData;
-  };
-
-  const handleEdit = (id) => {
-    navigate('/request/edit/', { state: { id: id } });
   };
 
   const handleReload = (check) => {
@@ -241,127 +142,134 @@ const FertilizerDetails = ({ title }) => {
     const stepStatus = steps[index].status;
 
     switch (index) {
-      case 0: // การขอรับบริการ
-        return statusLogs.requested !== null; // ถ้า requested ไม่เป็น null ถือว่าเสร็จสิ้น
-
-      case 1: // ลูกค้าส่งตัวอย่าง
+      case 0:
+        return statusLogs.requested !== null;
+      case 1:
         if (sampleCount === 0) return false;
-        return statusLogs.sample_sent !== null; // ถ้า sample_sent ไม่เป็น null ถือว่าเสร็จสิ้น
-
-      case 2: // ทบทวนคำขอ
-        return statusLogs.request_reviewed !== null; // ถ้า request_reviewed ไม่เป็น null ถือว่าเสร็จสิ้น
-
-      case 3: // ตัวอย่างจัดส่งถึงแล็บ
-        return statusLogs.sample_arrived_lab !== null; // ถ้า sample_arrived_lab ไม่เป็น null ถือว่าเสร็จสิ้น
-
-      case 4: // รับตัวอย่างเข้าระบบ
-        return statusLogs.sample_received !== null; // ถ้า sample_received ไม่เป็น null ถือว่าเสร็จสิ้น
-
-      case 5: // รอทดสอบบางรายการ
-        return statusLogs.partial_testing !== null; // ถ้า partial_testing ไม่เป็น null ถือว่าเสร็จสิ้น
-
-      case 6: // ออกใบเสนอราคา
-        return statusLogs.quotation_issued !== null; // ถ้า quotation_issued ไม่เป็น null ถือว่าเสร็จสิ้น
-
-      case 7: // ขอใบแจ้งหนี้
-        return statusLogs.invoice_requested !== null; // ถ้า invoice_requested ไม่เป็น null ถือว่าเสร็จสิ้น
-
-      case 8: // รับชำระเงิน
-        return statusLogs.payment_received !== null; // ถ้า payment_received ไม่เป็น null ถือว่าเสร็จสิ้น
-
-      case 9: // หัก ณ ที่จ่าย
-        return statusLogs.tax_withheld !== null; // ถ้า tax_withheld ไม่เป็น null ถือว่าเสร็จสิ้น
-
-      case 10: // ออกใบเสร็จรับเงิน/ใบกำกับภาษี
-        return statusLogs.receipt_issued !== null; // ถ้า receipt_issued ไม่เป็น null ถือว่าเสร็จสิ้น
-
+        return statusLogs.sample_sent !== null;
+      case 2:
+        return statusLogs.request_reviewed !== null;
+      case 3:
+        return statusLogs.sample_arrived_lab !== null;
+      case 4:
+        return statusLogs.sample_received !== null;
+      case 5:
+        return statusLogs.partial_testing !== null;
+      case 6:
+        return statusLogs.quotation_issued !== null;
+      case 7:
+        return statusLogs.invoice_requested !== null;
+      case 8:
+        return statusLogs.payment_received !== null;
+      case 9:
+        return statusLogs.tax_withheld !== null;
+      case 10:
+        return statusLogs.receipt_issued !== null;
       default:
         return false;
     }
   };
 
-  // ฟังก์ชันตรวจสอบว่า step นี้เสร็จสิ้นหรือไม่
-  // const isStepComplete = (index) => {
-  //   console.log('isStepComplete :', index);
-  //   if (!serviceStatus.request_status_tracking || !serviceStatus.request_status_tracking[0]) return false;
-  //   const statusTracking = serviceStatus.request_status_tracking[0];
-  //   return statusTracking[steps[index].status] === 'yes';
-  // };
-
+  const [company, setCompany] = useState({});
+  const handleSetCustomer = async (data) => {
+    console.log('handleSetCustomer data', data);
+    setCompany(data);
+  };
   return (
     <div>
-      <Card>
-        <Card.Header>
-          <h5>{title}</h5>
-        </Card.Header>
-        <Card.Body>
-          <div>
-            {/* MUI Stepper */}
-            {orientation === 'vertical' ? (
-              <Stepper
-                activeStep={activeStep}
-                orientation={orientation}
-                alternativeLabel={orientation === 'horizontal'}
-                sx={{
-                  width: '100%',
-                  margin: '0 auto',
-                  padding: '20px 0'
-                }}
-              >
-                {steps.map((step, index) => (
-                  <Step key={index} completed={isStepComplete(index, sampleList, serviceData.service_status_logs || {})}>
-                    <StepLabel>{step.label}</StepLabel>
-                    {orientation === 'vertical' && (
-                      <StepContent>
-                        <ServiceStepContent serviceId={id} handleReload={handleReload} />
-                      </StepContent>
-                    )}
-                  </Step>
-                ))}
-              </Stepper>
-            ) : (
-              <>
-                <Card style={{ borderRadius: 10, marginBottom: 10 }}>
-                  <Card.Body style={{ padding: '8px 20px 3px' }}>
-                    <Stepper
-                      activeStep={activeStep}
-                      orientation={orientation}
-                      alternativeLabel={orientation === 'horizontal'}
-                      sx={{
-                        width: '100%',
-                        margin: '0 auto',
-                        padding: '20px 0'
-                      }}
-                    >
-                      {steps.map((step, index) => (
-                        <Step key={index} completed={isStepComplete(index, sampleList, serviceData.service_status_logs || {})}>
-                          <StepLabel>{step.label}</StepLabel>
-                          {orientation === 'vertical' && (
-                            <StepContent>
-                              <ServiceStepContent serviceId={id} handleReload={handleReload} />
-                            </StepContent>
-                          )}
-                        </Step>
-                      ))}
-                    </Stepper>
-                  </Card.Body>
-                </Card>
-                <AdminStepContent serviceId={serviceData.request_id} />
-              </>
-            )}
-          </div>
-        </Card.Body>
-        <Card.Footer className="text-start">
-          <Button variant="primary" onClick={() => handleEdit(id)}>
-            <FiEdit style={{ marginRight: 8 }} />
-            แก้ไขข้อมูล
-          </Button>
-          <Button variant="danger" onClick={() => navigate('/admin/request/')}>
-            <i className="feather icon-corner-up-left" />
-            กลับหน้าหลัก
-          </Button>
-        </Card.Footer>
-      </Card>
+      {loading ? (
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '50vh'
+          }}
+        >
+          <CircularProgress size={60} />
+        </Box>
+      ) : (
+        <Card>
+          <Card.Header>
+            <h5>{title}</h5>
+          </Card.Header>
+          <Card.Body>
+            <div>
+              {orientation === 'vertical' ? (
+                <Stepper
+                  activeStep={activeStep}
+                  orientation={orientation}
+                  alternativeLabel={orientation === 'horizontal'}
+                  sx={{
+                    width: '100%',
+                    margin: '0 auto',
+                    padding: '20px 0'
+                  }}
+                >
+                  {steps.map((step, index) => (
+                    <Step key={index} completed={isStepComplete(index, sampleList, serviceData.service_status_logs || {})}>
+                      <StepLabel>{step.label}</StepLabel>
+                      {orientation === 'vertical' && (
+                        <StepContent>
+                          <AdminStepContent
+                            serviceId={id}
+                            handleReload={handleReload}
+                            startLoading={startLoading}
+                            stopLoading={stopLoading}
+                            handleSetCustomer={handleSetCustomer}
+                          />
+                        </StepContent>
+                      )}
+                    </Step>
+                  ))}
+                </Stepper>
+              ) : (
+                <>
+                  <Card style={{ borderRadius: 10, marginBottom: 10 }}>
+                    <Card.Body style={{ padding: '8px 20px 3px' }}>
+                      <Stepper
+                        activeStep={activeStep}
+                        orientation={orientation}
+                        alternativeLabel={orientation === 'horizontal'}
+                        sx={{
+                          width: '100%',
+                          margin: '0 auto',
+                          padding: '20px 0'
+                        }}
+                      >
+                        {steps.map((step, index) => (
+                          <Step key={index} completed={isStepComplete(index, sampleList, serviceData.service_status_logs || {})}>
+                            <StepLabel>{step.label}</StepLabel>
+                          </Step>
+                        ))}
+                      </Stepper>
+                    </Card.Body>
+                  </Card>
+                  <AdminStepContent
+                    serviceId={id}
+                    handleReload={handleReload}
+                    startLoading={startLoading}
+                    stopLoading={stopLoading}
+                    handleSetCustomer={handleSetCustomer}
+                  />
+                </>
+              )}
+            </div>
+          </Card.Body>
+          <Card.Footer className="text-start">
+            {/* <Button variant="primary" onClick={() => {}}>
+              <LuMailQuestion style={{ marginRight: 8 }} />
+              แจ้งแก้ไขข้อมูล
+            </Button> */}
+            <EmailForm buttonTitle="แจ้งแก้ไขข้อมูล" icon={<LuMailQuestion style={{ marginRight: 8 }} />} serviceData={serviceData} />
+            <CreateServiceRequest serviceData={serviceData} customerData={company} />
+            <Button variant="danger" onClick={() => navigate('/admin/request/')}>
+              <i className="feather icon-corner-up-left" />
+              กลับหน้าหลัก
+            </Button>
+          </Card.Footer>
+        </Card>
+      )}
     </div>
   );
 };

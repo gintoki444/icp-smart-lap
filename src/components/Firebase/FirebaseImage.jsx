@@ -3,7 +3,7 @@ import { Image } from 'react-bootstrap';
 import { ref, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../services/_api/firebaseConfig';
 
-const FirebaseImage = ({ imagePath, alt = 'Image', style, thumbnail = true, fallbackImage }) => {
+const FirebaseImage = ({ imagePath, alt = 'Image', style, thumbnail = true, fallbackImage, className }) => {
   const [imageUrl, setImageUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -48,7 +48,7 @@ const FirebaseImage = ({ imagePath, alt = 'Image', style, thumbnail = true, fall
   }
 
   if (imageUrl) {
-    return <Image src={imageUrl} alt={alt} style={style} thumbnail={thumbnail} />;
+    return <Image src={imageUrl} className={className} alt={alt} style={style} thumbnail={thumbnail} />;
   }
 
   return null; // กรณีอื่นๆ

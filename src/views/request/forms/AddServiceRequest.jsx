@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Form, Modal, Row, Col } from 'react-bootstrap';
-// import { ChemicalFertilizerForm } from './ChemicalFertilizerForm';
-// import { OrganicFertilizerForm } from './OrganicFertilizerForm';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { GiFertilizerBag, GiChemicalTank } from 'react-icons/gi';
 import { postServiceRequests, postServiceRequestDocuments, putServiceRequestStatusTracking } from 'services/_api/serviceRequest';
 import { postSampleSubmisDetail, postSampleSubmissions } from 'services/_api/sampleSubmissionsRequest';
 import { handleUploadFiles } from 'services/_api/uploadFileRequest';
@@ -12,6 +9,9 @@ import { authenUser } from 'services/_api/authentication';
 import { toast } from 'react-toastify';
 import { getCustomerSpecialConditionsByID } from 'services/_api/specialConditionsRequest';
 import { getCustomerByID } from 'services/_api/customerRequest';
+
+import logoFertilizerOrganic from '../../../assets/images/logo-fertilizer-organic.webp';
+import logoFertilizerChemical from '../../../assets/images/logo-fertilizer-chemical.webp';
 
 const AddServiceRequest = () => {
   const navigate = useNavigate();
@@ -49,7 +49,6 @@ const AddServiceRequest = () => {
     try {
       const response = await getCustomerByID(companyId);
       console.log('getCustomerByID:', response);
-
       setCustomer(response);
     } catch (error) {
       console.error(error);
@@ -66,14 +65,9 @@ const AddServiceRequest = () => {
       setSpacialCon([]);
     }
   };
-  // useEffect(() => {
-  //   if (usersFromState === null) {
-  //     navigate('/request/');
-  //   }
-  // }, []);
+
   const handleSave = async (data) => {
     console.log(data);
-    // ข้อมูลจาก Step 1
     const step1 = {
       user_id: user.user_id,
       customer_id: data.company_id,
@@ -97,6 +91,7 @@ const AddServiceRequest = () => {
         is_mixed_fertilizer: record.fertilizer_main_id === 3 ? 1 : 0,
         is_secondary_nutrient_fertilizer: record.fertilizer_main_id === 4 ? 1 : 0,
         fertilizer_type_id: record.fertilizer_type_id,
+        fertilizer_other: record.fertilizer_other,
         color: record.color,
         fertilizer_formula: record.fertilizer_formula,
         packaging_other: record.packaging_other,
@@ -111,7 +106,6 @@ const AddServiceRequest = () => {
         sample_weight: record.sample_weight,
         sample_weight_unit: record.sample_weight_unit,
         packaging_id: record.packaging_id,
-        is_self_pickup: (record.reportMethod || []).includes('is_self_pickup') ? 1 : 0,
         pdf_email: (record.reportMethod || []).includes('pdf_email') ? record.email : '',
         is_self_pickup: (record.reportMethod || []).includes('is_self_pickup') ? 1 : 0,
         is_mail_delivery: (record.reportMethod || []).includes('pdf_email') ? 1 : 0,
@@ -124,21 +118,18 @@ const AddServiceRequest = () => {
         phone: record.submitted_phone,
         test_items: record.test_items,
         formula_id: record.formula_id,
-        fertilizer_main_id: record.fertilizer_main_id
+        fertilizer_main_id: record.fertilizer_main_id,
+        other_requirements: record.other_requirements
       };
       sampleSubmissionsData.push(step2);
     });
     console.log(sampleSubmissionsData);
 
-    // ข้อมูลไฟล์จาก Step ที่เก็บใน data.files
     const fileData = data.files;
-    // if (data === 999999) {
     try {
       console.log('step1:', step1);
       const responseService = await postServiceRequests(step1);
       if (responseService.request_id) {
-        // ทำการส่งข้อมูล sampleSubmissionsData
-
         for (const record of sampleSubmissionsData) {
           record.request_id = responseService.request_id;
           const responseSample = await postSampleSubmissions(record);
@@ -153,10 +144,7 @@ const AddServiceRequest = () => {
           }
         }
 
-        // อัปโหลดไฟล์ทั้งหมด และรับผลลัพธ์
         const uploadResults = await handleUploadFiles(fileData, 'service-requests', 'service_');
-
-        // สำหรับแต่ละไฟล์ที่อัปโหลด ให้ส่งข้อมูลไปยัง /service-request-documents
         for (const fileResult of uploadResults) {
           const extractedFileName = fileResult.fileName.split('/').pop();
           const documentData = {
@@ -165,8 +153,6 @@ const AddServiceRequest = () => {
             file_name: extractedFileName,
             file_path: `/${fileResult.fileName}`
           };
-
-          // เรียก API เพิ่มข้อมูลเอกสาร
           await postServiceRequestDocuments(documentData);
         }
 
@@ -174,6 +160,7 @@ const AddServiceRequest = () => {
           newStatusTracking: 'requested'
         };
         await putServiceRequestStatusTracking(responseService.request_id, reqStatusTracking);
+
         toast.success('เพิ่มข้อมูลคำขอรับบริการสำเร็จ!', { autoClose: 3000 });
         navigate('/request/detial', { state: { id: responseService.request_id } });
         setShowSuccessModal(true);
@@ -183,17 +170,23 @@ const AddServiceRequest = () => {
       toast.error('เพิ่มข้อมูลคำขอรับบริการไม่สำเร็จ!', { autoClose: 3000 });
       alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล:', error);
     }
-    // }
   };
+
   return (
     <>
       {selectedForm === null && (
         <Card>
           <Card.Header>
-            <h5>เลือกการขอรับบริการ</h5>
+            <h5>เลือกประเภทการขอรับบริการ</h5>
           </Card.Header>
           <Card.Body>
             <Row className="mb-4">
+              <Col md={6} className="mb-2">
+                <p className="mb-0">
+                  รหัสลูกค้า : <strong className="text-dark">{customer.company_code}</strong>{' '}
+                  <span className="text-dark">(กรณีมีการเปลี่ยนแปลง ชื่อ, ที่อยู่ กรุณาแจ้งห้องปฏิบัติการ)</span>
+                </p>
+              </Col>
               <Col md={6} className="mb-2">
                 <p className="mb-0">
                   ชื่อบริษัท : <strong className="text-dark">{customerFromState.company_name}</strong>
@@ -214,37 +207,58 @@ const AddServiceRequest = () => {
                   <p className="mb-0">
                     เงื่อนไขพิเศษ :{' '}
                     <strong className="text-dark">
-                      {spacialCon.map((x, index) => (index + 1 < spacialCon.length ? x.description : ` , ${x.description}`))}
+                      {spacialCon.map((x, index) => (
+                        <span key={index}>
+                          {x.description}
+                          {index + 1 < spacialCon.length && ', '}
+                        </span>
+                      ))}
                     </strong>
                   </p>
                 </Col>
               )}
             </Row>
-            <div className="d-flex justify-content-center">
+            <div className="d-flex justify-content-center gap-3 align-items-start">
               <Button
-                variant="info"
-                className="w-50 py-4 d-flex align-items-center justify-content-center flex-column"
+                variant="outline"
+                className="py-4 d-flex align-items-center justify-content-center flex-column"
+                style={{ width: '300px', color: '#8B4513', fontSize: '18px', fontWeight: 'bold' }}
                 onClick={() => handleFormSelection('organic')}
-                style={{ fontSize: 18 }}
               >
-                <GiFertilizerBag size={45} className="mb-2" />
+                <div
+                  className="logo-fertilizer-style"
+                  style={{
+                    border: 'solid 3px #8B4513'
+                  }}
+                >
+                  <img src={logoFertilizerOrganic} alt="ปุ๋ยอินทรีย์" style={{ width: '175px', height: '175px', padding: '12px' }} />
+                </div>
                 แบบฟอร์มนำส่งตัวอย่างปุ๋ยอินทรีย์
               </Button>
               <Button
-                variant="success"
-                className="w-50  py-4 d-flex align-items-center justify-content-center flex-column"
+                variant="outline"
+                className="py-4 d-flex align-items-center justify-content-center flex-column"
+                style={{ width: '300px', color: '#28A745', fontSize: '18px', fontWeight: 'bold' }}
                 onClick={() => handleFormSelection('chemical')}
-                style={{ fontSize: 18 }}
               >
-                <GiChemicalTank size={45} className="mb-2" />
-                แบบฟอร์มนำส่งตัวอย่างปุ๋ยเคมีเพื่อขึ้นทะเบียนปุ๋ย
+                <div
+                  className="logo-fertilizer-style"
+                  style={{
+                    border: 'solid 3px #28A745'
+                  }}
+                >
+                  <img src={logoFertilizerChemical} alt="ปุ๋ยเคมี" style={{ width: '175px', height: '175px', padding: '12px' }} />
+                </div>
+                <div>
+                  แบบฟอร์มนำส่งตัวอย่างปุ๋ยเคมี
+                  <br />
+                  (เพื่อขึ้นทะเบียนปุ๋ย)
+                </div>
               </Button>
             </div>
           </Card.Body>
         </Card>
       )}
-      {/* {selectedForm === 'organic' && <OrganicFertilizerForm onHandleSave={setShowSuccessModal} />}
-      {selectedForm === 'chemical' && <ChemicalFertilizerForm onHandleSave={handleSave} userId={usersFromState.user_id} />} */}
 
       {selectedForm !== null && (
         <SampleRequestForm
@@ -258,7 +272,7 @@ const AddServiceRequest = () => {
       <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered>
         <Modal.Body className="text-center">
           <i className="text-success" style={{ fontSize: '3rem' }}>
-            &#10004;
+            ✔
           </i>
           <h5 className="mt-3">ลงทะเบียนขอรับบริการสำเร็จ</h5>
           <p>กรุณารอผลการตรวจสอบคำขอใช้บริการ</p>

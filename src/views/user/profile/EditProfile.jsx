@@ -20,26 +20,7 @@ function EditProfile() {
   //   const [open, setOpen] = useState(false);
   useEffect(() => {
     if (!usersFromState) navigate('/profile/');
-
-    // getRoles();
-    // getDepartments();
   }, []);
-
-  // useEffect(() => {}, []);
-  //   const getRoles = () => {
-  //     getAllRoles().then((result) => {
-  //       if (result) {
-  //         setRoles(result);
-  //       }
-  //     });
-  //   };
-  //   const getDepartments = () => {
-  //     getAllDepartments().then((result) => {
-  //       if (result) {
-  //         setDepartments(result);
-  //       }
-  //     });
-  //   };
 
   let initialValue = {
     id: usersFromState?.user_id,

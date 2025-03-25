@@ -237,3 +237,18 @@ export const putGenerateSubmis = async (id) => {
     throw error; // โยน Error ออกไปเพื่อให้ handle ที่ `handleSubmit`
   }
 };
+
+//  ✅ get sample submission details  By id
+export const getSampleSubmisRequestByID = async (id) => {
+  const myHeaders = new Headers();
+  myHeaders.append('Content-Type', 'application/json');
+
+  const requestOptions = {
+    method: 'GET',
+    headers: myHeaders,
+    redirect: 'follow'
+  };
+
+  const response = await fetch(API_BASE_URL + '/sample-submissions-request/' + id, requestOptions);
+  return await response.json();
+};

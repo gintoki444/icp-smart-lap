@@ -41,12 +41,12 @@ const NavBar = () => {
         <Link to="#" className={toggleClass.join(' ')} id="mobile-collapse" onClick={navToggleHandler}>
           <span />
         </Link>
-        <Link to="#" className="b-brand">
+        {/* <Link to="#" className="b-brand">
           <div className="b-bg">
             <i className="feather icon-trending-up" />
           </div>
           <span className="b-title">Datta Able</span>
-        </Link>
+        </Link> */}
         <Link to="#" className={moreClass.join(' ')} onClick={() => setMoreToggle(!moreToggle)}>
           <i className="feather icon-more-vertical" />
         </Link>

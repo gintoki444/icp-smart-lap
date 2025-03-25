@@ -219,10 +219,10 @@ const AddTestTracking = ({ submissionId, handleTracking, serviceRequestId, sampl
               </td>
               <td className="text-center">
                 <ButtonGroup>
-                  <Button variant="info" size="sm" onClick={() => handleEdit(data.tracking_id)}>
+                  <Button variant="info" size="sm" disabled={data.status !== 'received'} onClick={() => handleEdit(data.tracking_id)}>
                     <FiEdit />
                   </Button>
-                  <Button variant="danger" size="sm" onClick={() => handleDelete(data.tracking_id)}>
+                  <Button variant="danger" size="sm" disabled={data.status !== 'received'} onClick={() => handleDelete(data.tracking_id)}>
                     <RiDeleteBin5Fill />
                   </Button>
                 </ButtonGroup>

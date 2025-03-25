@@ -37,8 +37,8 @@ export const SampleRequestForm = ({ onHandleSave, userId, sampleType, company, s
           fertilizer_type_id: Yup.number().required('กรุณาเลือกประเภทลักษณะปุ๋ย').typeError('กรุณาเลือกประเภทลักษณะปุ๋ย'),
           packaging_id: Yup.number().required('กรุณาเลือกภาชนะบรรจุ').typeError('กรุณาเลือกภาชนะบรรจุ'),
           color: Yup.string().required('กรุณากรอกสี'),
-          fertilizer_formula: Yup.string().required('กรุณากรอกสูตรปุ๋ย'),
-          common_name: Yup.string().required('กรุณากรอกชื่อสามัญ'),
+          // fertilizer_formula: Yup.string().required('กรุณากรอกสูตรปุ๋ย'),
+          // common_name: Yup.string().required('กรุณากรอกชื่อสามัญ'),
           trade_name: Yup.string().required('กรุณากรอกชื่อการค้า'),
           trademark: Yup.string().required('กรุณากรอกเครื่องหมายการค้า'),
           manufacturer: Yup.string().required('กรุณากรอกชื่อผู้ผลิต'),
@@ -99,7 +99,16 @@ export const SampleRequestForm = ({ onHandleSave, userId, sampleType, company, s
             <Card>
               <Card.Header>
                 <h5>
-                  {sampleType === 1 ? 'ลงทะเบียนใบนำส่งตัวอย่างปุ๋ยอินทรีย์' : 'ลงทะเบียนใบนำส่งตัวอย่างปุ๋ยเคมี เพื่อขึ้นทะเบียนปุ๋ย'}
+                  {/* {sampleType === 1 ? 'ลงทะเบียนใบนำส่งตัวอย่างปุ๋ยอินทรีย์' : 'ลงทะเบียนใบนำส่งตัวอย่างปุ๋ยเคมี เพื่อขึ้นทะเบียนปุ๋ย'} */}
+                  {sampleType === 1 ? (
+                    <>
+                      ลงทะเบียนใบนำส่งตัวอย่าง<strong style={{ color: '#8B4513' }}> ปุ๋ยอินทรีย์</strong>
+                    </>
+                  ) : (
+                    <>
+                      ลงทะเบียนใบนำส่งตัวอย่าง<strong style={{ color: '#28A745' }}> ปุ๋ยเคมี</strong>
+                    </>
+                  )}
                 </h5>
               </Card.Header>
               <Card.Body className="p-0">

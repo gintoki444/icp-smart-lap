@@ -34,6 +34,7 @@ export const getUserByID = async (id) => {
 
 //  ✅ put User
 export const putUser = async (data, id) => {
+  console.log('data', data);
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
   const raw = JSON.stringify(data);
