@@ -77,7 +77,7 @@ const SearchCompany = () => {
     { field: 'company_address', headerName: 'ที่อยู่บริษัท', flex: 3 },
     {
       field: 'actions',
-      headerName: 'การจัดการ',
+      headerName: 'Action',
       flex: 1,
       headerAlign: 'center',
       align: 'center',

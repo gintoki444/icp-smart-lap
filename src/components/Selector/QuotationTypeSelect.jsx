@@ -44,14 +44,12 @@ const QuotationTypeSelect = ({
   return (
     <Form.Group className="mb-3">
       <Form.Label>
-        ประเภทใบเสนอราคา
-        {showText ? (
+        ประเภทใบเสนอราคา <span className="text-danger">*</span>
+        {showText && (
           <>
             <span className="text-meta-1"> : </span>
             <strong>{quotationType.find((x) => x.quotation_type_id === value)?.quotation_type_name}</strong>
           </>
-        ) : (
-          <span className="text-meta-1">: </span>
         )}
       </Form.Label>
       {!showText && (
@@ -60,11 +58,11 @@ const QuotationTypeSelect = ({
             value={value || ''}
             onChange={handleSelectChange}
             disabled={disables}
-            style={{ padding: '8px 20px', fontSize: 14 }}
+            style={{ padding: '12px 20px', fontSize: 15, color: '#000000' }}
             isInvalid={isInvalid} // เพิ่ม属性 isInvalid
           >
             <option value="" disabled className="text-body dark:text-bodydark">
-              เลือกประเภทใบส่งซื้อ
+              ประเภทใบส่งซื้อ
             </option>
             {quotationType.length > 0 &&
               quotationType.map((quotation, key) => (
@@ -75,7 +73,7 @@ const QuotationTypeSelect = ({
           </Form.Select>
           {isInvalid && (
             <Form.Control.Feedback type="invalid" style={{ display: 'block' }}>
-              {errorMessage || 'กรุณาเลือกประเภทใบส่งซื้อ'}
+              {errorMessage || 'กรุณาระบุประเภทใบส่งซื้อ'}
             </Form.Control.Feedback>
           )}
         </>

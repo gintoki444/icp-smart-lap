@@ -8,7 +8,9 @@ import { RiScales2Line, RiTestTubeLine } from 'react-icons/ri';
 import { VscGroupByRefType } from 'react-icons/vsc';
 import { LiaObjectGroup } from 'react-icons/lia';
 import { PiCertificate } from 'react-icons/pi';
+import { MdOutlineRequestQuote } from 'react-icons/md';
 // สร้าง Mapping ระหว่างชื่อไอคอนกับ React Components
+
 const iconMap = {
   'lu icon-building': LuBuilding,
   'Bs icon-home': FiHome,
@@ -17,7 +19,8 @@ const iconMap = {
   'ri test-tube-line': RiTestTubeLine,
   'vsc group-by-reftype': VscGroupByRefType,
   'lia object-group': LiaObjectGroup,
-  'pi certificate': PiCertificate
+  'pi certificate': PiCertificate,
+  'mb outline-request-quote': MdOutlineRequestQuote
 };
 
 const NavIcon = ({ items }) => {

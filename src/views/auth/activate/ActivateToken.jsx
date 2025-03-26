@@ -72,10 +72,10 @@ const ActivateToken = () => {
                   <img className="img-fluid" src={logo} alt="logo" width={120} />
                 </div>
                 <Col md={12}>
-                  <h3 className="mb-4">Activate E-mail</h3>
+                  <h3 className="mb-4">Activate Email</h3>
                   <p className="mb-4">
-                    กรอก Token ที่ได้รับจาก <br />
-                    อีเมล์เพื่อยืนยันตัวตน
+                    กรอกโทเคนที่ได้รับทางอีเมล <br />
+                    เพื่อยืนยันตัวตน
                   </p>
                   <Form onSubmit={formik.handleSubmit}>
                     <Form.Group className="mb-3">
@@ -103,8 +103,9 @@ const ActivateToken = () => {
                     </Button>
                   </Form>
                   <p className="mb-2 text-muted">
+                    Didn't receive the token?{' '}
                     <NavLink to={'/auth/resend-token'} className="f-w-400">
-                      Re-send activate token?
+                      Resend
                     </NavLink>
                   </p>
                   <p className="mb-2 text-muted">

@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Row, Col, Spinner, Badge } from 'react-bootstrap';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { getServiceRequestsByID, getServiceRequestsStatusByID } from 'services/_api/serviceRequest';
-import { getAllSampleReceiving } from 'services/_api/sampleReceivingRequest';
-import { getAllPackagingType } from 'services/_api/packageingTypeRequest';
-import { getAllFertilicerType } from 'services/_api/fertilizerTypesRequest';
-import { DataGrid } from '@mui/x-data-grid';
-import ReviewModal from './ReviewModal';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { getServiceRequestsByID } from 'services/_api/serviceRequest';
 import { Stepper, Step, StepLabel, StepContent } from '@mui/material';
 import AdminStepContent from './AdminStepContent';
-import { FiEdit } from 'react-icons/fi';
 import { LuMailQuestion } from 'react-icons/lu';
 import { CircularProgress, Box } from '@mui/material';
 import EmailForm from 'components/Email/EmailForm';
@@ -17,7 +11,10 @@ import CreateServiceRequest from 'components/PDF/CreateServiceRequest';
 
 const FertilizerDetails = ({ title }) => {
   const location = useLocation();
-  const id = location.state?.id || null;
+  // const id = location.state?.id || null;
+  const { id: paramId } = useParams();
+  const id = paramId || location.state?.id || null;
+
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [quotation, setQuotation] = useState(false);
@@ -29,22 +26,15 @@ const FertilizerDetails = ({ title }) => {
   const [loading, setLoading] = useState(true); // ควบคุมสถานะ loading
   const [pendingRequests, setPendingRequests] = useState(0); // นับจำนวนการโหลดที่รอดำเนินการ
 
-  const fertilizerCategoryOptions = [
-    { value: 'is_single_fertilizer', label: 'เชิงเดี่ยว' },
-    { value: 'is_compound_fertilizer', label: 'เชิงประกอบ' },
-    { value: 'is_mixed_fertilizer', label: 'เชิงผสม' },
-    { value: 'is_secondary_nutrient_fertilizer', label: 'ธาตุอาหารรอง-อาหารเสริม' }
-  ];
-  const reportMethodOptions = [
-    { value: 'is_self_pickup', label: 'รับด้วยตนเอง' },
-    { value: 'pdf_email', label: 'ต้องการไฟล์ pdf เพิ่มเติมทาง E-mail' },
-    { value: 'is_mail_delivery', label: 'ส่งทางไปรษณีย์' }
-  ];
-  const sampleDisposalOptions = [
-    { value: 'is_lab_dispose_sample', label: 'ให้ห้องปฏิบัติการจำหน่ายตัวอย่าง' },
-    { value: 'is_collect_within_3_months', label: 'มารับตัวอย่างคืนภายใน 3 เดือน' },
-    { value: 'is_return_sample', label: 'ให้ห้องปฏิบัติการจัดส่งตัวอย่างคืน' }
-  ];
+  useEffect(() => {
+    console.log('request id :', id);
+    if (id) {
+      getServiceRequest(id);
+    } else {
+      navigate('/admin/request');
+      setLoading(false);
+    }
+  }, [id, navigate]);
 
   // ฟังก์ชันสำหรับเริ่มการโหลด
   const startLoading = () => {
@@ -77,16 +67,6 @@ const FertilizerDetails = ({ title }) => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  useEffect(() => {
-    console.log('request id :', id);
-    if (id) {
-      getServiceRequest(id);
-    } else {
-      navigate('/admin/request');
-      setLoading(false);
-    }
-  }, [id, navigate]);
 
   const [serviceData, setServiceData] = useState({});
   const [sampleList, setSampleList] = useState([]);
@@ -124,7 +104,7 @@ const FertilizerDetails = ({ title }) => {
   };
 
   const steps = [
-    { label: 'การขอรับบริการ', status: 'requested' },
+    { label: 'คำขอรับบริการ', status: 'requested' },
     { label: 'ลูกค้าส่งตัวอย่าง', status: 'sample_sent' },
     { label: 'ทบทวนคำขอ', status: 'request_reviewed' },
     { label: 'ตัวอย่างจัดส่งถึงแล็บ', status: 'sample_arrived_lab' },
@@ -275,7 +255,7 @@ const FertilizerDetails = ({ title }) => {
 };
 
 const VerifyService = () => {
-  return <FertilizerDetails title="รายละเอียดข้อมูลการคำขอรับบริการ" />;
+  return <FertilizerDetails title="รายละเอียดคำขอรับบริการ" />;
 };
 
 export default VerifyService;

@@ -73,6 +73,7 @@ const AdminRequestPage = () => {
           notes: service.notes || '-',
           created_at: new Date(service.created_at).toLocaleString(),
           sample_submissions: service.sample_submissions,
+          count_sample_submissions: service.sample_submissions.length,
           service_request_documents: service.service_request_documents
         }));
         setServiceRequests(formattedRows);
@@ -91,7 +92,7 @@ const AdminRequestPage = () => {
     { field: 'request_no', headerName: 'เลขที่คำขอ', flex: 0.8 },
     { field: 'sample_type_name', headerName: 'ประเภทคำขอ', flex: 0.7 },
     { field: 'request_date', headerName: 'วันที่สร้าง', flex: 1 },
-    { field: 'notes', headerName: 'เงื่อนไขพิเศษ', flex: 1.2 },
+    { field: 'count_sample_submissions', headerName: 'จำนวนตัวอย่าง', flex: 1, headerAlign: 'center', align: 'center' },
     {
       field: 'status',
       headerName: 'สถานะ',

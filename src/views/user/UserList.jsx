@@ -13,6 +13,7 @@ import * as userRequest from 'services/_api/usersRequest';
 import { AiFillCloseCircle } from 'react-icons/ai';
 import { toast } from 'react-toastify';
 import { authenUser } from 'services/_api/authentication';
+import { approveUserNotify } from 'components/Notify/ApproveUserNotify';
 
 const UsersList = () => {
   const [user, setUser] = useState([]);
@@ -78,7 +79,7 @@ const UsersList = () => {
     },
     {
       field: 'actions',
-      headerName: 'การจัดการ',
+      headerName: 'Action',
       width: 200,
       headerAlign: 'center',
       align: 'center',
@@ -87,7 +88,9 @@ const UsersList = () => {
           <Button
             variant={params.row.status === 'pending' || params.row.status === 'rejected' ? 'outline-success' : 'outline-warning'}
             size="sm"
-            onClick={() => handleApprove(params.row.id, params.row.status === 'pending' || params.row.status === 'rejected' ? 'Y' : 'N')}
+            onClick={() =>
+              handleApprove(params.row.id, params.row.status === 'pending' || params.row.status === 'rejected' ? 'Y' : 'N', params.row)
+            }
           >
             {params.row.status === 'pending' || params.row.status === 'rejected' ? <FiCheck /> : <IoWarningOutline />}
           </Button>
@@ -124,7 +127,7 @@ const UsersList = () => {
     // คุณสามารถใส่การนำทางไปหน้าแก้ไขหรือแสดง Modal แก้ไขที่นี่
   };
 
-  const handleApprove = (id, status) => {
+  const handleApprove = (id, status, userData) => {
     const confirmApprove = window.confirm(`คุณต้องการอนุมัติผู้ใช้ หรือไม่?`);
     if (confirmApprove) {
       const data = {
@@ -134,6 +137,7 @@ const UsersList = () => {
       try {
         userRequest.putApproveUser(data, id).then(() => {
           toast.success('อนุมัติสำเร็จ!', { autoClose: 3000 });
+          approveUserNotify(userData, user, status);
           getUsers();
         });
       } catch (error) {

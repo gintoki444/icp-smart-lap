@@ -13,12 +13,19 @@ function SelectCompany() {
           <Row>
             <Col>
               <Card.Title as="h5">เพิ่มข้อมูลลูกค้า/บริษัท</Card.Title>
-              <span className="d-block m-t-5">ลูกค้าเคยลงทะเบียนขอรับบริการในนามบริษัทหรือไม่</span>
+              <span className="d-block mt-2">
+                <span style={{ fontSize: 16, fontWeight: 'bold' }}>โปรดเลือกประเภทของลูกค้าเพื่อดำเนินการต่อ</span>
+                <br />
+                <span style={{ fontSize: 14 }}>
+                  ระบบจำเป็นต้องทราบว่าลูกค้าเคยลงทะเบียนขอรับบริการในนามบริษัทมาก่อนหรือไม่
+                  เพื่อใช้ในการดึงข้อมูลเดิมหรือดำเนินการลงทะเบียนใหม่
+                </span>
+              </span>
             </Col>
           </Row>
         </Card.Header>
         <Card.Body>
-          <Row className="justify-content-center text-center">
+          <Row className="justify-content-start text-center">
             <Col md={4} sm={12} className="mb-3">
               <Button
                 variant="outline-primary"
@@ -26,7 +33,7 @@ function SelectCompany() {
                 onClick={() => navigate('/company/search')}
               >
                 <FaBuilding size={40} className="mb-2" />
-                เคยลงทะเบียนบริษัท / ขอรับบริการ
+                <strong style={{ fontSize: 16 }}>ลูกค้าเคยลงทะเบียนบริษัท / ขอรับบริการแล้ว</strong>
               </Button>
             </Col>
             <Col md={4} sm={12} className="mb-3">
@@ -36,7 +43,7 @@ function SelectCompany() {
                 onClick={() => navigate('/company/add')}
               >
                 <FaPlusCircle size={40} className="mb-2" />
-                ลงทะเบียนบริษัทใหม่
+                <strong style={{ fontSize: 16 }}>ลูกค้ายังไม่เคยลงทะเบียน / ลงทะเบียนบริษัทใหม่</strong>
               </Button>
             </Col>
           </Row>

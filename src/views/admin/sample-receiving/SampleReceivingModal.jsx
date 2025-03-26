@@ -51,8 +51,8 @@ const SampleReceivingModal = ({
     tracking_number: '',
     proof_image: null,
     status: 'received',
-    deliveredToLab: false,
-    receiveOption: 'not_received'
+    deliveredToLab: true,
+    receiveOption: 'received'
   };
 
   // ฟังก์ชันตรวจสอบและอัปเดตสถานะ
@@ -362,8 +362,8 @@ const SampleReceivingModal = ({
               proof_image: null,
               status: editData.status,
               received_by: editData.received_by,
-              deliveredToLab: false,
-              receiveOption: 'not_received'
+              deliveredToLab: true,
+              receiveOption: 'received'
             }}
             validationSchema={editValidationSchema}
             onSubmit={handleEditSubmit}
@@ -378,6 +378,7 @@ const SampleReceivingModal = ({
                       name="carrier_name"
                       value={values.carrier_name}
                       onChange={handleChange}
+                      disabled
                       onBlur={handleBlur}
                       isInvalid={touched.carrier_name && !!errors.carrier_name}
                     >
@@ -396,6 +397,7 @@ const SampleReceivingModal = ({
                       type="text"
                       name="tracking_number"
                       placeholder="กรอกหมายเลข Tracking"
+                      disabled
                       value={values.tracking_number}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -409,6 +411,7 @@ const SampleReceivingModal = ({
                     <Form.Control
                       type="file"
                       accept="image/*"
+                      disabled
                       onChange={(event) => setFieldValue('proof_image', event.target.files[0])}
                       isInvalid={touched.proof_image && !!errors.proof_image}
                     />

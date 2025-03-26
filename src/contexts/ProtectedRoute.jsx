@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Spinner } from 'react-bootstrap';
+import { matchPath } from 'react-router-dom';
 
 const isAuthenticated = () => {
   return !!localStorage.getItem('authToken');
@@ -77,7 +78,10 @@ const ProtectedRoute = ({ children, role, position, path }) => {
     return <Navigate to="/404" replace />;
   }
 
-  const hasPermission = permissions.some((perm) => perm.route && (path === perm.route || location.pathname.startsWith(perm.route)));
+  // const hasPermission = permissions.some((perm) => perm.route && (path === perm.route || location.pathname.startsWith(perm.route)));
+  const hasPermission = permissions.some((perm) => {
+    return perm.route && matchPath({ path: perm.route, end: false }, location.pathname);
+  });
 
   if (!hasPermission) {
     return <Navigate to="/404" replace />;

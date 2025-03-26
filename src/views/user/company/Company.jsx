@@ -84,7 +84,7 @@ const Company = () => {
     },
     {
       field: 'actions',
-      headerName: 'การจัดการ',
+      headerName: 'Action',
       width: 200,
       headerAlign: 'center',
       align: 'center',
@@ -142,10 +142,7 @@ const Company = () => {
           <Row>
             <Col>
               <Card.Title as="h5">รายการข้อมูลลูกค้า/บริษัท</Card.Title>
-              <span className="d-block m-t-5">
-                บริษัทที่ผู้ใช้งานดูแล
-                {/* <code>Table</code> component */}
-              </span>
+              <span className="d-block m-t-5">บริษัทที่ผู้ใช้งานมีสิทธิ์เข้าถึง / แก้ไขข้อมูลได้</span>
             </Col>
             {/* <Col className="text-end">
               <Button variant="primary" onClick={() => navigate('/company/select')}>

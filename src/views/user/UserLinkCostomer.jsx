@@ -81,7 +81,7 @@ const UserLinkCostomer = () => {
     },
     {
       field: 'actions',
-      headerName: 'การจัดการ',
+      headerName: 'Action',
       width: 200,
       headerAlign: 'center',
       align: 'center',

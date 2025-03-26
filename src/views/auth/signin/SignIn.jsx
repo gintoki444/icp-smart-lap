@@ -35,7 +35,7 @@ const Signin = () => {
                 </NavLink>
               </p>
               <p className="mb-1 text-muted">
-                Activate E-mal?{' '}
+                Activate E-mail?{' '}
                 <NavLink to="/auth/activate-token" className="f-w-400">
                   Activate
                 </NavLink>
@@ -43,7 +43,7 @@ const Signin = () => {
               <p className="mb-1 text-muted">
                 Don’t have an account?{' '}
                 <NavLink to="/auth/signup-1" className="f-w-400">
-                  Signup
+                  Sign Up
                 </NavLink>
               </p>
               {/* <Alert variant="primary" className="text-start mt-3">

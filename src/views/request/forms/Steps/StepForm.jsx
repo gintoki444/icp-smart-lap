@@ -256,21 +256,25 @@ const StepForm = ({
         return true;
       }),
     fertilizer_type_id: Yup.number().typeError('กรุณาเลือกประเภทลักษณะปุ๋ย').required('กรุณาเลือกประเภทลักษณะปุ๋ย'),
-    fertilizer_other: Yup.string().test('fertilizer-other-required', 'กรุณาระบุลักษณะปุ๋ย', function (value) {
-      const { fertilizer_type_id } = this.parent;
-      if (fertilizer_type_id === 5) {
-        return value && value.trim() !== '';
-      }
-      return true;
-    }),
+    fertilizer_other: Yup.string()
+      .nullable()
+      .test('fertilizer-other-required', 'กรุณาระบุลักษณะปุ๋ย', function (value) {
+        const { fertilizer_type_id } = this.parent;
+        if (fertilizer_type_id === 5) {
+          return value && value.trim() !== '';
+        }
+        return true;
+      }),
     packaging_id: Yup.number().typeError('กรุณาเลือกภาชนะบรรจุ').required('กรุณาเลือกภาชนะบรรจุ'),
-    packaging_other: Yup.string().test('packaging-other-required', 'กรุณาระบุภาชนะบรรจุ', function (value) {
-      const { packaging_id } = this.parent;
-      if (packaging_id === 6) {
-        return value && value.trim() !== '';
-      }
-      return true;
-    }),
+    packaging_other: Yup.string()
+      .nullable()
+      .test('packaging-other-required', 'กรุณาระบุภาชนะบรรจุ', function (value) {
+        const { packaging_id } = this.parent;
+        if (packaging_id === 6) {
+          return value && value.trim() !== '';
+        }
+        return true;
+      }),
     color: Yup.string().required('กรุณาระบุสี'),
     formula_id: Yup.string().nullable(), // ไม่บังคับตามฟอร์ม
 

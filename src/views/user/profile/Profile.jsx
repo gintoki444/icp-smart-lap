@@ -159,7 +159,7 @@ const Profile = () => {
                 ) : (
                   <div>
                     <Button variant="outline-primary" className="mt-2" onClick={handleSetEdit}>
-                      อัพโหลดรูปภาพ
+                      อัปโหลดรูปภาพ
                     </Button>
                   </div>
                 )}

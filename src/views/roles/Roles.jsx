@@ -59,7 +59,7 @@ const RolesList = () => {
     { field: 'description', headerName: 'รายละเอียด', flex: 1 },
     {
       field: 'actions',
-      headerName: 'การจัดการ',
+      headerName: 'Action',
       width: 200,
       headerAlign: 'center',
       align: 'center',

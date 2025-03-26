@@ -147,6 +147,7 @@ const EditSampleRequestForm = ({ userId: propUserId }) => {
     try {
       const response = await getServiceRequestsByID(id);
       const companyData = await getCustomerByID(response.customer_id);
+      console.log('companyData :', companyData);
       setCompany(companyData);
       const mappedValues = mapApiToFormValues(response, companyData);
       setInitialFormValues(mappedValues);
@@ -223,20 +224,6 @@ const EditSampleRequestForm = ({ userId: propUserId }) => {
       original.notes !== updated.notes
     );
   };
-  // const hasStep1Changed = (original, updated) => {
-  //   return (
-  //     original.customer_id !== updated.company_id ||
-  //     original.is_registration_analysis !== (updated.analysisMethod === 'is_registration_analysis' ? 1 : 0) ||
-  //     original.is_quality_check_analysis !== (updated.analysisMethod === 'is_quality_check_analysis' ? 1 : 0) ||
-  //     // sr_is_self_pickup: (values.reportMethod || []).includes('is_self_pickup') ? 1 : 0,
-  //     // sr_pdf_email: (values.reportMethod || []).includes('pdf_email') ? data.email : '',
-  //     // sr_is_mail_delivery: (values.reportMethod || []).includes('is_self_pickup') ? 1 : 0,
-  //     original.sr_is_self_pickup !== ((updated.reportMethod || []).includes('is_self_pickup') ? 1 : 0) ||
-  //     original.sr_pdf_email !== ((updated.reportMethod || []).includes('pdf_email') ? updated.email : '') ||
-  //     original.sr_is_mail_delivery !== ((updated.reportMethod || []).includes('is_mail_delivery') ? 1 : 0) ||
-  //     original.notes !== updated.notes
-  //   );
-  // };
 
   const hasFertilizerRecordChanged = (original, updated) => {
     const fieldsToCompare = [
@@ -353,82 +340,6 @@ const EditSampleRequestForm = ({ userId: propUserId }) => {
     });
     await Promise.all(updatePromises);
   };
-  // const updateSampleSubmissions = async (originalSubmissions, updatedSubmissions, requestId, values) => {
-  //   const deletedSubmissions = originalSubmissions.filter(
-  //     (orig) => !updatedSubmissions.some((upd) => upd.submission_id === orig.submission_id)
-  //   );
-  //   await Promise.all(deletedSubmissions.map((deleted) => deleteSampleSubmissions(deleted.submission_id)));
-
-  //   const updatePromises = updatedSubmissions.map(async (record) => {
-  //     const sampleSubmissionData = {
-  //       request_id: requestId,
-  //       is_single_fertilizer: record.fertilizerCategory === 'is_single_fertilizer' ? 1 : 0,
-  //       is_compound_fertilizer: record.fertilizerCategory === 'is_compound_fertilizer' ? 1 : 0,
-  //       is_mixed_fertilizer: record.fertilizerCategory === 'is_mixed_fertilizer' ? 1 : 0,
-  //       is_secondary_nutrient_fertilizer: record.fertilizerCategory === 'is_secondary_nutrient_fertilizer' ? 1 : 0,
-  //       fertilizer_type_id: record.fertilizer_type_id,
-  //       color: record.color,
-  //       fertilizer_formula: record.fertilizer_formula,
-  //       common_name: record.common_name,
-  //       trade_name: record.trade_name,
-  //       trademark: record.trademark,
-  //       manufacturer: record.manufacturer,
-  //       manufacturer_country: record.manufacturer_country,
-  //       supplier: record.supplier,
-  //       supplier_country: record.supplier_country,
-  //       composition: record.composition,
-  //       sample_weight: String(record.sample_weight),
-  //       sample_weight_unit: record.sample_weight_unit,
-  //       packaging_id: record.packaging_id,
-  //       packaging_other: record.packaging_other,
-  //       is_self_pickup: (record.reportMethod || []).includes('is_self_pickup') ? 1 : 0,
-  //       pdf_email: (record.reportMethod || []).includes('pdf_email') ? record.email : '',
-  //       is_self_pickup: (record.reportMethod || []).includes('is_self_pickup') ? 1 : 0,
-  //       is_mail_delivery: (record.reportMethod || []).includes('pdf_email') ? 1 : 0,
-  //       test_all_items: values.test_all_items ? 1 : 0,
-  //       is_lab_dispose_sample: record.sampleDisposal === 'is_lab_dispose_sample' ? 1 : 0,
-  //       is_collect_within_3_months: record.sampleDisposal === 'is_collect_within_3_months' ? 1 : 0,
-  //       is_return_sample: record.sampleDisposal === 'is_return_sample' ? 1 : 0,
-  //       submitted_by: record.submitted_by,
-  //       phone: record.submitted_phone,
-  //       submission_date: record.submitted_date
-  //     };
-
-  //     if (record.submission_id) {
-  //       const original = originalSubmissions.find((o) => o.submission_id === record.submission_id);
-  //       if (hasFertilizerRecordChanged(original, record)) {
-  //         await putSampleSubmissions(sampleSubmissionData, record.submission_id);
-  //       }
-
-  //       const originalTestItems = original.sample_submission_details || [];
-  //       const updatedTestItems = record.test_items || [];
-  //       const deletedTestItems = originalTestItems.filter(
-  //         (orig) => !updatedTestItems.some((upd) => upd.test_item_id === orig.test_item_id && upd.test_percentage === orig.test_percentage)
-  //       );
-  //       await Promise.all(deletedTestItems.map((item) => deleteSampleSubmisDetail(item.detail_id)));
-
-  //       const newTestItems = updatedTestItems.filter(
-  //         (upd) => !originalTestItems.some((orig) => orig.test_item_id === upd.test_item_id && orig.test_percentage === upd.test_percentage)
-  //       );
-  //       if (newTestItems.length > 0) {
-  //         await postSampleSubmisDetail({
-  //           submission_id: record.submission_id,
-  //           test_items: newTestItems
-  //         });
-  //       }
-  //     } else {
-  //       const response = await postSampleSubmissions(sampleSubmissionData);
-  //       if (record.test_items.length > 0) {
-  //         await postSampleSubmisDetail({
-  //           submission_id: response.submission_id,
-  //           test_items: record.test_items
-  //         });
-  //       }
-  //     }
-  //   });
-  //   await Promise.all(updatePromises);
-  // };
-
   const handleFileChanges = async (originalFiles, updatedFiles, requestId) => {
     const deletedFiles = originalFiles.filter((orig) => !updatedFiles.some((upd) => upd.document_id === orig.document_id));
     await Promise.all(
@@ -488,46 +399,11 @@ const EditSampleRequestForm = ({ userId: propUserId }) => {
       setSubmitting(false);
     }
   };
-  // const handleSubmit = async (values, { setSubmitting }) => {
-  //   console.log('values:', values);
-  //   try {
-  //     const step1 = {
-  //       user_id: values.user_id,
-  //       customer_id: values.company_id,
-  //       is_registration_analysis: values.analysisMethod === 'is_registration_analysis' ? 1 : 0,
-  //       is_quality_check_analysis: values.analysisMethod === 'is_quality_check_analysis' ? 1 : 0,
-  //       sr_is_self_pickup: (values.reportMethod || []).includes('is_self_pickup') ? 1 : 0,
-  //       sr_pdf_email: (values.reportMethod || []).includes('pdf_email') ? data.email : '',
-  //       sr_is_mail_delivery: (values.reportMethod || []).includes('is_self_pickup') ? 1 : 0,
-  //       // sr_is_self_pickup: values.fertilizerRecords[0].reportMethod.includes('is_self_pickup') ? 1 : 0,
-  //       // sr_pdf_email: values.fertilizerRecords[0].reportMethod.includes('pdf_email') ? values.fertilizerRecords[0].email : '',
-  //       // sr_is_mail_delivery: values.fertilizerRecords[0].reportMethod.includes('is_mail_delivery') ? 1 : 0,
-  //       // sr_mail_delivery_location: values.fertilizerRecords[0].sr_mail_delivery_location,
-  //       sr_mail_delivery_location: '-',
-  //       notes: values.notes
-  //     };
-
-  //     if (hasStep1Changed(originalData, values)) {
-  //       await putServiceRequests(step1, requestId);
-  //     }
-
-  //     await updateSampleSubmissions(originalData.sample_submissions, values.fertilizerRecords, requestId, values);
-  //     await handleFileChanges(originalData.service_request_documents, values.files, requestId);
-
-  //     setSuccessMessage('บันทึกการแก้ไขสำเร็จ');
-  //     setErrorMessage(null);
-  //     setTimeout(() => navigate('/request'), 1000);
-  //   } catch (error) {
-  //     console.error('Error submitting form:', error);
-  //     setErrorMessage('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
-  //   } finally {
-  //     setSubmitting(false);
-  //   }
-  // };
 
   const handleGetCusSpacialCon = async (companyId) => {
     try {
       const response = await getCustomerSpecialConditionsByID(companyId);
+      console.log('handleGetCusSpacialCon :', response);
       setSpacialCon(Array.isArray(response) ? response : []);
     } catch (error) {
       console.error('Error fetching special conditions:', error);

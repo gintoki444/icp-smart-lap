@@ -137,7 +137,7 @@ const JWTLogin = () => {
           <Row>
             <Col mt={2}>
               <Button className="btn-block mb-4" variant="primary" disabled={isSubmitting} type="submit">
-                Signin
+                Sign In
               </Button>
             </Col>
           </Row>

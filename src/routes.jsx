@@ -141,7 +141,18 @@ const routes = [
           />
         )
       },
-
+      {
+        path: 'request/verify/:id',
+        element: lazy(() => import('./views/admin/request/ServiceRequestDetail')),
+        guard: (props) => (
+          <ProtectedRoute
+            role={['super_admin', 'system', 'moderator', 'admin']}
+            position="manager"
+            path="/admin/request/verify/:id"
+            {...props}
+          />
+        )
+      },
       {
         exact: 'true',
         path: '/lab-list',
@@ -460,6 +471,38 @@ const routes = [
         element: lazy(() => import('./views/admin/test-results/EditTestResults')),
         guard: (props) => (
           <ProtectedRoute role={['admin', 'super_admin']} position="supervisor" path="/admin/test-results/edit" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/issue-quotation',
+        element: lazy(() => import('./views/admin/quotations/IssueQuotation')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin', 'moderator']} position="supervisor" path="/admin/test-results" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/issue-quotation/detail',
+        element: lazy(() => import('./views/admin/quotations/QuotationDetail')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin', 'moderator']} position="supervisor" path="/admin/test-results" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/issue-quotation/create',
+        element: lazy(() => import('./views/admin/quotations/MultiCreateQuotation')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin', 'moderator']} position="supervisor" path="/admin/test-results/add" {...props} />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/issue-quotation/edit',
+        element: lazy(() => import('./views/admin/quotations/EditQuotation')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin', 'moderator']} position="supervisor" path="/admin/test-results/edit" {...props} />
         )
       },
       {

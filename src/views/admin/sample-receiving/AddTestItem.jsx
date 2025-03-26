@@ -221,7 +221,7 @@ const FertilizerDetails = ({ title }) => {
   };
 
   const steps = [
-    { label: 'การขอรับบริการ', status: 'requested' },
+    { label: 'คำขอรับบริการ', status: 'requested' },
     { label: 'ลูกค้าส่งตัวอย่าง', status: 'sample_sent' },
     { label: 'ทบทวนคำขอ', status: 'request_reviewed' },
     { label: 'ตัวอย่างจัดส่งถึงแล็บ', status: 'sample_arrived_lab' },
@@ -345,7 +345,7 @@ const FertilizerDetails = ({ title }) => {
                 {serviceData.request_no && (
                   <Col md={12}>
                     <h5 className="mb-4">
-                      เลขที่คำขอบริการ : <span style={{ fontSize: 18 }}>{serviceData.request_no || ''}</span>
+                      เลขที่คำขอรับบริการ : <span style={{ fontSize: 18 }}>{serviceData.request_no || ''}</span>
                     </h5>
                   </Col>
                 )}

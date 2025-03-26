@@ -48,10 +48,10 @@ const ResetPassword = () => {
               <div className="mb-4">
                 <img className="img-fluid" src={logo} alt="logo" width={120} />
               </div>
-              <h3 className="mb-4">Verify e-mail</h3>
+              <h3 className="mb-4">Verify E-mail</h3>
               <p className="mb-4">
-                กรอกอีเมล์ที่สมัครสมาชิกเพื่อรับ <br />
-                token สำหรับรีเซตรหัสผ่าน
+                กรอกอีเมลที่ใช้สมัครสมาชิก <br />
+                เพื่อรับโทเคนสำหรับรีเซ็ตรหัสผ่าน
               </p>
               <Form onSubmit={formik.handleSubmit}>
                 <Form.Group className="mb-3">
@@ -67,13 +67,13 @@ const ResetPassword = () => {
                   <Form.Control.Feedback type="invalid">{formik.errors.email}</Form.Control.Feedback>
                 </Form.Group>
                 <Button variant="primary" type="submit" className="btn-block mb-4">
-                  Verify e-mail
+                  Verify Email
                 </Button>
               </Form>
               <p className="mb-1 text-muted">
-                have token of{' '}
+                Already have a reset token?{' '}
                 <NavLink to="/auth/new-password" className="f-w-400">
-                  reset password?
+                  Reset Password
                 </NavLink>
               </p>
               <p className="mb-1 text-muted">

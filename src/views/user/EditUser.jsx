@@ -42,7 +42,6 @@ function AddEdit() {
   };
 
   let initialValue = {
-    id: usersFromState?.id,
     first_name: usersFromState?.first_name,
     last_name: usersFromState?.last_name,
     email: usersFromState?.email,
@@ -64,7 +63,7 @@ function AddEdit() {
     try {
       delete values.email;
 
-      const response = await userRequest.putUser(values, values.id);
+      const response = await userRequest.putUser(values, usersFromState?.id);
       if (response) {
         toast.success('แก้ไขข้อมูลผู้ใช้งานสำเร็จ!', { autoClose: 3000 });
         navigate('/admin/user/');

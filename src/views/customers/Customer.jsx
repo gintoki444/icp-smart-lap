@@ -65,7 +65,7 @@ const Customer = () => {
     // { field: 'status', headerName: 'สถานะ', width: 120, headerAlign: 'center', align: 'center' },
     {
       field: 'actions',
-      headerName: 'การจัดการ',
+      headerName: 'Action',
       width: 200,
       headerAlign: 'center',
       align: 'center',

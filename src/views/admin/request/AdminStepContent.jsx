@@ -22,7 +22,7 @@ const AdminStepContent = ({ serviceId, handleReload, handleSetCustomer }) => {
   const [reloadData, setReloadData] = useState(false);
   const [serviceStatus, setServiceStatus] = useState([]);
   const [spacialCon, setSpacialCon] = useState({});
-  const [company, setCompany] = useState({});
+  const [customer, setCustomer] = useState({});
   const [packagingTypes, setPackagingTypes] = useState([]);
   const [serviceData, setServiceData] = useState({});
   const [sampleList, setSampleList] = useState([]);
@@ -98,7 +98,7 @@ const AdminStepContent = ({ serviceId, handleReload, handleSetCustomer }) => {
   const handleGetCustomer = async (companyId) => {
     try {
       const response = await getCustomerByID(companyId);
-      setCompany(response);
+      setCustomer(response);
       handleSetCustomer(response);
     } catch (error) {
       console.error(error);
@@ -212,30 +212,33 @@ const AdminStepContent = ({ serviceId, handleReload, handleSetCustomer }) => {
       <Card style={{ borderRadius: 10, marginBottom: 0 }}>
         <Card.Body style={{ paddingBottom: 20, paddingTop: 20 }}>
           <Row>
-            {serviceData.request_no && (
-              <Col md={12}>
-                <h5 className="mb-4">
-                  เลขที่คำขอบริการ : <span style={{ fontSize: 18 }}>{serviceData.request_no}</span>
-                </h5>
-              </Col>
-            )}
-            {/* เพิ่มเนื้อหาอื่นๆ ที่ต้องการใน StepContent ตามต้องการ */}
+            <Col md={12}>
+              <h5 className="mb-4">
+                เลขที่คำขอรับบริการ : <span style={{ fontSize: 18 }}>{serviceData.request_no || '-'}</span>
+              </h5>
+            </Col>
+            {/* เพิ่มเนื้อหาอื่นๆ ที่ต้องการใน ServiceStepContent ตามต้องการ */}
             <Col md={12}>
               <h6 className="mb-3">ข้อมูลผู้ขอขึ้นทะเบียน</h6>
             </Col>
             <Col md={6} className="mb-2">
               <p className="mb-0">
-                ชื่อบริษัท : <strong className="text-dark">{company.company_name}</strong>
+                รหัสลูกค้า : <strong className="text-dark">{customer.company_code}</strong>
               </p>
             </Col>
             <Col md={6} className="mb-2">
               <p className="mb-0">
-                เลขที่ผู้เสียภาษี : <strong className="text-dark">{company.tax_id}</strong>
+                ชื่อบริษัท : <strong className="text-dark">{customer.company_name}</strong>
               </p>
             </Col>
             <Col md={6} className="mb-2">
               <p className="mb-0">
-                ที่อยู่ : <strong className="text-dark">{company.company_address}</strong>
+                เลขที่ผู้เสียภาษี : <strong className="text-dark">{customer.tax_id}</strong>
+              </p>
+            </Col>
+            <Col md={6} className="mb-2">
+              <p className="mb-0">
+                ที่อยู่ : <strong className="text-dark">{customer.company_address}</strong>
               </p>
             </Col>
             <Col md={6}>
@@ -248,16 +251,26 @@ const AdminStepContent = ({ serviceId, handleReload, handleSetCustomer }) => {
                 </strong>
               </p>
             </Col>
+            {serviceData.sample_type_id === 1 && (
+              <Col md={6} className="mb-2">
+                <p className="mb-0">
+                  วัตถุประสงค์การขอรับบริการ :{' '}
+                  <strong className="text-dark">
+                    {serviceData.is_quality_check_analysis === 1 ? 'วิเคราะห์เพื่อตรวจสอบคุณภาพ' : 'วิเคราะห์ขึ้นทะเบียน'}
+                  </strong>
+                </p>
+              </Col>
+            )}
             <Col md={6} className="mb-2">
               <p className="mb-0">
                 ประเภทคำขอ : <strong className="text-dark">{serviceData.sample_type_name}</strong>
               </p>
             </Col>
-            <Col md={6} className="mb-2">
+            {/* <Col md={6} className="mb-2">
               <p className="mb-0">
                 คำขอเพิ่มเติม : <strong className="text-dark">{serviceData.notes}</strong>
               </p>
-            </Col>
+            </Col> */}
           </Row>
 
           {/* ข้อมูลปุ๋ยและส่วนอื่นๆ จะยังคงอยู่นอก StepContent */}
@@ -276,19 +289,22 @@ const AdminStepContent = ({ serviceId, handleReload, handleSetCustomer }) => {
                       >
                         <p className="mb-0">
                           ตัวอย่างที่ {index + 1}{' '}
-                          {sample.submission_no && (
+                          <>
+                            เลขที่ :{' '}
+                            <strong className="text-dark" style={{ fontWeight: 'bold' }}>
+                              {sample.submission_no || '-'}
+                            </strong>{' '}
+                          </>
+                          {sample.sample_type_id === 2 && (
                             <>
-                              เลขที่ :{' '}
+                              สูตรปุ๋ย : <strong className="text-dark">{sample.fertilizer_formula || '-'}</strong> ( ชื่อสามัญ :{' '}
                               <strong className="text-dark" style={{ fontWeight: 'bold' }}>
-                                {sample.submission_no || '-'}
-                              </strong>{' '}
+                                {sample.common_name || '-'}
+                              </strong>
+                              )
                             </>
-                          )}
-                          สูตรปุ๋ย : <strong className="text-dark">{sample.fertilizer_formula || '-'}</strong> ( ชื่อสามัญ :{' '}
-                          <strong className="text-dark" style={{ fontWeight: 'bold' }}>
-                            {sample.common_name || '-'}
-                          </strong>
-                          ) สถานะ :
+                          )}{' '}
+                          สถานะ :
                           <Badge
                             pill
                             bg={
@@ -403,13 +419,7 @@ const AdminStepContent = ({ serviceId, handleReload, handleSetCustomer }) => {
                           <Col md={6} className="mb-3">
                             <p className="mb-0">
                               วันที่ส่ง :{' '}
-                              <strong className="text-dark">
-                                {new Date(sample.submission_date).toLocaleDateString('th-TH', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
-                                }) || '-'}
-                              </strong>
+                              <strong className="text-dark">{new Date(sample.submission_date).toLocaleDateString('th-TH') || '-'}</strong>
                             </p>
                           </Col>
                           <Col md={12} className="mb-3">
@@ -446,7 +456,6 @@ const AdminStepContent = ({ serviceId, handleReload, handleSetCustomer }) => {
                       </AccordionDetails>
                     </Accordion>
                     <Col style={{ padding: '0px 16px ' }}>
-                      {/* <ReviewModal sampleSubmissions={sample} onSubmitReview={handleReload} /> */}
                       <SampleReceivingModal
                         serviceData={serviceData}
                         submissionId={sample.submission_id}
@@ -459,9 +468,11 @@ const AdminStepContent = ({ serviceId, handleReload, handleSetCustomer }) => {
                         serviceRequestId={serviceData.request_id}
                       />
                     </Col>
-                    <Col style={{ padding: '0px 16px 16px' }}>
-                      <ReviewModal sampleSubmissions={sample} onSubmitReview={handleReload} serviceRequestId={serviceData.request_id} />
-                    </Col>
+                    {serviceData.service_status_logs?.sample_arrived_lab && (
+                      <Col style={{ padding: '0px 16px 16px' }}>
+                        <ReviewModal sampleSubmissions={sample} onSubmitReview={handleReload} serviceRequestId={serviceData.request_id} />
+                      </Col>
+                    )}
                   </Col>
                 </Row>
 

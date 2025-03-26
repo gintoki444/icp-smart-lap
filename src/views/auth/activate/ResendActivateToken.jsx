@@ -54,8 +54,11 @@ const ResendActovateToken = () => {
                   <img className="img-fluid" src={logo} alt="logo" width={120} />
                 </div>
                 <Col md={12}>
-                  <h3 className="mb-4">Resend Activate Token</h3>
-                  <p className="mb-4">กรอกอีเมล์ที่สมัครสมาชิกเพื่อรับ Token ใหม่</p>
+                  <h3 className="mb-4">Resend Activation Token</h3>
+                  <p className="mb-4">
+                    กรอกอีเมลที่ใช้สมัครสมาชิก
+                    <br /> เพื่อรับโทเคนใหม่อีกครั้ง
+                  </p>
                   <Form onSubmit={formik.handleSubmit}>
                     <Form.Group className="mb-3">
                       <Form.Control
@@ -78,7 +81,7 @@ const ResendActovateToken = () => {
                       {formik.isSubmitting ? (
                         <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                       ) : (
-                        'Re-send'
+                        'Resend'
                       )}
                     </Button>
                   </Form>

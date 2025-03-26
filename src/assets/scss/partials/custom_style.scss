@@ -313,13 +313,24 @@ span > .Mui-completed {
 }
 
 .logo-fertilizer-style {
-  width: 200px;
-  height: 200px;
+  width: 140px;
+  height: 140px;
   margin-bottom: 10px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.MuiToolbar-gutters p {
+  margin-bottom: 0;
+}
+.form-check > .form-check-label {
+  margin-bottom: 0;
+}
+
+a.alert-link:hover {
+  text-decoration: underline;
+  opacity: 0.8;
 }
 
 /* Responsive adjustments */

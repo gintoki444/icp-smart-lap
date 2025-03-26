@@ -10,7 +10,7 @@ import { RiDeleteBin5Fill } from 'react-icons/ri';
 import { toast } from 'react-toastify';
 import { putServiceRequestStatusTracking, deleteServiceRequestStatusTracking, getServiceRequestsByID } from 'services/_api/serviceRequest'; // เพิ่ม API
 
-const AddTestTracking = ({ submissionId, handleTracking, serviceRequestId, sampleSubmissions }) => {
+const AddTestTracking = ({ submissionId, handleTracking, serviceRequestId, sampleSubmissions, serviceData }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [deliveryData, setDeliveryData] = useState([]);
@@ -203,7 +203,7 @@ const AddTestTracking = ({ submissionId, handleTracking, serviceRequestId, sampl
                   {data.status === 'received'
                     ? 'ดำเนินการจัดส่ง'
                     : data.status === 'in_processing'
-                      ? 'กำลังตรวจสอบ/ทดสอบ'
+                      ? 'กำลังทดสอบ'
                       : data.status === 'completed'
                         ? 'ทดสอบเสร็จสิ้น'
                         : 'จัดส่งสำเร็จ'}
@@ -231,11 +231,11 @@ const AddTestTracking = ({ submissionId, handleTracking, serviceRequestId, sampl
           ))}
         </tbody>
       </Table>
-
-      <Button variant="primary" onClick={() => setShowAddModal(true)}>
-        เพิ่มข้อมูลการจัดส่ง
-      </Button>
-
+      {!serviceData.service_status_logs.sample_arrived_lab && (
+        <Button variant="primary" onClick={() => setShowAddModal(true)}>
+          เพิ่มข้อมูลการจัดส่ง
+        </Button>
+      )}
       <Modal show={showAddModal} onHide={() => setShowAddModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>

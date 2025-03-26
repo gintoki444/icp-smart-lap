@@ -85,109 +85,7 @@ const FertilizerDetails = ({ title }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const [loading, setLoading] = useState(false);
-
-  const handleDownload = () => {
-    setLoading(true);
-    handleOpenNewTab();
-    setTimeout(() => {
-      setLoading(false);
-      alert('ดาวน์โหลดเอกสารสำเร็จ!');
-    }, 3000);
-  };
-
-  // const [packagingTypes, setPackagingTypes] = useState([]);
-  // const [testItems, setSampleReceiving] = useState([]);
-
-  useEffect(() => {
-    // handleGetPackageType();
-    // handleGetSampleReceiving();
-    // getFertilizerTypes();
-  }, []);
-
-  // const handleGetPackageType = async () => {
-  //   const response = await getAllPackagingType();
-  //   setPackagingTypes(response);
-  // };
-
-  // const handleGetSampleReceiving = async () => {
-  //   try {
-  //     const response = await getAllSampleReceiving();
-  //     setSampleReceiving(response);
-  //   } catch (error) {
-  //     console.error('Error fetching test items:', error);
-  //     setSampleReceiving([]);
-  //   }
-  // };
-
-  // const [fertilizerTypes, setFertilizerTypes] = useState([]);
-  // const getFertilizerTypes = async () => {
-  //   try {
-  //     const response = await getAllFertilicerType();
-  //     setFertilizerTypes(response);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-
-  const handleOpenNewTab = () => {
-    const url = '/request/detial/quotation';
-    window.open(url, '_blank');
-  };
-
-  // const getFertilizerCategoryLabel = (sampleList, fertilizerCategoryOptions) => {
-  //   const selectedKey = Object.keys(sampleList).find((key) => sampleList[key] === 1);
-  //   const selectedOption = fertilizerCategoryOptions.find((option) => option.value === selectedKey);
-  //   return selectedOption ? selectedOption.label : null;
-  // };
-
-  // const columns = [
-  //   { field: 'no', headerName: '#', width: 90, headerAlign: 'center', align: 'center' },
-  //   {
-  //     field: 'test_code',
-  //     headerName: 'ทดสอบ',
-  //     flex: 1,
-  //     renderCell: (params) => {
-  //       if (!params || !params.row) return '-';
-  //       const { test_code, test_percentage } = params.row;
-  //       return `${test_code || ''}${test_percentage ? ` (${test_percentage})` : ''}`.trim();
-  //     }
-  //   },
-  //   {
-  //     field: 'status',
-  //     headerName: 'สถานะ',
-  //     headerAlign: 'center',
-  //     align: 'center',
-  //     flex: 1,
-  //     renderCell: (params) => (
-  //       <Badge pill bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
-  //         {params.row.status === 'pending' ? 'รออนุมัติ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
-  //       </Badge>
-  //     )
-  //   },
-  //   {
-  //     field: 'test_value',
-  //     headerName: 'ผลที่ได้',
-  //     flex: 1,
-  //     renderCell: (params) => params?.row?.test_value || '-'
-  //   },
-  //   {
-  //     field: 'test_date',
-  //     headerName: 'วันที่ทดสอบ',
-  //     flex: 1,
-  //     valueGetter: (params) => params?.row?.created_at || '-'
-  //   }
-  // ];
-
-  // const handleSetDataGrid = (data) => {
-  //   const setData = data.map((test, idx) => ({
-  //     id: test.detail_id,
-  //     no: idx + 1,
-  //     ...test
-  //   }));
-  //   console.log('setData', setData);
-  //   return setData;
-  // };
+  useEffect(() => {}, []);
 
   const handleEdit = (id) => {
     navigate('/request/edit/', { state: { id } });
@@ -200,7 +98,7 @@ const FertilizerDetails = ({ title }) => {
   };
 
   const steps = [
-    { label: 'การขอรับบริการ', status: 'requested' },
+    { label: 'คำขอรับบริการ', status: 'requested' },
     { label: 'ลูกค้าส่งตัวอย่าง', status: 'sample_sent' },
     { label: 'ทบทวนคำขอ', status: 'request_reviewed' },
     { label: 'ตัวอย่างจัดส่งถึงแล็บ', status: 'sample_arrived_lab' },
@@ -312,8 +210,12 @@ const FertilizerDetails = ({ title }) => {
           </div>
         </Card.Body>
         <Card.Footer className="text-start">
-          <SampleSubmissionModal service={serviceData} />
-          <Button variant="primary" onClick={() => handleEdit(id)}>
+          {serviceData.service_status_logs?.partial_testing && <SampleSubmissionModal service={serviceData} />}
+          <Button
+            variant="primary"
+            disabled={serviceData.service_status_logs?.quotation_issued || serviceData.status === 'rejected'}
+            onClick={() => handleEdit(id)}
+          >
             <FiEdit style={{ marginRight: 8 }} /> แก้ไขข้อมูล
           </Button>
           <Button variant="danger" onClick={() => navigate('/request/')}>

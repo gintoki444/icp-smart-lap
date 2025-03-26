@@ -3,7 +3,7 @@ import { Card, Badge, Row, Col, Form, Button, ButtonGroup } from 'react-bootstra
 import { Stack } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useNavigate } from 'react-router-dom';
-import { IoWarningOutline, IoReload } from 'react-icons/io5';
+import { IoWarningOutline, IoReload, IoCheckmark } from 'react-icons/io5';
 import { FiCheck, FiEdit } from 'react-icons/fi';
 import { RiDeleteBin5Line } from 'react-icons/ri';
 import * as userRequest from 'services/_api/usersRequest';
@@ -11,7 +11,7 @@ import { toast } from 'react-toastify';
 import { authenUser } from 'services/_api/authentication';
 import { deleteServiceRequests, getAllServiceRequestByUser } from 'services/_api/serviceRequest';
 import { getCustomerSpecialConditionsByID } from 'services/_api/specialConditionsRequest';
-// import { getCustomerSpecialConditionsByID } from 'services/_api/customerService'; // สมมติว่ามี API นี้
+import { getNextPendingStatus } from '../../components/Utility/statusRequestUtilis';
 
 const UserRequestPage = () => {
   const [user, setUser] = useState(null);
@@ -52,11 +52,10 @@ const UserRequestPage = () => {
   const getcustomers = async (id) => {
     try {
       const result = await userRequest.getCustomerByUserID(id);
-      console.log('result:', result);
       if (result) {
         const formattedCustomers = await Promise.all(
           result
-            // .filter((customer) => customer.status === 'approved')
+            .filter((customer) => customer.status === 'approved')
             .map(async (customer, index) => {
               const specialConditions = await handleGetCusSpacialCon(customer.company_id);
               return {
@@ -76,7 +75,6 @@ const UserRequestPage = () => {
               };
             })
         );
-        console.log('formattedCustomers:', formattedCustomers);
         setCustomer(formattedCustomers);
 
         // อัปเดต spacialCon ด้วยข้อมูลทั้งหมด
@@ -114,7 +112,13 @@ const UserRequestPage = () => {
           special_conditions: service.special_conditions || '-', // เปลี่ยนจาก notes เป็น special_conditions
           created_at: new Date(service.created_at).toLocaleDateString('th-TH'),
           status: service.status,
+          quotation_id: service.quotation_id,
+          quotation_no: service.quotation_no,
+          quotation_date: service.quotation_date,
+          service_status_logs: service.service_status_logs,
           sample_submissions: service.sample_submissions,
+          request_id_list_by_quotation: service.request_id_list_by_quotation || null,
+          submission_count: service.sample_submissions.length,
           service_request_documents: service.service_request_documents
         }));
         setServiceRequests(formattedRows);
@@ -133,8 +137,17 @@ const UserRequestPage = () => {
     { field: 'No', headerName: 'No.', width: 90, headerAlign: 'center', align: 'center' },
     { field: 'request_no', headerName: 'เลขที่คำขอ', flex: 0.8 },
     { field: 'sample_type_name', headerName: 'ประเภทปุ๋ย', flex: 0.7 },
-    // { field: 'special_conditions', headerName: 'เงื่อนไขพิเศษ', flex: 1.2 }, // เปลี่ยนจาก notes เป็น special_conditions
+    // { field: 'submission_count', headerName: 'เงื่อนไขพิเศษ', flex: 1.2 }, // เปลี่ยนจาก notes เป็น special_conditions
     { field: 'request_date', headerName: 'วันที่สร้าง', flex: 1 },
+    {
+      field: 'quotation_no',
+      headerName: 'ออกใบเสนอราคา',
+      flex: 1,
+      headerAlign: 'center',
+      align: 'center',
+      renderCell: (params) => <>{params.row.quotation_no ? params.row.quotation_no : '-'}</>
+    }, // เปลี่ยนจาก notes เป็น special_conditions
+    { field: 'submission_count', headerName: 'จำนวนตัวอย่าง', flex: 1, headerAlign: 'center', align: 'center' }, // เปลี่ยนจาก notes เป็น special_conditions
     {
       field: 'status',
       headerName: 'สถานะ',
@@ -147,9 +160,40 @@ const UserRequestPage = () => {
         </Badge>
       )
     },
+    // {
+    //   field: 'status',
+    //   headerName: 'สถานะ',
+    //   width: 160,
+    //   headerAlign: 'center',
+    //   align: 'center',
+    //   renderCell: (params) => {
+    //     const statusText = getNextPendingStatus(params.row.service_status_logs || {});
+
+    //     const variant =
+    //       statusText === 'ดำเนินการครบแล้ว'
+    //         ? 'success'
+    //         : statusText.includes('รอ') || statusText.includes('ขอ') || statusText.includes('ใบเสนอ')
+    //           ? 'warning'
+    //           : 'success';
+
+    //     return (
+    //       <>
+    //         {params.row.status === 'rejected' ? (
+    //           <Badge pill bg="danger">
+    //             ไม่อนุมัติ
+    //           </Badge>
+    //         ) : (
+    //           <Badge pill bg={variant}>
+    //             {statusText}
+    //           </Badge>
+    //         )}
+    //       </>
+    //     );
+    //   }
+    // },
     {
       field: 'actions',
-      headerName: 'การจัดการ',
+      headerName: 'Action',
       width: 200,
       headerAlign: 'center',
       align: 'center',
@@ -158,10 +202,20 @@ const UserRequestPage = () => {
           <Button variant="primary" size="sm" onClick={() => navigate('/request/detial', { state: { id: params.row.id } })}>
             <i className="feather icon-file-text m-0" />
           </Button>
-          <Button variant="info" size="sm" onClick={() => handleEdit(params.row)}>
+          <Button
+            variant="info"
+            size="sm"
+            disabled={params.row.request_id_list_by_quotation || params.row.status === 'rejected'}
+            onClick={() => handleEdit(params.row)}
+          >
             <FiEdit />
           </Button>
-          <Button variant="outline-danger" size="sm" onClick={() => handleDelete(params.row.id)}>
+          <Button
+            variant="outline-danger"
+            size="sm"
+            disabled={params.row.request_id_list_by_quotation || params.row.status === 'rejected'}
+            onClick={() => handleDelete(params.row.id)}
+          >
             <RiDeleteBin5Line />
           </Button>
         </ButtonGroup>
@@ -228,15 +282,19 @@ const UserRequestPage = () => {
       setLoading(true);
       try {
         const response = await deleteServiceRequests(id);
-        if (response) {
+
+        // ✅ ตรวจสอบว่า response.status อยู่ในช่วง 200–299
+        if (response?.status >= 200 && response?.status < 300) {
           toast.success('ลบข้อมูลคำขอรับบริการสำเร็จ!', { autoClose: 3000 });
           if (user?.user_id) {
             await getServiceRequests(user.user_id);
           }
+        } else {
+          throw new Error('API ไม่สำเร็จ'); // ให้เข้า catch ด้านล่าง
         }
       } catch (error) {
         toast.error('ลบข้อมูลคำขอรับบริการไม่สำเร็จ!', { autoClose: 3000 });
-        console.error(error);
+        console.error('❌ Delete error:', error);
       } finally {
         setLoading(false);
       }

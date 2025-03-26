@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Form, Modal, Row, Col } from 'react-bootstrap';
+import { Card, Button, Form, Modal, Row, Col, Alert } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { postServiceRequests, postServiceRequestDocuments, putServiceRequestStatusTracking } from 'services/_api/serviceRequest';
 import { postSampleSubmisDetail, postSampleSubmissions } from 'services/_api/sampleSubmissionsRequest';
@@ -12,6 +12,7 @@ import { getCustomerByID } from 'services/_api/customerRequest';
 
 import logoFertilizerOrganic from '../../../assets/images/logo-fertilizer-organic.webp';
 import logoFertilizerChemical from '../../../assets/images/logo-fertilizer-chemical.webp';
+import { createServiceNotify } from 'components/Notify/CreateServiceNotify';
 
 const AddServiceRequest = () => {
   const navigate = useNavigate();
@@ -59,6 +60,7 @@ const AddServiceRequest = () => {
   const handleGetCusSpacialCon = async (companyId) => {
     try {
       const response = await getCustomerSpecialConditionsByID(companyId);
+      console.log('handleGetCusSpacialCon:', response);
       setSpacialCon(Array.isArray(response) ? response : []);
     } catch (error) {
       console.error(error);
@@ -161,6 +163,7 @@ const AddServiceRequest = () => {
         };
         await putServiceRequestStatusTracking(responseService.request_id, reqStatusTracking);
 
+        await createServiceNotify(data, customer, spacialCon, window.location.origin, responseService.request_id);
         toast.success('เพิ่มข้อมูลคำขอรับบริการสำเร็จ!', { autoClose: 3000 });
         navigate('/request/detial', { state: { id: responseService.request_id } });
         setShowSuccessModal(true);
@@ -180,82 +183,86 @@ const AddServiceRequest = () => {
             <h5>เลือกประเภทการขอรับบริการ</h5>
           </Card.Header>
           <Card.Body>
-            <Row className="mb-4">
-              <Col md={6} className="mb-2">
-                <p className="mb-0">
-                  รหัสลูกค้า : <strong className="text-dark">{customer.company_code}</strong>{' '}
-                  <span className="text-dark">(กรณีมีการเปลี่ยนแปลง ชื่อ, ที่อยู่ กรุณาแจ้งห้องปฏิบัติการ)</span>
-                </p>
-              </Col>
-              <Col md={6} className="mb-2">
-                <p className="mb-0">
-                  ชื่อบริษัท : <strong className="text-dark">{customerFromState.company_name}</strong>
-                </p>
-              </Col>
-              <Col md={6} className="mb-2">
-                <p className="mb-0">
-                  เลขที่ผู้เสียภาษี : <strong className="text-dark">{customerFromState.tax_id}</strong>
-                </p>
-              </Col>
-              <Col md={6} className="mb-2">
-                <p className="mb-0">
-                  ที่อยู่ : <strong className="text-dark">{customerFromState.company_address}</strong>
-                </p>
-              </Col>
-              {spacialCon && spacialCon.length > 0 && (
-                <Col md={6}>
+            <Card className="p-4 mb-3">
+              <Row>
+                <Col md={6} className="mb-2">
                   <p className="mb-0">
-                    เงื่อนไขพิเศษ :{' '}
-                    <strong className="text-dark">
-                      {spacialCon.map((x, index) => (
-                        <span key={index}>
-                          {x.description}
-                          {index + 1 < spacialCon.length && ', '}
-                        </span>
-                      ))}
-                    </strong>
+                    รหัสลูกค้า : <strong className="text-dark">{customer.company_code}</strong>{' '}
+                    <span className="text-dark">(กรณีมีการเปลี่ยนแปลง ชื่อ, ที่อยู่ กรุณาแจ้งห้องปฏิบัติการ)</span>
                   </p>
                 </Col>
-              )}
-            </Row>
-            <div className="d-flex justify-content-center gap-3 align-items-start">
-              <Button
-                variant="outline"
-                className="py-4 d-flex align-items-center justify-content-center flex-column"
-                style={{ width: '300px', color: '#8B4513', fontSize: '18px', fontWeight: 'bold' }}
-                onClick={() => handleFormSelection('organic')}
-              >
-                <div
-                  className="logo-fertilizer-style"
-                  style={{
-                    border: 'solid 3px #8B4513'
-                  }}
-                >
-                  <img src={logoFertilizerOrganic} alt="ปุ๋ยอินทรีย์" style={{ width: '175px', height: '175px', padding: '12px' }} />
-                </div>
-                แบบฟอร์มนำส่งตัวอย่างปุ๋ยอินทรีย์
-              </Button>
-              <Button
-                variant="outline"
-                className="py-4 d-flex align-items-center justify-content-center flex-column"
-                style={{ width: '300px', color: '#28A745', fontSize: '18px', fontWeight: 'bold' }}
-                onClick={() => handleFormSelection('chemical')}
-              >
-                <div
-                  className="logo-fertilizer-style"
-                  style={{
-                    border: 'solid 3px #28A745'
-                  }}
-                >
-                  <img src={logoFertilizerChemical} alt="ปุ๋ยเคมี" style={{ width: '175px', height: '175px', padding: '12px' }} />
-                </div>
-                <div>
-                  แบบฟอร์มนำส่งตัวอย่างปุ๋ยเคมี
-                  <br />
-                  (เพื่อขึ้นทะเบียนปุ๋ย)
-                </div>
-              </Button>
-            </div>
+                <Col md={6} className="mb-2">
+                  <p className="mb-0">
+                    ชื่อบริษัท : <strong className="text-dark">{customerFromState.company_name}</strong>
+                  </p>
+                </Col>
+                <Col md={6} className="mb-2">
+                  <p className="mb-0">
+                    เลขที่ผู้เสียภาษี : <strong className="text-dark">{customerFromState.tax_id}</strong>
+                  </p>
+                </Col>
+                <Col md={6} className="mb-2">
+                  <p className="mb-0">
+                    ที่อยู่ : <strong className="text-dark">{customerFromState.company_address}</strong>
+                  </p>
+                </Col>
+                {spacialCon && spacialCon.length > 0 && (
+                  <Col md={6}>
+                    <p className="mb-0">
+                      เงื่อนไขพิเศษ :{' '}
+                      <strong className="text-dark">
+                        {spacialCon.map((x, index) => (
+                          <span key={index}>
+                            {x.description}
+                            {index + 1 < spacialCon.length && ', '}
+                          </span>
+                        ))}
+                      </strong>
+                    </p>
+                  </Col>
+                )}
+              </Row>
+            </Card>
+
+            <Alert variant="warning" className="mb-3 rounded-0" style={{ borderLeft: 'solid 3px #FFA500' }}>
+              ลูกค้ามีเครดิต (Credit) กรุณาแจ้งหากต้องการเงื่อนไขพิเศษ (Advance Invoice)
+            </Alert>
+            <Card className="p-4">
+              <Row className="justify-content-start ">
+                <Col md={4} sm={12} className="mb-3">
+                  <Button
+                    variant="outline"
+                    className="w-100 h-100 py-4 d-flex align-items-center justify-content-top flex-column"
+                    style={{ color: '#8B4513', fontSize: '18px', fontWeight: 'bold', border: 'solid 1px #8B4513', borderRadius: 10 }}
+                    onClick={() => handleFormSelection('organic')}
+                  >
+                    <div className="logo-fertilizer-style" style={{ border: 'solid 3px #8B4513' }}>
+                      <img src={logoFertilizerOrganic} alt="ปุ๋ยอินทรีย์" style={{ width: '120px', padding: '12px' }} />
+                    </div>
+                    แบบฟอร์มนำส่งตัวอย่างปุ๋ยอินทรีย์
+                  </Button>
+                </Col>
+
+                <Col md={4} sm={12} className="mb-3">
+                  <Button
+                    variant="outline"
+                    className="w-100 h-100 py-4 d-flex align-items-center justify-content-center flex-column"
+                    style={{ color: '#28A745', fontSize: '18px', fontWeight: 'bold', border: 'solid 1px #28A745', borderRadius: 10 }}
+                    onClick={() => handleFormSelection('chemical')}
+                  >
+                    <div className="logo-fertilizer-style" style={{ border: 'solid 3px #28A745' }}>
+                      <img src={logoFertilizerChemical} alt="ปุ๋ยเคมี" style={{ width: '120px', padding: '12px' }} />
+                    </div>
+                    <div>
+                      แบบฟอร์มนำส่งตัวอย่างปุ๋ยเคมี
+                      <br />
+                      (เพื่อขึ้นทะเบียนปุ๋ย)
+                    </div>
+                  </Button>
+                </Col>
+                {/* หากต้องการเพิ่มปุ่มอีก 2 ปุ่ม สามารถเพิ่ม <Col md={3} sm={12}> ได้ที่นี่ */}
+              </Row>
+            </Card>
           </Card.Body>
         </Card>
       )}
