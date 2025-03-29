@@ -9,10 +9,16 @@ import { RiDeleteBin5Line } from 'react-icons/ri';
 import * as userRequest from 'services/_api/usersRequest';
 import { toast } from 'react-toastify';
 import { authenUser } from 'services/_api/authentication';
-import { deleteServiceRequests, getAllServiceRequests, getAllServiceRequestByUser } from 'services/_api/serviceRequest';
+import {
+  deleteServiceRequests,
+  getAllServiceRequests,
+  getAllServiceRequestByUserQuotation,
+  deleteServiceRequestStatusTracking
+} from 'services/_api/serviceRequest';
 import { getAllCustomer } from 'services/_api/customerRequest';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { deleteQuotations } from 'services/_api/quotationRequest';
+import { TbScriptPlus } from 'react-icons/tb';
 
 const IssueQuotation = () => {
   const [user, setUser] = useState(null);
@@ -65,7 +71,7 @@ const IssueQuotation = () => {
 
         const detailedServiceResults = await Promise.all(
           uniqueUserIds.map((userId) =>
-            getAllServiceRequestByUser(userId)
+            getAllServiceRequestByUserQuotation(userId)
               .then((services) => ({
                 userId,
                 services: services.data || []
@@ -107,7 +113,7 @@ const IssueQuotation = () => {
         );
 
         const combinedServices = [
-          ...initialServiceResult.map((service, index) => ({
+          ...detailedServiceResults.map((service, index) => ({
             id: service.request_id,
             No: index + 1,
             request_date: new Date(service.request_date).toLocaleString(),
@@ -143,6 +149,7 @@ const IssueQuotation = () => {
             No: index + 1
           }));
 
+        console.log('finalServiceRequests:', finalServiceRequests);
         setServiceRequests(finalServiceRequests.length > 0 ? finalServiceRequests : []);
       } else {
         setServiceRequests([]);
@@ -196,18 +203,18 @@ const IssueQuotation = () => {
     { field: 'sample_type_name', headerName: 'ประเภทคำขอ', flex: 0.7 },
     { field: 'request_date', headerName: 'วันที่สร้าง', flex: 1 },
     { field: 'count_sample_submissions', headerName: 'จำนวนตัวอย่าง', flex: 1, headerAlign: 'center', align: 'center' },
-    {
-      field: 'status',
-      headerName: 'สถานะ',
-      width: 120,
-      headerAlign: 'center',
-      align: 'center',
-      renderCell: (params) => (
-        <Badge pill bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
-          {params.row.status === 'pending' ? 'กำลังดำเนินการ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
-        </Badge>
-      )
-    },
+    // {
+    //   field: 'status',
+    //   headerName: 'สถานะ',
+    //   width: 120,
+    //   headerAlign: 'center',
+    //   align: 'center',
+    //   renderCell: (params) => (
+    //     <Badge pill bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
+    //       {params.row.status === 'pending' ? 'กำลังดำเนินการ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
+    //     </Badge>
+    //   )
+    // },
     {
       field: 'actions',
       headerName: 'Action',
@@ -217,7 +224,12 @@ const IssueQuotation = () => {
       renderCell: (params) => (
         <ButtonGroup>
           <Tooltip title="แก้ไข" placement="bottom" arrow>
-            <Button variant="info" size="sm" disabled={!params.row.quotation_id} onClick={() => handleEdit(params.row.quotation_id)}>
+            <Button
+              variant="info"
+              size="sm"
+              disabled={!params.row.quotation_id}
+              onClick={() => handleEdit(params.row.request_id_list_by_quotation)}
+            >
               <FiEdit />
             </Button>
           </Tooltip>
@@ -227,7 +239,7 @@ const IssueQuotation = () => {
               size="sm"
               disabled={!params.row.quotation_id}
               onClick={() => {
-                navigate('/admin/issue-quotation/detail', { state: { id: params.row.quotation_id } });
+                navigate('/admin/issue-quotation/detail', { state: { id: params.row.request_id_list_by_quotation, service: params.row } });
               }}
             >
               <i className="feather icon-file-text m-0" />
@@ -238,7 +250,7 @@ const IssueQuotation = () => {
               variant="outline-danger"
               size="sm"
               disabled={!params.row.quotation_id}
-              onClick={() => handleDelete(params.row.quotation_id)}
+              onClick={() => handleDelete(params.row.quotation_id, params.row.request_id_list_by_quotation)}
             >
               <RiDeleteBin5Line />
             </Button>
@@ -319,7 +331,7 @@ const IssueQuotation = () => {
     );
   };
 
-  const handleCreateQuotation = (customerId) => {
+  const handleCreateQuotation = () => {
     if (selectedRequests.length === 0) {
       toast.error('กรุณาเลือกอย่างน้อย 1 รายการ');
       return;
@@ -341,7 +353,7 @@ const IssueQuotation = () => {
       created_by: user?.user_id
     });
 
-    navigate(`/admin/issue-quotation/create?${params.toString()}`);
+    navigate(`/admin/issue-quotation/create?${params.toString()}`, { state: { serviceData: selectedRows } });
   };
 
   useEffect(() => {
@@ -357,14 +369,20 @@ const IssueQuotation = () => {
     navigate('/admin/issue-quotation/edit', { state: { id } });
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, serviceId) => {
+    const requestIds = serviceId?.split(',') || [];
+
     const confirmDelete = window.confirm('คุณต้องการลบข้อมูลใบเสนอราคา หรือไม่?');
     if (confirmDelete) {
       setLoading(true);
       try {
-        const response = await deleteQuotations(id);
-        console.log('deleteQuotations:', response);
-
+        await deleteQuotations(id);
+        const deleteStatus = {
+          StatusTracking: 'quotation_issued'
+        };
+        requestIds.map((service) => {
+          deleteServiceRequestStatusTracking(service, deleteStatus);
+        });
         toast.success('ลบข้อมูลใบเสนอราคาสำเร็จ!', { autoClose: 3000 });
         await fetchData();
       } catch (error) {
@@ -451,7 +469,7 @@ const IssueQuotation = () => {
                           }}
                           disabled={!selectedRequests.some((id) => group.filteredRows.some((row) => row.id === id))}
                         >
-                          สร้างใบเสนอราคา
+                          <TbScriptPlus style={{ fontSize: 18, marginRight: 6 }} /> สร้างใบเสนอราคา
                         </Button>
                       </Stack>
                     </Col>

@@ -3,6 +3,7 @@ import { Document, Page, Text, View, StyleSheet, Font, pdf, Image } from '@react
 import { Button, Modal, Form, Row, Col } from 'react-bootstrap';
 import { TbFileText } from 'react-icons/tb';
 import logo from '../../assets/images/logo/logo.png'; // ปรับ path ตามโครงสร้างโปรเจคของคุณ
+import { FaRegFilePdf } from 'react-icons/fa';
 
 // โหลดฟอนต์ภาษาไทย
 Font.register({
@@ -119,12 +120,12 @@ const CreateServiceRequest = ({ serviceData, customerData }) => {
         <Modal.Body>
           <p>คลิก "สร้าง PDF" เพื่อดูตัวอย่างฟอร์มที่สร้างจากข้อมูลปัจจุบัน</p>
         </Modal.Body>
-        <Modal.Footer>
+        <Modal.Footer className="d-flex justify-content-center" style={{ flexShrink: 0 }}>
           <Button variant="primary" onClick={generatePDF}>
-            สร้าง PDF
+            <FaRegFilePdf style={{ fontSize: 16, marginRight: 8 }} /> สร้าง PDF
           </Button>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            ปิด
+          <Button variant="danger" onClick={() => setShowModal(false)}>
+            <i className="feather icon-corner-up-left" /> ยกเลิก
           </Button>
         </Modal.Footer>
       </Modal>

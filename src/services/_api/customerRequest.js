@@ -246,3 +246,19 @@ export const deleteCustomerDocuments = async (id) => {
   const response = await fetch(API_BASE_URL + '/customer-documents/' + id, requestOptions);
   return await response.json();
 };
+
+export const getGenerateCompanyCode = async () => {
+  const myHeaders = new Headers();
+  myHeaders.append('Content-Type', 'application/json');
+  //   const raw = JSON.stringify(data);
+
+  const requestOptions = {
+    method: 'GET',
+    headers: myHeaders,
+    // body: raw,
+    redirect: 'follow'
+  };
+
+  const response = await fetch(API_BASE_URL + '/generate-company-code', requestOptions);
+  return await response.json();
+};

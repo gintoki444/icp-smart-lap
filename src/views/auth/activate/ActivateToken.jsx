@@ -32,7 +32,7 @@ const ActivateToken = () => {
           navigate('/auth/activate-success');
         }
       } catch (error) {
-        let errorMessage = 'เกิดข้อผิดพลาดในการยืนยันอีเมล์';
+        let errorMessage = 'เกิดข้อผิดพลาดในการยืนยันอีเมล';
         if (error.message.includes('400')) {
           errorMessage = 'Token ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง';
         } else if (error.message.includes('404')) {

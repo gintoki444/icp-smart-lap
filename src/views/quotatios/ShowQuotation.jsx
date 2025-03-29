@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Document, Page, Text, Image, View, StyleSheet, PDFDownloadLink, Font, pdf } from '@react-pdf/renderer';
 import { Badge, Button, ButtonGroup, Col, Row, Table, Modal, Card, Form } from 'react-bootstrap';
-import logo from '../../../assets/images/logo/logo.png';
-import { deleteQuotations, getQuotationsByID, putQuotations } from 'services/_api/quotationRequest';
+import logo from '../../assets/images/logo/logo.png';
+import { deleteQuotations, getAllQuotationRequestsById, getQuotationsByID } from 'services/_api/quotationRequest';
 import { toast } from 'react-toastify';
 import { RiDeleteBin5Line, RiMailSendLine } from 'react-icons/ri';
 import { LuView } from 'react-icons/lu';
@@ -14,7 +14,7 @@ import { handleUploadFiles } from 'services/_api/uploadFileRequest';
 import { authenUser } from 'services/_api/authentication';
 import { getUserByID } from 'services/_api/usersRequest';
 import { CircularProgress, Backdrop } from '@mui/material';
-
+import { BsFiletypePdf } from 'react-icons/bs';
 // ✅ โหลดฟอนต์ภาษาไทย
 Font.register({
   family: 'THSarabunNew',
@@ -163,280 +163,74 @@ export const generatePDF = async (quotation) => {
 };
 
 // ✅ Component หลัก
-const GenerateQuotation = ({ quotationData, service }) => {
+const ShowQuotation = ({ id, service }) => {
   const [quotations, setQuotations] = useState([]);
-  const [dataSend, setDataSend] = useState([]);
-  const [approve, setApprove] = useState([]);
-  const [formData, setFormData] = useState({
-    toEmail: '',
-    subject: '',
-    message: '',
-    username: '',
-    files: null
-  });
+  //   const [dataSend, setDataSend] = useState([]);
+  //   const [formData, setFormData] = useState({
+  //     toEmail: '',
+  //     subject: '',
+  //     message: '',
+  //     username: '',
+  //     files: null
+  //   });
 
-  const [validated, setValidated] = useState(false);
+  //   const [validated, setValidated] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  //   const [error, setError] = useState(null);
+  //   const [showModal, setShowModal] = useState(false);
+  //   useEffect(() => {
+  //     const fetchUserData = async () => {
+  //       try {
+  //         // const token = localStorage.getItem('authToken');
+  //         // const response = await authenUser(token);
+  //         const userData = await getUserByID(service.user_id);
+  //         console.log('userData:', userData);
+  //         if (userData.user_id) {
+  //           setFormData((prev) => ({
+  //             ...prev,
+  //             subject: `ใบเสนอราคา ${service.quotation_no}`,
+  //             toEmail: userData.email,
+  //             username: userData.first_name + ' ' + userData.last_name
+  //           }));
+  //         } else {
+  //           setError('ไม่สามารถดึงข้อมูลผู้ใช้ได้');
+  //         }
+  //       } catch (err) {
+  //         setError('เกิดข้อผิดพลาดในการตรวจสอบผู้ใช้: ' + err.message);
+  //       }
+  //     };
+
+  //     fetchUserData();
+  //   }, []);
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchAllQuotations = async () => {
       try {
-        const token = localStorage.getItem('authToken');
-        const response = await authenUser(token);
-        const userData = await getUserByID(service.user_id);
-        console.log('userData:', userData);
-        if (userData.user_id) {
-          setFormData((prev) => ({
-            ...prev,
-            subject: `ใบเสนอราคา ${service.quotation_no}`,
-            toEmail: userData.email,
-            username: userData.first_name + ' ' + userData.last_name
-          }));
-          setApprove(response.user);
-        } else {
-          setError('ไม่สามารถดึงข้อมูลผู้ใช้ได้');
-        }
+        setLoading(true);
+        const data = await getAllQuotationRequestsById(id);
+        console.log('getAllQuotationRequestsById:', data);
+        setQuotations(data);
+        setLoading(false);
       } catch (err) {
         setError('เกิดข้อผิดพลาดในการตรวจสอบผู้ใช้: ' + err.message);
       }
     };
 
-    fetchUserData();
-  }, []);
-
-  useEffect(() => {
-    const fetchAllQuotations = async () => {
-      setQuotations([quotationData]);
-    };
-
-    fetchAllQuotations();
-  }, [quotationData]);
-
-  const handleSendEmail = async (data) => {
-    setLoading(true); // Show loading
-    try {
-      // const token = localStorage.getItem('authToken'); // Get token for postSendEmail
-      setDataSend(data);
-      setShowModal(true);
-    } catch (error) {
-      console.error('Error sending email:', error);
-      toast.error('เกิดข้อผิดพลาดในการส่งอีเมล');
-    } finally {
-      setLoading(false); // Hide loading
-    }
-  };
-
-  // Handle email sending after confirmation
-  const handleConfirmSendEmail = async () => {
-    setShowModal(false); // Close the modal
-    setLoading(true); // Show loading
-    try {
-      const updateStatus = {
-        status: 'approved',
-        approved_by: approve.user_id
-      };
-
-      console.log('updateStatus:', updateStatus);
-      // await generateAndSendPDF(selectedQuotation, { ...formData, ...emailFormData }, token);
-      await generateAndSendPDF(dataSend, formData);
-
-      await putQuotations(dataSend.quotation_id, updateStatus);
-    } catch (error) {
-      console.error('Error sending email:', error);
-      toast.error('เกิดข้อผิดพลาดในการส่งอีเมล');
-    } finally {
-      setLoading(false); // Hide loading
-    }
-  };
-
-  // Handle modal close
-  const handleCloseModal = () => {
-    setShowModal(false);
-  };
-
-  // Handle input changes in the modal
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // const handleSendEmail = async (data) => {
-  //   const confirmDelete = window.confirm('คุณต้องการส่งข้อมูลใบเสนอราคา :' + data.quotation_no + ' หรือไม่?');
-  //   if (confirmDelete) {
-  //     setLoading(true);
-  //     try {
-  //       await generateAndSendPDF(data, formData);
-  //       // toast.success('ส่งข้อมูลใบเสนอราคาสำเร็จ!', { autoClose: 3000 });
-  //     } catch (error) {
-  //       toast.error('ส่งข้อมูลใบเสนอราคาไม่สำเร็จ!', { autoClose: 3000 });
-  //       console.error('❌ Delete error:', error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-  // };
+    console.log('id:', id);
+    if (id) fetchAllQuotations();
+  }, [id]);
   return (
     <>
-      <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={loading}>
-        <CircularProgress color="inherit" />
-      </Backdrop>
-      {/* Modal for email confirmation */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-        <Modal.Header closeButton>
-          <h6 className="mb-0">ส่งใบเสนอราคา เลขที่ : {service.quotation_no}</h6>
-        </Modal.Header>
-        <Modal.Body>
-          <Form noValidate validated={validated} onSubmit={handleConfirmSendEmail}>
-            <Row>
-              <Col md={12}>
-                <Form.Group className="mb-3">
-                  <Form.Label>อีเมลผู้รับ</Form.Label>
-                  <Form.Control
-                    type="email"
-                    name="toEmail"
-                    value={formData.toEmail}
-                    onChange={handleChange}
-                    placeholder="เช่น email@gmail.com"
-                    required
-                    isInvalid={validated && !formData.toEmail.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)}
-                  />
-                  <Form.Control.Feedback type="invalid">กรุณากรอกอีเมลให้ถูกต้อง</Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <Row>
-              <Col md={12}>
-                <Form.Group className="mb-3">
-                  <Form.Label>หัวข้อ</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    placeholder="หัวข้ออีเมล"
-                    required
-                    isInvalid={validated && !formData.subject.trim()}
-                  />
-                  <Form.Control.Feedback type="invalid">กรุณากรอกหัวข้อ</Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
-
-            {/* <Row>
-                  <Col md={12}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>รายละเอียด</Form.Label>
-                      <Form.Control
-                        as="textarea"
-                        rows={4}
-                        name="message"
-                        value={formData.message}
-                        onChange={handleChange}
-                        placeholder="พิมพ์ข้อความของคุณที่นี่"
-                        required
-                        isInvalid={validated && !formData.message.trim()}
-                      />
-                      <Form.Control.Feedback type="invalid">กรุณากรอกรายละเอียด</Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                </Row> */}
-
-            {error && (
-              <div className="alert alert-danger" role="alert">
-                {error}
-              </div>
-            )}
-          </Form>
-        </Modal.Body>
-        <Modal.Footer className="d-flex justify-content-center" style={{ flexShrink: 0 }}>
-          <Button variant="primary" type="submit" onClick={handleConfirmSendEmail} disabled={loading}>
-            {loading ? (
-              'กำลังส่ง...'
-            ) : (
-              <>
-                <i className="feather icon-mail" /> ส่งอีเมล
-              </>
-            )}
-          </Button>
-          <Button variant="danger" onClick={() => setShowModal(false)} disabled={loading}>
-            <i className="feather icon-corner-up-left" /> ยกเลิก
-          </Button>
-        </Modal.Footer>
-      </Modal>
-      <Row className="mb-2">
-        <Col>
-          <h6>ข้อมูลใบเสนอราคา</h6>
-          <Table striped bordered hover className="mt-2">
-            <thead>
-              <tr>
-                <th width={80}>#</th>
-                <th style={{ flex: 1.3 }}>เลขที่ใบเสนอราคา</th>
-                <th className="text-center" style={{ flex: 1 }}>
-                  ประเภท
-                </th>
-                <th style={{ flex: 1 }}>วันที่สร้าง</th>
-                <th style={{ flex: 1 }} className="text-end">
-                  จำนวนเงิน
-                </th>
-                <th className="text-center" style={{ flex: 1 }}>
-                  สถานะ
-                </th>
-                <th className="text-center" style={{ flex: 1 }}>
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {quotations.map((data, index) => (
-                <tr key={`quutation-list-${data.id}`}>
-                  <td>{index + 1}</td>
-                  <td>{data.quotation_no}</td>
-                  <td className="text-center">{data.quotation_type_name || '-'}</td>
-                  <td>{new Date(data.quotation_date).toLocaleDateString('th-TH')}</td>
-                  <td className="text-end">{setNumber(data.grand_total)}</td>
-                  <td className="text-center">
-                    <Badge pill style={{}} bg={data.status === 'pending' ? 'warning' : data.status === 'rejected' ? 'danger' : 'success'}>
-                      {data.status === 'pending' ? 'รออนุมัติ' : data.status === 'rejected' ? 'ยกเลิก' : 'อนุมัติ'}
-                    </Badge>
-                  </td>
-                  <td className="text-center" style={{ flex: 1 }}>
-                    <ButtonGroup>
-                      <Tooltip title="Pre-view" placement="bottom" arrow>
-                        <Button variant="info" size="sm" onClick={() => generatePDF(data)}>
-                          <LuView style={{ fontSize: 16 }} />
-                        </Button>
-                      </Tooltip>
-                      <PDFDownloadLink document={<MyDocument quotation={data} />} fileName={`${data.quotation_no}.pdf`}>
-                        <Tooltip title="ดาวน์โหลด PDF" placement="bottom" arrow>
-                          <Button variant="primary" style={{ borderRadius: 0, padding: '12px', display: 'flex', alignItems: 'center' }}>
-                            <MdOutlineSimCardDownload style={{ fontSize: 16 }} />
-                          </Button>
-                        </Tooltip>
-                      </PDFDownloadLink>
-                      <Tooltip title="ส่งอีเมล" placement="bottom" arrow>
-                        <Button
-                          variant="info"
-                          size="sm"
-                          onClick={() => handleSendEmail(data)}
-                          disabled={loading} // Disable button while loading
-                        >
-                          <RiMailSendLine style={{ fontSize: 16 }} />
-                        </Button>
-                      </Tooltip>
-                    </ButtonGroup>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </Col>
-      </Row>
+      {quotations.map((data, index) => (
+        <span
+          key={`quotations-doc-${index}`}
+          className="d-flex justify-content-center align-items-center link-files text-primary"
+          size="sm"
+          onClick={() => generatePDF(data)}
+        >
+          <BsFiletypePdf style={{ fontSize: 16, marginRight: 8 }} /> {data.quotation_no}
+        </span>
+      ))}
     </>
   );
 };
@@ -747,4 +541,4 @@ const stylesFooter = StyleSheet.create({
 
 const cellWidth = [{ width: 0.6 }, { width: 4 }, { width: 1 }, { width: 0.9 }, { width: 1 }];
 
-export default GenerateQuotation;
+export default ShowQuotation;

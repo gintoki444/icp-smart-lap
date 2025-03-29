@@ -52,23 +52,25 @@ const Breadcrumb = () => {
             <div className="page-header-title">
               <h5 className="m-b-10">{item ? item.title : 'Dashboard'}</h5>
             </div>
-            <ListGroup as="ul" bsPrefix=" " className="breadcrumb">
-              <ListGroup.Item as="li" bsPrefix=" " className="breadcrumb-item">
-                <Link to="/*">
-                  <i className="feather icon-home" />
-                </Link>
-              </ListGroup.Item>
-              {main && (
+            {item && (
+              <ListGroup as="ul" bsPrefix=" " className="breadcrumb">
                 <ListGroup.Item as="li" bsPrefix=" " className="breadcrumb-item">
-                  <Link to="#">{main.title}</Link>
+                  <Link to="/*">
+                    <i className="feather icon-home" />
+                  </Link>
                 </ListGroup.Item>
-              )}
-              {item && (
-                <ListGroup.Item as="li" bsPrefix=" " className="breadcrumb-item">
-                  <Link to="#">{item.title}</Link>
-                </ListGroup.Item>
-              )}
-            </ListGroup>
+                {main && (
+                  <ListGroup.Item as="li" bsPrefix=" " className="breadcrumb-item">
+                    <Link to="#">{main.title}</Link>
+                  </ListGroup.Item>
+                )}
+                {item && (
+                  <ListGroup.Item as="li" bsPrefix=" " className="breadcrumb-item">
+                    <Link to="#">{item.title}</Link>
+                  </ListGroup.Item>
+                )}
+              </ListGroup>
+            )}
           </div>
         </div>
       </div>

@@ -9,6 +9,7 @@ import { FiEdit } from 'react-icons/fi';
 import { RiDeleteBin5Fill } from 'react-icons/ri';
 import { toast } from 'react-toastify';
 import { putServiceRequestStatusTracking, deleteServiceRequestStatusTracking, getServiceRequestsByID } from 'services/_api/serviceRequest'; // เพิ่ม API
+import { TbCubeSend } from 'react-icons/tb';
 
 const AddTestTracking = ({ submissionId, handleTracking, serviceRequestId, sampleSubmissions, serviceData }) => {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -183,63 +184,73 @@ const AddTestTracking = ({ submissionId, handleTracking, serviceRequestId, sampl
           </tr>
         </thead>
         <tbody>
-          {deliveryData.map((data, index) => (
-            <tr key={`${data.tracking_number}-${index}`}>
-              <td className="text-center">{index + 1}</td>
-              <td>{data.carrier_name}</td>
-              <td>{data.tracking_number}</td>
-              <td className="text-center">
-                <Badge
-                  bg={
-                    data.status === 'received'
-                      ? 'secondary'
+          {deliveryData.length > 0 ? (
+            deliveryData.map((data, index) => (
+              <tr key={`${data.tracking_number}-${index}`}>
+                <td className="text-center">{index + 1}</td>
+                <td>{data.carrier_name}</td>
+                <td>{data.tracking_number}</td>
+                <td className="text-center">
+                  <Badge
+                    pill
+                    bg={
+                      data.status === 'received'
+                        ? 'info'
+                        : data.status === 'in_processing'
+                          ? 'warning'
+                          : data.status === 'completed'
+                            ? 'primary'
+                            : 'success'
+                    }
+                  >
+                    {data.status === 'received'
+                      ? 'ดำเนินการจัดส่ง'
                       : data.status === 'in_processing'
-                        ? 'warning'
+                        ? 'กำลังทดสอบ'
                         : data.status === 'completed'
-                          ? 'primary'
-                          : 'success'
-                  }
-                >
-                  {data.status === 'received'
-                    ? 'ดำเนินการจัดส่ง'
-                    : data.status === 'in_processing'
-                      ? 'กำลังทดสอบ'
-                      : data.status === 'completed'
-                        ? 'ทดสอบเสร็จสิ้น'
-                        : 'จัดส่งสำเร็จ'}
-                </Badge>
-              </td>
-              <td className="text-center">
-                <FirebaseImage
-                  imagePath={data.proof_image}
-                  alt={`Proof for ${data.tracking_number}`}
-                  style={{ maxHeight: '100px' }}
-                  thumbnail={true}
-                />
-              </td>
-              <td className="text-center">
-                <ButtonGroup>
-                  <Button variant="info" size="sm" disabled={data.status !== 'received'} onClick={() => handleEdit(data.tracking_id)}>
-                    <FiEdit />
-                  </Button>
-                  <Button variant="danger" size="sm" disabled={data.status !== 'received'} onClick={() => handleDelete(data.tracking_id)}>
-                    <RiDeleteBin5Fill />
-                  </Button>
-                </ButtonGroup>
+                          ? 'ทดสอบเสร็จสิ้น'
+                          : 'จัดส่งสำเร็จ'}
+                  </Badge>
+                </td>
+                <td className="text-center">
+                  <FirebaseImage
+                    imagePath={data.proof_image}
+                    alt={`Proof for ${data.tracking_number}`}
+                    style={{ maxHeight: '100px' }}
+                    thumbnail={true}
+                  />
+                </td>
+                <td className="text-center">
+                  <ButtonGroup>
+                    <Button variant="info" size="sm" disabled={data.status !== 'received'} onClick={() => handleEdit(data.tracking_id)}>
+                      <FiEdit />
+                    </Button>
+                    <Button variant="danger" size="sm" disabled={data.status !== 'received'} onClick={() => handleDelete(data.tracking_id)}>
+                      <RiDeleteBin5Fill />
+                    </Button>
+                  </ButtonGroup>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={6} className="text-center">
+                ไม่มีข้อมูล
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </Table>
       {!serviceData.service_status_logs.sample_arrived_lab && (
         <Button variant="primary" onClick={() => setShowAddModal(true)}>
+          <TbCubeSend style={{ fontSize: 22, marginRight: 8 }} />
           เพิ่มข้อมูลการจัดส่ง
         </Button>
       )}
       <Modal show={showAddModal} onHide={() => setShowAddModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>
-            <h5>รายละเอียดการจัดส่งตัวอย่าง</h5>
+            <h6 className="mb-0">รายละเอียดการจัดส่งตัวอย่าง</h6>
           </Modal.Title>
         </Modal.Header>
         <Formik initialValues={initialValues} validationSchema={addValidationSchema} onSubmit={handleAddSubmit}>
@@ -294,12 +305,14 @@ const AddTestTracking = ({ submissionId, handleTracking, serviceRequestId, sampl
                   )}
                   <Form.Control.Feedback type="invalid">{errors.proof_image}</Form.Control.Feedback>
                 </Form.Group>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="success" type="submit" disabled={isSubmitting}>
+              </Modal.Body>{' '}
+              <Modal.Footer className="justify-content-center">
+                <Button variant="primary" type="submit" disabled={isSubmitting}>
+                  <i className="feather icon-save" />
                   บันทึก
                 </Button>
-                <Button variant="secondary" onClick={() => setShowAddModal(false)} disabled={isSubmitting}>
+                <Button variant="danger" onClick={() => setShowAddModal(false)} disabled={isSubmitting}>
+                  <i className="feather icon-corner-up-left" />
                   ยกเลิก
                 </Button>
               </Modal.Footer>
@@ -312,7 +325,7 @@ const AddTestTracking = ({ submissionId, handleTracking, serviceRequestId, sampl
         <Modal show={showEditModal} onHide={() => setShowEditModal(false)} centered>
           <Modal.Header closeButton>
             <Modal.Title>
-              <h5>แก้ไขรายละเอียดการจัดส่งตัวอย่าง</h5>
+              <h6 className="mb-0">แก้ไขรายละเอียดการจัดส่งตัวอย่าง</h6>
             </Modal.Title>
           </Modal.Header>
           <Formik
@@ -384,11 +397,13 @@ const AddTestTracking = ({ submissionId, handleTracking, serviceRequestId, sampl
                     <Form.Control.Feedback type="invalid">{errors.proof_image}</Form.Control.Feedback>
                   </Form.Group>
                 </Modal.Body>
-                <Modal.Footer>
-                  <Button variant="success" type="submit" disabled={isSubmitting}>
-                    บันทึกการแก้ไข
+                <Modal.Footer className="justify-content-center">
+                  <Button variant="primary" type="submit" disabled={isSubmitting}>
+                    <i className="feather icon-save" />
+                    บันทึก
                   </Button>
-                  <Button variant="secondary" onClick={() => setShowEditModal(false)} disabled={isSubmitting}>
+                  <Button variant="danger" onClick={() => setShowEditModal(false)} disabled={isSubmitting}>
+                    <i className="feather icon-corner-up-left" />
                     ยกเลิก
                   </Button>
                 </Modal.Footer>

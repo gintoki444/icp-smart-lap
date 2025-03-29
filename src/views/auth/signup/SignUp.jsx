@@ -27,7 +27,7 @@ const SignUp1 = () => {
     Yup.object({
       first_name: Yup.string().min(3, 'ชื่อต้องมีอย่างน้อย 3 ตัวอักษร').required('กรุณากรอกชื่อ'),
       last_name: Yup.string().min(3, 'นามสกุลต้องมีอย่างน้อย 3 ตัวอักษร').required('กรุณากรอกนามสกุล'),
-      email: Yup.string().email('รูปแบบอีเมล์ไม่ถูกต้อง').required('กรุณากรอกอีเมล์'),
+      email: Yup.string().email('รูปแบบอีเมลไม่ถูกต้อง').required('กรุณากรอกอีเมล'),
       phone: Yup.string()
         .matches(/^[0-9]{10}$/, 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (10 หลัก)')
         .required('กรุณากรอกเบอร์โทรศัพท์'),
@@ -48,7 +48,7 @@ const SignUp1 = () => {
       const response = await Signup(values);
 
       if (response.userId) {
-        alert('สมัครสมาชิกสำเร็จ กรุณาตรวจสอบอีเมล์เพื่อยืนยันตัวตน');
+        alert('สมัครสมาชิกสำเร็จ กรุณาตรวจสอบอีเมลเพื่อยืนยันตัวตน');
         navigate('/auth/activate-token');
       } else {
         setErrors({ submit: err.message });
@@ -111,7 +111,7 @@ const SignUp1 = () => {
                         <Form.Group className="mb-3 text-start">
                           <Form.Control
                             type="email"
-                            placeholder="อีเมล์"
+                            placeholder="อีเมล"
                             name="email"
                             value={values.email}
                             onChange={handleChange}

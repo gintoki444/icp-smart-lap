@@ -333,6 +333,24 @@ a.alert-link:hover {
   opacity: 0.8;
 }
 
+.badge.status-service {
+  font-size: 12px;
+  padding: 6px 10px;
+  min-width: 132px;
+  max-width: 132px;
+}
+
+span.link-files {
+  text-decoration: underline;
+}
+span.link-files:hover {
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+span.bg-warning {
+  background-color: #daa300 !important;
+}
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .MuiStepper-horizontal {

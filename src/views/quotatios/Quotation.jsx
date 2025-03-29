@@ -14,7 +14,7 @@ import { getCustomerSpecialConditionsByID } from 'services/_api/specialCondition
 import { getNextPendingStatus } from '../../components/Utility/statusRequestUtilis';
 import ShowQuotation from 'views/quotatios/ShowQuotation';
 
-const UserRequestPage = () => {
+const Quotations = () => {
   const [user, setUser] = useState(null);
   const [customer, setCustomer] = useState([]);
   const [serviceRequests, setServiceRequests] = useState([]);
@@ -97,31 +97,67 @@ const UserRequestPage = () => {
     try {
       const result = await getAllServiceRequestByUser(id);
       if (result.success) {
-        const formattedRows = result.data.map((service, index) => ({
-          id: service.request_id,
-          No: index + 1,
-          request_date: new Date(service.request_date).toLocaleDateString('th-TH'),
-          request_no: service.request_no || '-',
-          user_id: service.user_id,
-          user_name: service.user_name,
-          customer_id: service.customer_id,
-          customer_name: service.customer_name,
-          sample_type_name: service.sample_type_name,
-          is_registration_analysis: service.is_registration_analysis,
-          is_quality_check_analysis: service.is_quality_check_analysis,
-          sample_type_id: service.sample_type_id,
-          special_conditions: service.special_conditions || '-', // เปลี่ยนจาก notes เป็น special_conditions
-          created_at: new Date(service.created_at).toLocaleDateString('th-TH'),
-          status: service.status,
-          quotation_id: service.quotation_id,
-          quotation_no: service.quotation_no,
-          quotation_date: service.quotation_date,
-          service_status_logs: service.service_status_logs,
-          sample_submissions: service.sample_submissions,
-          request_id_list_by_quotation: service.request_id_list_by_quotation || null,
-          submission_count: service.sample_submissions.length,
-          service_request_documents: service.service_request_documents
-        }));
+        // 1. จัดกลุ่มข้อมูลตาม quotation_no
+        const quotationMap = new Map();
+
+        // รวบรวมข้อมูลตาม quotation_no
+        result.data.forEach((service) => {
+          if (service.quotation_no) {
+            if (!quotationMap.has(service.quotation_no)) {
+              quotationMap.set(service.quotation_no, {
+                requests: [],
+                service_data: service
+              });
+            }
+            quotationMap.get(service.quotation_no).requests.push(service.request_no || '-');
+          }
+        });
+
+        // 2. สร้าง formattedRows โดยเลือกเฉพาะที่มี quotation_no และรวมข้อมูล
+        const formattedRows = Array.from(quotationMap.entries()).map(([quotation_no, { requests, service_data }], index) => {
+          // กำหนด status_quotation
+          let status_quotation = '-';
+          if (service_data.service_status_logs) {
+            if (service_data.service_status_logs.tax_withheld) {
+              status_quotation = 'หัก ณ ที่จ่าย';
+            } else if (service_data.service_status_logs.payment_received) {
+              status_quotation = 'รับชำระเงิน';
+            } else if (service_data.service_status_logs.invoice_requested) {
+              status_quotation = 'ขอใบแจ้งหนี้';
+            } else if (service_data.service_status_logs.quotation_issued) {
+              status_quotation = 'ออกใบเสนอราคา';
+            }
+          }
+
+          return {
+            id: service_data.request_id, // ใช้ request_id จาก record แรก
+            No: index + 1,
+            request_date: new Date(service_data.request_date).toLocaleDateString('th-TH'),
+            request_no: requests[0], // ใช้ request_no อันแรก
+            user_id: service_data.user_id,
+            user_name: service_data.user_name,
+            customer_id: service_data.customer_id,
+            customer_name: service_data.customer_name,
+            sample_type_name: service_data.sample_type_name,
+            is_registration_analysis: service_data.is_registration_analysis,
+            is_quality_check_analysis: service_data.is_quality_check_analysis,
+            sample_type_id: service_data.sample_type_id,
+            special_conditions: service_data.special_conditions || '-',
+            created_at: new Date(service_data.created_at).toLocaleDateString('th-TH'),
+            status: service_data.status,
+            quotation_id: service_data.quotation_id,
+            quotation_no: quotation_no,
+            quotation_date: new Date(service_data.quotation_date).toLocaleDateString('th-TH'),
+            service_status_logs: service_data.service_status_logs,
+            sample_submissions: service_data.sample_submissions,
+            request_id_list_by_quotation: service_data.request_id_list_by_quotation,
+            request_no_list_by_quotation: requests.join(', '), // รวมทุก request_no
+            submission_count: service_data.sample_submissions.length,
+            service_request_documents: service_data.service_request_documents,
+            status_quotation: status_quotation
+          };
+        });
+
         console.log('formattedRows', formattedRows);
         setServiceRequests(formattedRows);
       } else {
@@ -137,18 +173,18 @@ const UserRequestPage = () => {
 
   const columns = [
     { field: 'No', headerName: 'No.', width: 90, headerAlign: 'center', align: 'center' },
-    { field: 'request_no', headerName: 'เลขที่คำขอ', flex: 0.8 },
-    { field: 'sample_type_name', headerName: 'ประเภทปุ๋ย', flex: 0.7 },
-    { field: 'request_date', headerName: 'วันที่สร้าง', flex: 1 },
     {
       field: 'quotation_no',
       headerName: 'เลขที่ใบเสนอราคา',
       flex: 1,
       headerAlign: 'center',
       align: 'center',
-      renderCell: (params) => <>{params.row.quotation_no ? <ShowQuotation id={params.row.request_id_list_by_quotation} /> : '-'}</>
+      renderCell: (params) => <>{params.row.quotation_no ? params.row.quotation_no : '-'}</>
     },
-    { field: 'submission_count', headerName: 'จำนวนตัวอย่าง', flex: 1, headerAlign: 'center', align: 'center' },
+    { field: 'request_no_list_by_quotation', headerName: 'เลขที่คำขอ', flex: 1.5 },
+    // { field: 'sample_type_name', headerName: 'ประเภทปุ๋ย', flex: 0.7 },
+    { field: 'quotation_date', headerName: 'วันที่สร้าง', flex: 0.7 },
+
     {
       field: 'status',
       headerName: 'สถานะ',
@@ -176,10 +212,10 @@ const UserRequestPage = () => {
       align: 'center',
       renderCell: (params) => (
         <ButtonGroup>
-          <Button variant="primary" size="sm" onClick={() => navigate('/request/detial', { state: { id: params.row.id } })}>
+          <Button variant="primary" size="sm" onClick={() => navigate('/quotations/' + params.row.request_id_list_by_quotation)}>
             <i className="feather icon-file-text m-0" />
           </Button>
-          <Button
+          {/* <Button
             variant="info"
             size="sm"
             disabled={params.row.request_id_list_by_quotation || params.row.status === 'rejected'}
@@ -194,7 +230,7 @@ const UserRequestPage = () => {
             onClick={() => handleDelete(params.row.id)}
           >
             <RiDeleteBin5Line />
-          </Button>
+          </Button> */}
         </ButtonGroup>
       )
     }
@@ -250,7 +286,8 @@ const UserRequestPage = () => {
   };
 
   const handleEdit = (services) => {
-    navigate('/request/edit/', { state: { id: services.id, customer: customer } });
+    // navigate('/quotations/', { state: { id: services.id, customer: customer } });
+    navigate('/quotations/' + services.id);
   };
 
   const handleDelete = async (id) => {
@@ -294,7 +331,7 @@ const UserRequestPage = () => {
       <Card.Header>
         <Row>
           <Col>
-            <Card.Title as="h5">รายการคำขอรับบริการ</Card.Title>
+            <Card.Title as="h5">รายการใบเสนอราคา</Card.Title>
           </Col>
         </Row>
       </Card.Header>
@@ -315,63 +352,66 @@ const UserRequestPage = () => {
         {loading ? (
           <div>Loading...</div>
         ) : filteredCustomers.length > 0 ? (
-          filteredCustomers.map((company) => (
-            <Card key={`customer-${company.id}`} className="mb-3 rounded">
-              <Card.Header style={{ background: '#e8f5ff' }}>
-                <Row className="align-items-center">
-                  <Col>
-                    <Card.Title as="h6">
-                      <spen style={{ fontWeigth: '300' }}>รหัสลูกค้า</spen>: {company.company_code} - {company.company_name}
-                    </Card.Title>
-                    <Row>
-                      <Col md={6}>
-                        <p className="mb-0">
-                          เลขที่ผู้เสียภาษี: <span className="text-dark">{company.tax_id + ' '}</span>
-                          ที่อยู่: <span className="text-dark">{' ' + company.company_address}</span>
-                        </p>
+          filteredCustomers.map(
+            (company) =>
+              company.filteredRows.length > 0 && (
+                <Card key={`customer-${company.id}`} className="mb-3 rounded">
+                  <Card.Header style={{ background: '#e8f5ff' }}>
+                    <Row className="align-items-center">
+                      <Col>
+                        <Card.Title as="h6">
+                          <spen style={{ fontWeigth: '300' }}>รหัสลูกค้า</spen>: {company.company_code} - {company.company_name}
+                        </Card.Title>
+                        <Row>
+                          <Col md={6}>
+                            <p className="mb-0">
+                              เลขที่ผู้เสียภาษี: <span className="text-dark">{company.tax_id + ' '}</span>
+                              ที่อยู่: <span className="text-dark">{' ' + company.company_address}</span>
+                            </p>
+                          </Col>
+                          {spacialCon && spacialCon.length > 0 && (
+                            <Col md={6}>
+                              <p className="mb-0">
+                                เงื่อนไขพิเศษ :{' '}
+                                <strong className="text-dark">
+                                  {spacialCon
+                                    .filter((x) => x.company_id === company.id) // กรองเฉพาะของ company นี้
+                                    .map((x, index, array) => (index + 1 < array.length ? `${x.description}, ` : x.description))}
+                                </strong>
+                              </p>
+                            </Col>
+                          )}
+                        </Row>
                       </Col>
-                      {spacialCon && spacialCon.length > 0 && (
-                        <Col md={6}>
-                          <p className="mb-0">
-                            เงื่อนไขพิเศษ :{' '}
-                            <strong className="text-dark">
-                              {spacialCon
-                                .filter((x) => x.company_id === company.id) // กรองเฉพาะของ company นี้
-                                .map((x, index, array) => (index + 1 < array.length ? `${x.description}, ` : x.description))}
-                            </strong>
-                          </p>
-                        </Col>
-                      )}
+                      <Col xs="auto">
+                        <Button variant="success" size="sm" onClick={() => handleAddService(company)} disabled={loading}>
+                          <i className="feather icon-plus-circle" /> เพิ่มคำขอ
+                        </Button>
+                      </Col>
                     </Row>
-                  </Col>
-                  <Col xs="auto">
-                    <Button variant="success" size="sm" onClick={() => handleAddService(company)} disabled={loading}>
-                      <i className="feather icon-plus-circle" /> เพิ่มคำขอ
-                    </Button>
-                  </Col>
-                </Row>
-              </Card.Header>
-              <Card.Body>
-                {company.filteredRows.length > 0 ? (
-                  <DataGrid
-                    rows={company.filteredRows}
-                    columns={columns}
-                    pageSize={5}
-                    rowsPerPageOptions={[5, 10, 20]}
-                    pagination
-                    disableSelectionOnClick
-                    hideFooterSelectedRowCount
-                    loading={loading}
-                    autoHeight
-                  />
-                ) : (
-                  <div className="text-center">
-                    <p className="mt-2">ไม่พบคำขอรับบริการสำหรับบริษัทนี้</p>
-                  </div>
-                )}
-              </Card.Body>
-            </Card>
-          ))
+                  </Card.Header>
+                  <Card.Body>
+                    {company.filteredRows.length > 0 ? (
+                      <DataGrid
+                        rows={company.filteredRows}
+                        columns={columns}
+                        pageSize={5}
+                        rowsPerPageOptions={[5, 10, 20]}
+                        pagination
+                        disableSelectionOnClick
+                        hideFooterSelectedRowCount
+                        loading={loading}
+                        autoHeight
+                      />
+                    ) : (
+                      <div className="text-center">
+                        <p className="mt-2">ไม่พบคำขอรับบริการสำหรับบริษัทนี้</p>
+                      </div>
+                    )}
+                  </Card.Body>
+                </Card>
+              )
+          )
         ) : (
           <div className="text-center py-4">
             <IoWarningOutline size={24} />
@@ -383,4 +423,4 @@ const UserRequestPage = () => {
   );
 };
 
-export default UserRequestPage;
+export default Quotations;

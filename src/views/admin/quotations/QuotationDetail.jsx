@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Button, Form, Table, Row, Col } from 'react-bootstrap';
 import { FiEdit } from 'react-icons/fi';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { getQuotationsByID } from 'services/_api/quotationRequest';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { getAllQuotationRequestsById } from 'services/_api/quotationRequest';
+import GenerateQuotation from './GenerateQuotation';
 
 const QuotationDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { id: paramId } = useParams();
+  const id = paramId || location.state?.id || null;
+  const serviceData = location.state?.service;
+
   const [quotationData, setQuotationData] = useState(null);
   const [customer, setCustomer] = useState({});
   const [items, setItems] = useState([]);
@@ -17,21 +22,25 @@ const QuotationDetail = () => {
   const [validUntil, setValidUntil] = useState('');
   const [quotationTypeName, setQuotationTypeName] = useState('');
 
+  console.log('serviceData:', serviceData);
+
   useEffect(() => {
-    const quotationId = location.state?.id || null;
+    // const quotationId = location.state?.id || null;
     // const searchParams = new URLSearchParams(location.search);
     // const quotationId = searchParams.get('id');
 
     const fetchQuotationDetails = async () => {
       try {
-        const response = await getQuotationsByID(quotationId);
-        const data = response; // ข้อมูลใบเสนอราคาจะอยู่ใน array index 0
+        const response = await getAllQuotationRequestsById(id);
+        const data = response[0]; // ข้อมูลใบเสนอราคาจะอยู่ใน array index 0
 
         // ตั้งค่าข้อมูลใบเสนอราคา
         setQuotationData(data);
 
         // ตั้งค่าข้อมูลลูกค้า
         const customerInfo = data.customer_info[0] || {};
+        console.log('data.customer_info:', data.customer_info);
+        console.log('customerInfo:', customerInfo);
         setCustomer({
           company_code: customerInfo.company_code || '-',
           company_name: customerInfo.company_name || '-',
@@ -70,7 +79,7 @@ const QuotationDetail = () => {
       }
     };
 
-    if (quotationId) {
+    if (id) {
       fetchQuotationDetails();
     } else {
       console.error('Quotation ID not provided');
@@ -103,9 +112,16 @@ const QuotationDetail = () => {
           <Card.Header>
             <Row>
               <Col>
-                <Card.Title as="h5">
-                  รายละเอียดใบเสนอราคา (เลขที่: <strong>{quotationData?.quotation_no || '-'}</strong>)
+                <Card.Title as="h5" className="mb-2">
+                  รายละเอียดใบเสนอราคา เลขที่: <strong>{quotationData?.quotation_no || '-'}</strong>
                 </Card.Title>
+                <p className="mb-0">
+                  (เลขที่คำขอ:{' '}
+                  <span className="text-dark" style={{ fontWeight: 'bold' }}>
+                    {quotationData?.request_no_list_by_quotation}
+                  </span>
+                  )
+                </p>
               </Col>
             </Row>
           </Card.Header>
@@ -208,9 +224,27 @@ const QuotationDetail = () => {
                 </Row>
               </Card.Body>
             </Card>
+
+            <Card className="mb-3">
+              <Card.Body className="pt-3 pb-2">
+                {quotationData && (
+                  <div>
+                    <GenerateQuotation
+                      quotationData={quotationData}
+                      service={serviceData}
+                      // onChange={handleReload}
+                      // sampleStatus={serviceStatus.sample_submissions.find((x) => x.submission_id === sample.submission_id)}
+                    />
+                  </div>
+                )}
+              </Card.Body>
+            </Card>
             <Card className="mb-0">
               <Card.Body className="pt-3 pb-2">
                 <Row>
+                  <Col md={12}>
+                    <h6 className="mb-3">รายละเอียด</h6>
+                  </Col>
                   <Col className="ps-3 pe-3 mb-3">
                     <Form.Group as={Row} className="align-items-center">
                       <Form.Label column xs={2} className="text-dark">
@@ -222,10 +256,10 @@ const QuotationDetail = () => {
                     </Form.Group>
                   </Col>
                 </Row>
-                <Table striped bordered hover>
+                <Table striped bordered hover size="sm">
                   <thead>
                     <tr>
-                      <th width={80} className="text-center">
+                      <th width={80} className="text-center p-3">
                         No.
                       </th>
                       <th>ชื่อตัวอย่าง</th>
@@ -367,7 +401,7 @@ const QuotationDetail = () => {
             <Button
               variant="primary"
               //   disabled={serviceData.service_status_logs?.quotation_issued || serviceData.status === 'rejected'}
-              onClick={() => handleEdit(quotationData.quotation_id)}
+              onClick={() => handleEdit(quotationData.request_id_list_by_quotation)}
             >
               <FiEdit style={{ marginRight: 8 }} /> แก้ไขข้อมูล
             </Button>

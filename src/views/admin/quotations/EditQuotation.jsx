@@ -2,7 +2,13 @@ import QuotationTypeSelect from 'components/Selector/QuotationTypeSelect';
 import React, { useEffect, useState } from 'react';
 import { Card, Button, Form, Table, Row, Col } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getQuotationsByID, putQuotationDetails, putQuotations, postQuotationDetails } from 'services/_api/quotationRequest';
+import {
+  getAllQuotationRequestsById,
+  putQuotationDetails,
+  putQuotations,
+  postQuotationDetails,
+  deleteQuotationDetails // เพิ่มการนำเข้า API สำหรับลบ
+} from 'services/_api/quotationRequest';
 import { FaPlus } from 'react-icons/fa';
 import { TbScriptPlus } from 'react-icons/tb';
 import { toast } from 'react-toastify';
@@ -10,7 +16,7 @@ import { toast } from 'react-toastify';
 const EditQuotation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const quotationId = location.state?.id || null;
+  const id = location.state?.id || null;
   const [selectedItems, setSelectedItems] = useState([]);
   const [discountValue, setDiscountValue] = useState(0);
   const [discountUnit, setDiscountUnit] = useState('percentage');
@@ -22,17 +28,114 @@ const EditQuotation = () => {
   const [paymentTerms, setPaymentTerms] = useState('');
   const [validUntil, setValidUntil] = useState('');
 
+  // useEffect(() => {
+  //   const fetchQuotationData = async () => {
+  //     if (!id) {
+  //       toast.error('ไม่พบ ID ใบเสนอราคา');
+  //       navigate('/admin/issue-quotation');
+  //       return;
+  //     }
+
+  //     try {
+  //       const response = await getAllQuotationRequestsById(id);
+  //       const data = response[0];
+
+  //       // ตั้งค่าข้อมูลใบเสนอราคา
+  //       setQuotationData(data);
+
+  //       // ตั้งค่าข้อมูลลูกค้า
+  //       const customerInfo = data.customer_info[0] || {};
+  //       setCustomer({
+  //         company_code: customerInfo.company_code || '-',
+  //         company_name: customerInfo.company_name || '-',
+  //         tax_id: customerInfo.tax_id || '-',
+  //         company_address: customerInfo.company_address || '-',
+  //         customer_special_conditions: customerInfo.special_conditions ? [{ description: customerInfo.special_conditions }] : []
+  //       });
+
+  //       // ตั้งค่ารายการในตาราง
+  //       const quotationItems = data.quotation_details.map((item) => ({
+  //         id: item.quotation_detail_id,
+  //         quotation_detail_id: item.quotation_detail_id,
+  //         test_item_id: item.test_item_id,
+  //         name: item.name_for_quotation,
+  //         price: parseFloat(item.unit_price),
+  //         quantity: item.quantity,
+  //         maxQuantity: item.quantity,
+  //         summary: parseFloat(item.total_price),
+  //         testCode: item.test_code
+  //       }));
+
+  //       let initialSelectedItems = quotationItems;
+  //       if (!quotationItems.find((x) => x.test_item_id === 49)) {
+  //         await quotationItems.push({
+  //           id: 49,
+  //           test_item_id: 49,
+  //           name: 'ค่าตรวจสอบด่วนพิเศษ',
+  //           price: 2000,
+  //           quantity: 1,
+  //           maxQuantity: 1,
+  //           summary: 2000,
+  //           testCode: 'EXP006',
+  //           quotation_type_id: response.quotation_type_id
+  //         });
+  //         initialSelectedItems = quotationItems.filter((item) => item.id !== 49);
+  //         // console.log('initialSelectedItems:', initialSelectedItems);
+  //       }
+  //       if (!quotationItems.find((x) => x.test_item_id === 50)) {
+  //         quotationItems.push({
+  //           id: 50,
+  //           test_item_id: 50,
+  //           name: 'ค่าบริการอื่นๆ',
+  //           price: 1000,
+  //           quantity: 1,
+  //           maxQuantity: 1,
+  //           summary: 1000,
+  //           testCode: 'EXP007',
+  //           quotation_type_id: response.quotation_type_id
+  //         });
+  //         console.log('initialSelectedItems:', initialSelectedItems);
+  //         // initialSelectedItems = quotationItems.filter((item) => item.id !== 50);
+  //       }
+
+  //       console.log('initialSelectedItems:', initialSelectedItems);
+  //       setItems(quotationItems);
+  //       setSelectedItems(initialSelectedItems);
+
+  //       // ตั้งค่าข้อมูลส่วนลด
+  //       if (parseFloat(data.discount_percentage) > 0) {
+  //         setDiscountUnit('percentage');
+  //         setDiscountValue(parseFloat(data.discount_percentage));
+  //       } else if (parseFloat(data.discount_amount) > 0) {
+  //         setDiscountUnit('amount');
+  //         setDiscountValue(parseFloat(data.discount_amount));
+  //       }
+
+  //       // ตั้งค่าวันที่และเงื่อนไข
+  //       setDocumentDate(new Date(data.quotation_date).toISOString().split('T')[0]);
+  //       setPaymentTerms(data.payment_terms || '30 วัน');
+  //       setValidUntil(new Date(data.valid_until).toISOString().split('T')[0]);
+  //       setQuotationTypeId(data.quotation_type_id.toString());
+  //     } catch (error) {
+  //       console.error('Error fetching quotation data:', error);
+  //       toast.error('เกิดข้อผิดพลาดในการดึงข้อมูลใบเสนอราคา');
+  //       navigate('/admin/issue-quotation');
+  //     }
+  //   };
+
+  //   fetchQuotationData();
+  // }, [id, navigate]);
   useEffect(() => {
     const fetchQuotationData = async () => {
-      if (!quotationId) {
+      if (!id) {
         toast.error('ไม่พบ ID ใบเสนอราคา');
         navigate('/admin/issue-quotation');
         return;
       }
 
       try {
-        const response = await getQuotationsByID(quotationId);
-        const data = response; // ข้อมูลใบเสนอราคาจะอยู่ใน array index 0
+        const response = await getAllQuotationRequestsById(id);
+        const data = response[0];
 
         // ตั้งค่าข้อมูลใบเสนอราคา
         setQuotationData(data);
@@ -50,17 +153,65 @@ const EditQuotation = () => {
         // ตั้งค่ารายการในตาราง
         const quotationItems = data.quotation_details.map((item) => ({
           id: item.quotation_detail_id,
-          quotation_detail_id: item.quotation_detail_id, // เพิ่ม quotation_detail_id เพื่อใช้ในการอัปเดต
+          quotation_detail_id: item.quotation_detail_id,
           test_item_id: item.test_item_id,
           name: item.name_for_quotation,
           price: parseFloat(item.unit_price),
           quantity: item.quantity,
-          maxQuantity: item.quantity, // ใช้ quantity เดิมเป็น maxQuantity
+          maxQuantity: item.quantity,
           summary: parseFloat(item.total_price),
           testCode: item.test_code
         }));
+
+        // เก็บรายการที่มี test_item_id === 49 และ 50 ที่มีอยู่ใน quotationItems
+        const hasItem49 = quotationItems.find((x) => x.test_item_id === 49);
+        const hasItem50 = quotationItems.find((x) => x.test_item_id === 50);
+
+        // เพิ่มรายการ test_item_id 49 และ 50 ถ้ายังไม่มี
+        if (!hasItem49) {
+          quotationItems.push({
+            id: 49,
+            test_item_id: 49,
+            name: 'ค่าตรวจสอบด่วนพิเศษ',
+            price: 2000,
+            quantity: 1,
+            maxQuantity: 1,
+            summary: 2000,
+            testCode: 'EXP006',
+            quotation_type_id: response.quotation_type_id
+          });
+        }
+
+        if (!hasItem50) {
+          quotationItems.push({
+            id: 50,
+            test_item_id: 50,
+            name: 'ค่าบริการอื่นๆ',
+            price: 1000,
+            quantity: 1,
+            maxQuantity: 1,
+            summary: 1000,
+            testCode: 'EXP007',
+            quotation_type_id: response.quotation_type_id
+          });
+        }
+
+        // ตั้งค่า initialSelectedItems
+        let initialSelectedItems = [...quotationItems];
+
+        // ถ้าไม่มี test_item_id 49 หรือ 50 ใน quotationItems เดิม ให้กรองออกจาก selectedItems
+        if (!hasItem49) {
+          initialSelectedItems = initialSelectedItems.filter((item) => item.test_item_id !== 49);
+        }
+        if (!hasItem50) {
+          initialSelectedItems = initialSelectedItems.filter((item) => item.test_item_id !== 50);
+        }
+
+        console.log('quotationItems:', quotationItems);
+        console.log('initialSelectedItems:', initialSelectedItems);
+
         setItems(quotationItems);
-        setSelectedItems(quotationItems); // เลือกทุกรายการที่มีอยู่แล้ว
+        setSelectedItems(initialSelectedItems);
 
         // ตั้งค่าข้อมูลส่วนลด
         if (parseFloat(data.discount_percentage) > 0) {
@@ -84,7 +235,7 @@ const EditQuotation = () => {
     };
 
     fetchQuotationData();
-  }, [quotationId, navigate]);
+  }, [id, navigate]);
 
   const calculateTotals = () => {
     const totalAmount = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -105,7 +256,6 @@ const EditQuotation = () => {
 
   const { totalAmount, discountAmount, netTotal, vatAmount, grandTotal } = calculateTotals();
 
-  // ฟังก์ชันสำหรับฟอร์แมตตัวเลขให้มีคอมมา
   const formatNumber = (number) => {
     return number.toLocaleString('en-US', {
       minimumFractionDigits: 2,
@@ -176,19 +326,6 @@ const EditQuotation = () => {
     setDiscountValue(0);
   };
 
-  const handleAddItem = () => {
-    const newItem = {
-      id: `new-${Date.now()}`,
-      name: '',
-      price: 0,
-      quantity: 1,
-      maxQuantity: 999,
-      summary: 0,
-      testCode: ''
-    };
-    setItems([...items, newItem]);
-  };
-
   const handleUpdateQuotation = async () => {
     if (selectedItems.length === 0) {
       toast.error('กรุณาเลือกอย่างน้อย 1 รายการเพื่อแก้ไขใบเสนอราคา');
@@ -214,14 +351,33 @@ const EditQuotation = () => {
       const vatAmount = netTotal * 0.07;
       const grandTotal = netTotal + vatAmount;
 
-      // วนลูป selectedItems เพื่ออัปเดตหรือเพิ่มรายการใน quotation_details
+      // หารายการที่ถูกลบออก (อยู่ใน items แต่ไม่อยู่ใน selectedItems)
+      const removedItems = items.filter(
+        (item) =>
+          item.quotation_detail_id && // ต้องมี quotation_detail_id (รายการที่มาจากฐานข้อมูล)
+          !selectedItems.some((selected) => selected.id === item.id) // ไม่ได้อยู่ใน selectedItems
+      );
+
+      // ลบรายการที่ถูกลบออกจากฐานข้อมูล
+      for (const removedItem of removedItems) {
+        try {
+          await deleteQuotationDetails(removedItem.quotation_detail_id);
+          console.log(`Deleted quotation detail ID: ${removedItem.quotation_detail_id}`);
+        } catch (error) {
+          console.error(`Error deleting quotation detail ID ${removedItem.quotation_detail_id}:`, error);
+          toast.error(`ไม่สามารถลบรายการ ${removedItem.name} ได้`);
+          return; // หยุดการทำงานถ้ามีข้อผิดพลาด
+        }
+      }
+
+      // อัปเดตหรือเพิ่มรายการใน quotation_details
       for (const item of selectedItems) {
         const quotationDetailPayload = {
           test_item_id: item.test_item_id || null,
           quantity: item.quantity,
           unit_price: parseFloat(item.price.toFixed(2)).toString(),
           subtotal_price: (item.quantity * item.price).toFixed(2),
-          discount_amount: '0.00', // หากมีส่วนลดในระดับรายการ สามารถปรับได้
+          discount_amount: '0.00',
           total_price: (item.quantity * item.price).toFixed(2)
         };
 
@@ -233,7 +389,21 @@ const EditQuotation = () => {
           await putQuotationDetails(item.quotation_detail_id, quotationDetailPayload);
         } else {
           // เพิ่มรายการใหม่
-          await postQuotationDetails(quotationId, quotationDetailPayload);
+          const quotationDetailPost = {
+            quotation_id: quotationData.quotation_id,
+            test_items_for_quotation: [
+              {
+                test_item_id: item.test_item_id || null,
+                quantity: item.quantity,
+                unit_price: parseFloat(item.price.toFixed(2)).toString(),
+                subtotal_price: (item.quantity * item.price).toFixed(2),
+                discount_amount: '0.00',
+                total_price: (item.quantity * item.price).toFixed(2)
+              }
+            ]
+          };
+          console.log('quotationDetailPost:', quotationDetailPost);
+          await postQuotationDetails(quotationDetailPost);
         }
       }
 
@@ -254,13 +424,13 @@ const EditQuotation = () => {
         quotation_type_id: parseInt(quotationTypeId)
       };
 
-      const response = await putQuotations(quotationId, quotationPayload);
+      const response = await putQuotations(quotationData.quotation_id, quotationPayload);
 
       if (response) {
         toast.success('แก้ไขใบเสนอราคาสำเร็จ!', {
           autoClose: 3000
         });
-        navigate('/admin/issue-quotation/detail', { state: { id: quotationId } });
+        navigate('/admin/issue-quotation/detail', { state: { id: id } });
       } else {
         throw new Error('Failed to update quotation');
       }
@@ -280,7 +450,16 @@ const EditQuotation = () => {
           <Card.Header>
             <Row>
               <Col>
-                <Card.Title as="h5">แก้ไขใบเสนอราคา (เลขที่: {quotationData?.quotation_no || '-'})</Card.Title>
+                <Card.Title as="h5" className="mb-2">
+                  แก้ไขใบเสนอราคา (เลขที่: {quotationData?.quotation_no || '-'})
+                </Card.Title>
+                <p className="mb-0">
+                  (เลขที่คำขอ:{' '}
+                  <span className="text-dark" style={{ fontWeight: 'bold' }}>
+                    {quotationData?.request_no_list_by_quotation}
+                  </span>
+                  )
+                </p>
               </Col>
             </Row>
           </Card.Header>
@@ -392,13 +571,22 @@ const EditQuotation = () => {
               <Card.Body className="pt-3 pb-2">
                 <Row>
                   <Col className="ps-3 pe-3">
-                    <QuotationTypeSelect name="quotation_type_id" value={quotationTypeId} onSelect={(e) => setQuotationTypeId(e)} />
+                    <QuotationTypeSelect
+                      name="quotation_type_id"
+                      value={quotationTypeId}
+                      onSelect={(e) => {
+                        setQuotationTypeId(e);
+                        if (e !== 3) {
+                          setDiscountValue(0);
+                        }
+                      }}
+                    />
                   </Col>
                 </Row>
-                <Table striped bordered hover>
+                <Table striped bordered hover size="sm">
                   <thead>
                     <tr>
-                      <th width={80} className="text-center">
+                      <th width={80} className="text-center p-3">
                         เลือก
                       </th>
                       <th>ชื่อตัวอย่าง</th>
@@ -496,7 +684,7 @@ const EditQuotation = () => {
                     )}
                     <tr>
                       <td colSpan={5} className="text-end">
-                        <p className="mb-0 text-dark">ราคารวมก่อนส่วนลด:</p>
+                        <p className="mb-0 text-dark">ราคารวมก่อนส่วนลด</p>
                       </td>
                       <td className="text-end">
                         <p className="mb-0 text-dark">{formatNumber(totalAmount)} บาท</p>
@@ -505,7 +693,7 @@ const EditQuotation = () => {
                     <tr>
                       <td colSpan={5} className="text-end">
                         <p className="mb-0 text-dark">
-                          ส่วนลด ({discountUnit === 'percentage' ? `${discountValue}%` : `${formatNumber(discountValue)} บาท`}):
+                          ส่วนลด ({discountUnit === 'percentage' ? `${discountValue}%` : `${formatNumber(discountValue)} บาท`})
                         </p>
                       </td>
                       <td className="text-end">
@@ -514,7 +702,7 @@ const EditQuotation = () => {
                     </tr>
                     <tr>
                       <td colSpan={5} className="text-end">
-                        <p className="mb-0 text-dark">ราคาสุทธิ :</p>
+                        <p className="mb-0 text-dark">ราคาสุทธิ</p>
                       </td>
                       <td className="text-end">
                         <p className="mb-0 text-dark">{formatNumber(netTotal)} บาท</p>
@@ -522,7 +710,7 @@ const EditQuotation = () => {
                     </tr>
                     <tr>
                       <td colSpan={5} className="text-end">
-                        <p className="mb-0 text-dark">VAT 7%:</p>
+                        <p className="mb-0 text-dark">VAT 7%</p>
                       </td>
                       <td className="text-end">
                         <p className="mb-0 text-dark">{formatNumber(vatAmount)} บาท</p>
@@ -530,7 +718,7 @@ const EditQuotation = () => {
                     </tr>
                     <tr>
                       <td colSpan={5} className="text-end">
-                        <h6 className="mb-0">ยอดรวมทั้งหมด :</h6>
+                        <h6 className="mb-0">ยอดรวมทั้งหมด</h6>
                       </td>
                       <td className="text-end">
                         <h6 className="mb-0">{formatNumber(grandTotal)} บาท</h6>

@@ -90,6 +90,12 @@ const routes = [
     element: lazy(() => import('./views/pages/page404/Page404'))
   },
 
+  {
+    exact: 'true',
+    path: '/admin/request/print-qr-sample',
+    element: lazy(() => import('./components/Utility/PrintQrTestItems'))
+  },
+
   // Admin Routes (รวม super_admin, system, moderator, admin)
   {
     path: '/admin/*',
@@ -149,6 +155,42 @@ const routes = [
             role={['super_admin', 'system', 'moderator', 'admin']}
             position="manager"
             path="/admin/request/verify/:id"
+            {...props}
+          />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/request-sample-sent',
+        element: lazy(() => import('./views/admin/request/RequestSampleSentPage'))
+      },
+      {
+        exact: 'true',
+        path: '/request-sample-sent/:id',
+        element: lazy(() => import('./views/admin/request/ServiceRequestDetail')),
+        guard: (props) => (
+          <ProtectedRoute
+            role={['super_admin', 'system', 'moderator', 'admin']}
+            position="manager"
+            path="/admin/request/verify"
+            {...props}
+          />
+        )
+      },
+      {
+        exact: 'true',
+        path: '/request-reviewed',
+        element: lazy(() => import('./views/admin/request/RequestReviewedPage'))
+      },
+      {
+        exact: 'true',
+        path: '/request-reviewed/:id',
+        element: lazy(() => import('./views/admin/request/ServiceRequestDetail')),
+        guard: (props) => (
+          <ProtectedRoute
+            role={['super_admin', 'system', 'moderator', 'admin']}
+            position="manager"
+            path="/admin/request/verify"
             {...props}
           />
         )
@@ -491,6 +533,14 @@ const routes = [
       },
       {
         exact: 'true',
+        path: '/issue-quotation/detail/:id',
+        element: lazy(() => import('./views/admin/quotations/QuotationDetail')),
+        guard: (props) => (
+          <ProtectedRoute role={['admin', 'super_admin', 'moderator']} position="supervisor" path="/admin/test-results" {...props} />
+        )
+      },
+      {
+        exact: 'true',
         path: '/issue-quotation/create',
         element: lazy(() => import('./views/admin/quotations/MultiCreateQuotation')),
         guard: (props) => (
@@ -516,11 +566,11 @@ const routes = [
   {
     path: '/*',
     layout: AdminLayout,
-    guard: (props) => <ProtectedRoute role="user" path="/*" {...props} />,
+    // guard: (props) => <ProtectedRoute role="user" path="/*" {...props} />,
     routes: [
       {
         exact: 'true',
-        path: '/',
+        path: '/*',
         element: lazy(() => import('./views/dashboard'))
       },
       {
@@ -576,7 +626,7 @@ const routes = [
       {
         exact: 'true',
         path: '/request/edit',
-        element: lazy(() => import('./views/request/forms/EditSampleRequestForm'))
+        element: lazy(() => import('./views/request/forms/EditServiceRequest'))
       },
       {
         exact: 'true',
@@ -587,6 +637,16 @@ const routes = [
         exact: 'true',
         path: '/request-history',
         element: lazy(() => import('./views/request/HistoryRequestPage'))
+      },
+      {
+        exact: 'true',
+        path: '/quotations',
+        element: lazy(() => import('./views/quotatios/Quotation'))
+      },
+      {
+        exact: 'true',
+        path: '/quotations/:id',
+        element: lazy(() => import('./views/quotatios/QuotationDetail'))
       },
       {
         path: '*',

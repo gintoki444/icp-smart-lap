@@ -15,7 +15,7 @@ const ResendActovateToken = () => {
       email: ''
     },
     validationSchema: Yup.object({
-      email: Yup.string().email('รูปแบบอีเมล์ไม่ถูกต้อง').required('กรุณากรอกอีเมล์')
+      email: Yup.string().email('รูปแบบอีเมลไม่ถูกต้อง').required('กรุณากรอกอีเมล')
     }),
     onSubmit: async (values, { setSubmitting }) => {
       try {
@@ -25,7 +25,7 @@ const ResendActovateToken = () => {
 
         // ตรวจสอบการตอบกลับจาก API (สมมติว่าถ้าสำเร็จจะมี response หรือ status ที่ระบุ)
         if (response) {
-          toast.success('ส่ง Token ใหม่สำเร็จ! กรุณาตรวจสอบอีเมล์ของคุณ', { autoClose: 3000 });
+          toast.success('ส่ง Token ใหม่สำเร็จ! กรุณาตรวจสอบอีเมลของคุณ', { autoClose: 3000 });
           navigate('/auth/activate-token'); // เปลี่ยนเส้นทางไปที่ /auth/activate-token
         }
       } catch (error) {

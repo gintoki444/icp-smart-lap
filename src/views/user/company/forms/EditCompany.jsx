@@ -110,7 +110,7 @@ function EditCompany() {
         .required('กรุณากรอกเลขที่ผู้เสียภาษี'),
       company_address: Yup.string().required('กรุณากรอกที่อยู่บริษัท'),
       document_address: Yup.string().min(3, 'ที่อยู่จัดส่งเอกสารต้องมีอย่างน้อย 3 ตัวอักษร').required('กรุณากรอกที่อยู่จัดส่งเอกสาร'),
-      email: Yup.string().email('รูปแบบอีเมล์ไม่ถูกต้อง').required('กรุณากรอกอีเมล์'),
+      email: Yup.string().email('รูปแบบอีเมลไม่ถูกต้อง').required('กรุณากรอกอีเมล'),
       phone: Yup.string()
         .matches(/^[0-9]{10}$/, 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (10 หลัก)')
         .required('กรุณากรอกเบอร์โทรศัพท์'),
@@ -121,7 +121,7 @@ function EditCompany() {
           contact_phone: Yup.string()
             .matches(/^[0-9]{10}$/, 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (10 หลัก)')
             .required('กรุณากรอกเบอร์โทรศัพท์'),
-          contact_email: Yup.string().email('รูปแบบอีเมล์ไม่ถูกต้อง').required('กรุณากรอกอีเมล์'),
+          contact_email: Yup.string().email('รูปแบบอีเมลไม่ถูกต้อง').required('กรุณากรอกอีเมล'),
           position: Yup.string().required('กรุณากรอกตำแหน่ง')
         })
       ),
@@ -385,12 +385,12 @@ function EditCompany() {
                     </Col>
                     <Col md={6}>
                       <Form.Group className="mb-2">
-                        <Form.Label>อีเมล์ :</Form.Label>
+                        <Form.Label>อีเมล :</Form.Label>
                         <Form.Control
                           type="email"
                           className="form-control"
                           disabled
-                          placeholder="อีเมล์"
+                          placeholder="อีเมล"
                           name="email"
                           value={values.email || ''}
                           onChange={handleChange}
@@ -469,12 +469,12 @@ function EditCompany() {
                                     </Col>
                                     <Col md={6} className="mb-3">
                                       <Form.Group>
-                                        <Form.Label>อีเมล์:</Form.Label>
+                                        <Form.Label>อีเมล:</Form.Label>
                                         <Form.Control
                                           type="email"
                                           name={`contacts.${index}.contact_email`}
                                           value={contact.contact_email || ''}
-                                          placeholder="กรอกอีเมล์"
+                                          placeholder="กรอกอีเมล"
                                           onChange={handleChange}
                                           onBlur={handleBlur}
                                           isInvalid={touched.contacts?.[index]?.contact_email && !!errors.contacts?.[index]?.contact_email}

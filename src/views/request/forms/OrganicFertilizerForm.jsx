@@ -478,7 +478,7 @@ export const OrganicFertilizerForm = ({ onHandleSave }) => {
                           )}
 
                           <Form.Group className="mb-4 mt-2">
-                            <Form.Label>อัพโหลดเอกสาร :</Form.Label>
+                            <Form.Label>อัปโหลดเอกสาร :</Form.Label>
                             <div
                               {...getRootProps()}
                               style={{
@@ -543,7 +543,7 @@ export const OrganicFertilizerForm = ({ onHandleSave }) => {
         <Modal show={showModal} onHide={() => setShowModal(false)} centered>
           <Modal.Header closeButton>
             <Modal.Title>
-              <h5>เพิ่มข้อมูลปุ๋ยอินทรีย์</h5>
+              <h6 className="mb-0">เพิ่มข้อมูลปุ๋ยอินทรีย์</h6>
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>

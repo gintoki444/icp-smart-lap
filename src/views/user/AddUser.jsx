@@ -42,7 +42,7 @@ function AddUser() {
     Yup.object({
       first_name: Yup.string().min(3, 'ชื่อต้องมีอย่างน้อย 3 ตัวอักษร').required('กรุณากรอกชื่อ'),
       last_name: Yup.string().min(3, 'นามสกุลต้องมีอย่างน้อย 3 ตัวอักษร').required('กรุณากรอกนามสกุล'),
-      email: Yup.string().email('รูปแบบอีเมล์ไม่ถูกต้อง').required('กรุณากรอกอีเมล์'),
+      email: Yup.string().email('รูปแบบอีเมลไม่ถูกต้อง').required('กรุณากรอกอีเมล'),
       phone: Yup.string()
         .matches(/^[0-9]{10}$/, 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (10 หลัก)')
         .required('กรุณากรอกเบอร์โทรศัพท์'),
@@ -117,11 +117,11 @@ function AddUser() {
                   </Col>
                   <Col md={6}>
                     <Form.Group className="mb-2">
-                      <Form.Label>อีเมล์ :</Form.Label>
+                      <Form.Label>อีเมล :</Form.Label>
                       <Form.Control
                         type="email"
                         className="form-control"
-                        placeholder="อีเมล์"
+                        placeholder="อีเมล"
                         name="email"
                         value={values.email}
                         onChange={handleChange}

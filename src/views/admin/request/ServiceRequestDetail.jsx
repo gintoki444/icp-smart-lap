@@ -9,9 +9,8 @@ import { CircularProgress, Box } from '@mui/material';
 import EmailForm from 'components/Email/EmailForm';
 import CreateServiceRequest from 'components/PDF/CreateServiceRequest';
 
-const FertilizerDetails = ({ title }) => {
+const VerifyService = () => {
   const location = useLocation();
-  // const id = location.state?.id || null;
   const { id: paramId } = useParams();
   const id = paramId || location.state?.id || null;
 
@@ -23,8 +22,8 @@ const FertilizerDetails = ({ title }) => {
   const [billing, setBilling] = useState(false);
   const [orientation, setOrientation] = useState('horizontal');
   const [activeStep, setActiveStep] = useState(0);
-  const [loading, setLoading] = useState(true); // ควบคุมสถานะ loading
-  const [pendingRequests, setPendingRequests] = useState(0); // นับจำนวนการโหลดที่รอดำเนินการ
+  const [loading, setLoading] = useState(true);
+  const [pendingRequests, setPendingRequests] = useState(0);
 
   useEffect(() => {
     console.log('request id :', id);
@@ -36,20 +35,18 @@ const FertilizerDetails = ({ title }) => {
     }
   }, [id, navigate]);
 
-  // ฟังก์ชันสำหรับเริ่มการโหลด
   const startLoading = () => {
     setPendingRequests((prev) => {
       const newCount = prev + 1;
-      setLoading(newCount > 0); // ถ้ามีการโหลดอย่างน้อย 1 รายการ ให้แสดง loading
+      setLoading(newCount > 0);
       return newCount;
     });
   };
 
-  // ฟังก์ชันสำหรับหยุดการโหลด
   const stopLoading = () => {
     setPendingRequests((prev) => {
-      const newCount = Math.max(prev - 1, 0); // ไม่ให้ต่ำกว่า 0
-      setLoading(newCount > 0); // ถ้าไม่มีรายการโหลดแล้ว ให้ซ่อน loading
+      const newCount = Math.max(prev - 1, 0);
+      setLoading(newCount > 0);
       return newCount;
     });
   };
@@ -73,29 +70,26 @@ const FertilizerDetails = ({ title }) => {
 
   const getServiceRequest = async (id) => {
     try {
-      startLoading(); // เริ่มการโหลด
+      startLoading();
       const response = await getServiceRequestsByID(id);
       console.log('response', response);
       setSampleList(response.sample_submissions || []);
       setServiceData(response);
-
-      // const responseStatus = await getServiceRequestsStatusByID(id);
-      // console.log('sample_submissions', response.sample_submissions);
-
-      // if (responseStatus && responseStatus.request_status_tracking.length > 0) {
-      //   const statusTracking = responseStatus.request_status_tracking[0];
-      //   const stepsStatus = steps.map((step) => statusTracking[step.status] === 'yes');
-      //   const completedSteps = stepsStatus.lastIndexOf(true);
-      //   setActiveStep(completedSteps >= 0 ? completedSteps + 1 : 0);
-      //   setServiceStatus(responseStatus);
-      // }
+      // ลบการเรียก updateActiveStep ออก เพราะจะย้ายไปใช้ useEffect
     } catch (error) {
       console.error('Error fetching service request:', error);
       navigate('/admin/request');
     } finally {
-      stopLoading(); // หยุดการโหลด
+      stopLoading();
     }
   };
+
+  // เพิ่ม useEffect เพื่ออัปเดต activeStep เมื่อ serviceData เปลี่ยน
+  useEffect(() => {
+    if (serviceData && Object.keys(serviceData).length > 0) {
+      updateActiveStep(serviceData, {});
+    }
+  }, [serviceData]); // เรียก updateActiveStep เมื่อ serviceData เปลี่ยน
 
   const handleReload = (check) => {
     if (check) {
@@ -106,9 +100,9 @@ const FertilizerDetails = ({ title }) => {
   const steps = [
     { label: 'คำขอรับบริการ', status: 'requested' },
     { label: 'ลูกค้าส่งตัวอย่าง', status: 'sample_sent' },
-    { label: 'ทบทวนคำขอ', status: 'request_reviewed' },
     { label: 'ตัวอย่างจัดส่งถึงแล็บ', status: 'sample_arrived_lab' },
     { label: 'รับตัวอย่างเข้าระบบ', status: 'sample_received' },
+    { label: 'ทบทวนคำขอ', status: 'request_reviewed' },
     { label: 'รอทดสอบบางรายการ', status: 'partial_testing' },
     { label: 'ออกใบเสนอราคา', status: 'quotation_issued' },
     { label: 'ขอใบแจ้งหนี้', status: 'invoice_requested' },
@@ -128,13 +122,13 @@ const FertilizerDetails = ({ title }) => {
         if (sampleCount === 0) return false;
         return statusLogs.sample_sent !== null;
       case 2:
-        return statusLogs.request_reviewed !== null;
-      case 3:
         return statusLogs.sample_arrived_lab !== null;
-      case 4:
+      case 3:
         return statusLogs.sample_received !== null;
+      case 4:
+        return statusLogs.request_reviewed !== null;
       case 5:
-        return statusLogs.partial_testing !== null;
+        return statusLogs.partial_testing !== null ? true : false;
       case 6:
         return statusLogs.quotation_issued !== null;
       case 7:
@@ -150,11 +144,47 @@ const FertilizerDetails = ({ title }) => {
     }
   };
 
+  const updateActiveStep = (serviceData, serviceStatus) => {
+    const sampleSubmissions = serviceData.sample_submissions || [];
+    const statusLogs = serviceData.service_status_logs || {};
+
+    let currentStep = 0;
+    let displayStep = 0;
+
+    for (let i = 0; i < steps.length; i++) {
+      const isPartialTestingSkipped = i === 5 && statusLogs.partial_testing === null;
+
+      if (isPartialTestingSkipped) {
+        continue;
+      }
+
+      if (isStepComplete(i, sampleSubmissions, statusLogs)) {
+        currentStep = i + 1;
+        displayStep++;
+      } else {
+        currentStep = i;
+        break;
+      }
+    }
+
+    let adjustedActiveStep = displayStep;
+    if (statusLogs.partial_testing === null && currentStep > 5) {
+      adjustedActiveStep = displayStep;
+    } else if (statusLogs.partial_testing === null && currentStep <= 5) {
+      adjustedActiveStep = currentStep;
+    } else {
+      adjustedActiveStep = currentStep;
+    }
+
+    setActiveStep(adjustedActiveStep);
+  };
+
   const [company, setCompany] = useState({});
   const handleSetCustomer = async (data) => {
     console.log('handleSetCustomer data', data);
     setCompany(data);
   };
+
   return (
     <div>
       {loading ? (
@@ -171,7 +201,7 @@ const FertilizerDetails = ({ title }) => {
       ) : (
         <Card>
           <Card.Header>
-            <h5>{title}</h5>
+            <h5>รายละเอียดคำขอรับบริการ</h5>
           </Card.Header>
           <Card.Body>
             <div>
@@ -186,22 +216,27 @@ const FertilizerDetails = ({ title }) => {
                     padding: '20px 0'
                   }}
                 >
-                  {steps.map((step, index) => (
-                    <Step key={index} completed={isStepComplete(index, sampleList, serviceData.service_status_logs || {})}>
-                      <StepLabel>{step.label}</StepLabel>
-                      {orientation === 'vertical' && (
-                        <StepContent>
-                          <AdminStepContent
-                            serviceId={id}
-                            handleReload={handleReload}
-                            startLoading={startLoading}
-                            stopLoading={stopLoading}
-                            handleSetCustomer={handleSetCustomer}
-                          />
-                        </StepContent>
-                      )}
-                    </Step>
-                  ))}
+                  {steps.map((step, index) => {
+                    if (index === 5 && serviceData.service_status_logs?.partial_testing === null) {
+                      return null;
+                    }
+                    return (
+                      <Step key={index} completed={isStepComplete(index, sampleList, serviceData.service_status_logs || {})}>
+                        <StepLabel>{step.label}</StepLabel>
+                        {orientation === 'vertical' && (
+                          <StepContent>
+                            <AdminStepContent
+                              serviceId={id}
+                              handleReload={handleReload}
+                              startLoading={startLoading}
+                              stopLoading={stopLoading}
+                              handleSetCustomer={handleSetCustomer}
+                            />
+                          </StepContent>
+                        )}
+                      </Step>
+                    );
+                  })}
                 </Stepper>
               ) : (
                 <>
@@ -217,11 +252,16 @@ const FertilizerDetails = ({ title }) => {
                           padding: '20px 0'
                         }}
                       >
-                        {steps.map((step, index) => (
-                          <Step key={index} completed={isStepComplete(index, sampleList, serviceData.service_status_logs || {})}>
-                            <StepLabel>{step.label}</StepLabel>
-                          </Step>
-                        ))}
+                        {steps.map((step, index) => {
+                          if (index === 5 && serviceData.service_status_logs?.partial_testing === null) {
+                            return null;
+                          }
+                          return (
+                            <Step key={index} completed={isStepComplete(index, sampleList, serviceData.service_status_logs || {})}>
+                              <StepLabel>{step.label}</StepLabel>
+                            </Step>
+                          );
+                        })}
                       </Stepper>
                     </Card.Body>
                   </Card>
@@ -237,10 +277,6 @@ const FertilizerDetails = ({ title }) => {
             </div>
           </Card.Body>
           <Card.Footer className="text-start">
-            {/* <Button variant="primary" onClick={() => {}}>
-              <LuMailQuestion style={{ marginRight: 8 }} />
-              แจ้งแก้ไขข้อมูล
-            </Button> */}
             <EmailForm buttonTitle="แจ้งแก้ไขข้อมูล" icon={<LuMailQuestion style={{ marginRight: 8 }} />} serviceData={serviceData} />
             <CreateServiceRequest serviceData={serviceData} customerData={company} />
             <Button variant="danger" onClick={() => navigate('/admin/request/')}>
@@ -252,10 +288,6 @@ const FertilizerDetails = ({ title }) => {
       )}
     </div>
   );
-};
-
-const VerifyService = () => {
-  return <FertilizerDetails title="รายละเอียดคำขอรับบริการ" />;
 };
 
 export default VerifyService;

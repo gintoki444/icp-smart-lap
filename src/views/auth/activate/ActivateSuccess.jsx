@@ -23,11 +23,11 @@ const ActivateSuccess = () => {
       try {
         const response = await activateEmail(values.token);
         if (response.message === 'Account activated successfully. You can now log in.') {
-          alert('ยืนยันอีเมล์สำเร็จ!');
+          alert('ยืนยันอีเมลสำเร็จ!');
           navigate('/auth/activate-success');
         }
       } catch (error) {
-        let errorMessage = 'เกิดข้อผิดพลาดในการยืนยันอีเมล์';
+        let errorMessage = 'เกิดข้อผิดพลาดในการยืนยันอีเมล';
         if (error.message.includes('400')) {
           errorMessage = 'Token ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง';
         } else if (error.message.includes('404')) {
@@ -60,7 +60,7 @@ const ActivateSuccess = () => {
                 </div>
                 <Col md={12}>
                   <AiOutlineCheckCircle size={60} className="text-success mb-4" />
-                  <h3 className="mb-4">ยืนยันอีเมล์สำเร็จ!</h3>
+                  <h3 className="mb-4">ยืนยันอีเมลสำเร็จ!</h3>
                   <p className="mb-4">ขอบคุณที่ยืนยันตัวตนของคุณ ตอนนี้บัญชีของคุณพร้อมใช้งานแล้ว</p>
                   <p className="mb-2">
                     Already have an account?{' '}
@@ -73,7 +73,7 @@ const ActivateSuccess = () => {
                   <h3 className="mb-4">Activate E-mail</h3>
                   <p className="mb-4">
                     กรอก Token ที่ได้รับจาก <br />
-                    อีเมล์เพื่อยืนยันตัวตน
+                    อีเมลเพื่อยืนยันตัวตน
                   </p>
                   <Form onSubmit={formik.handleSubmit}>
                     <Form.Group className="mb-3">

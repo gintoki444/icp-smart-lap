@@ -16,7 +16,7 @@ import { toast } from 'react-toastify';
 const SampleReceivingModal = ({
   serviceData,
   submissionId,
-  handleTracking,
+  handleReload,
   trackingData,
   reviewBy,
   sampleNo,
@@ -58,12 +58,10 @@ const SampleReceivingModal = ({
   // ฟังก์ชันตรวจสอบและอัปเดตสถานะ
   const checkAndUpdateStatus = async () => {
     try {
-      // ดึงข้อมูล sample_submissions จาก API
       const sampleSubmissions = await getSampleSubmisRequestByID(serviceRequestId);
       const sampleSubmissionsCount = sampleSubmissions.length;
       const statusLogs = (await getServiceRequestsByID(serviceRequestId)).service_status_logs || {};
 
-      // 1. ตรวจสอบ sample_tracking
       const receivedCount = sampleSubmissions.reduce((count, submission) => {
         const tracking = submission.sample_tracking || [];
         const hasReceivedTracking = tracking.some(
@@ -74,23 +72,16 @@ const SampleReceivingModal = ({
 
       const isSampleSentComplete = receivedCount === sampleSubmissionsCount;
 
-      // 2. ตรวจสอบ sample_status_tracking ว่ามี item.status === 'delivered_to_lab' หรือไม่
-      // รวม sample_status_tracking จากทุก submission
       const allSampleStatusTracking = sampleSubmissions.flatMap((submission) => submission.sample_status_tracking || []);
 
       const hasDeliveredToLab = allSampleStatusTracking.some((item) => item.status === 'delivered_to_lab');
 
-      console.log('isSampleSentComplete', isSampleSentComplete);
-      console.log('hasDeliveredToLab', hasDeliveredToLab);
-      console.log('statusLogs.sample_sent', statusLogs.sample_sent);
-      // 3. อัปเดตสถานะ sample_sent ถ้าครบเงื่อนไข
       if (isSampleSentComplete && hasDeliveredToLab && statusLogs.sample_sent === null) {
         const reqStatusTracking = { newStatusTracking: 'sample_sent' };
         await putServiceRequestStatusTracking(serviceRequestId, reqStatusTracking);
         toast.success('สถานะอัปเดต: ตัวอย่างถูกส่งครบแล้ว', { autoClose: 3000 });
       }
 
-      // 4. ตรวจสอบสถานะ "sample_arrived_lab" (ตัวอย่างจัดส่งถึงแลป)
       const deliveredCount = allSampleStatusTracking.filter((item) => item.status === 'delivered_to_lab').length;
       if (deliveredCount >= sampleSubmissionsCount && statusLogs.sample_arrived_lab === null) {
         const reqStatusTracking = { newStatusTracking: 'sample_arrived_lab' };
@@ -102,7 +93,6 @@ const SampleReceivingModal = ({
         toast.info('สถานะถูกลบ: ตัวอย่างยังไม่ถึงแลปครบ', { autoClose: 3000 });
       }
 
-      // 5. ตรวจสอบสถานะ "sample_received" (รับตัวอย่างเข้าระบบ)
       const receivedInSystemCount = allSampleStatusTracking.filter((item) => item.status === 'received_in_system').length;
       if (receivedInSystemCount >= sampleSubmissionsCount && statusLogs.sample_received === null) {
         const reqStatusTracking = { newStatusTracking: 'sample_received' };
@@ -145,12 +135,13 @@ const SampleReceivingModal = ({
         }
       ]);
 
-      handleTracking(true);
       setShowAddModal(false);
       resetForm();
 
-      // เรียก checkAndUpdateStatus หลังจากเพิ่มข้อมูล
+      // เรียก checkAndUpdateStatus และรอให้เสร็จก่อน
       await checkAndUpdateStatus();
+      // เรียก handleReload หลังจาก checkAndUpdateStatus เสร็จ
+      handleReload(true);
     } catch (error) {
       console.error('Error saving tracking data:', error);
       setErrors({ submit: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่' });
@@ -170,7 +161,6 @@ const SampleReceivingModal = ({
       if (!submissionNo) await putGenerateSubmis(submissionId);
       if (!serviceData.request_no) await putGenerateRequest(serviceRequestId);
 
-      // 1. ตรวจสอบ Checkbox "ตัวอย่างจัดส่งถึงแลป"
       if (values.deliveredToLab) {
         const deliveredStatus = {
           submission_id: submissionId,
@@ -185,7 +175,6 @@ const SampleReceivingModal = ({
         }
       }
 
-      // 2. ตรวจสอบ Radio "รับตัวอย่างเข้าระบบ"
       if (values.receiveOption === 'received') {
         const receivedStatus = {
           submission_id: submissionId,
@@ -200,13 +189,11 @@ const SampleReceivingModal = ({
         }
       }
 
-      // บันทึกสถานะใหม่
       if (newSampleStatus.length > 0) {
         const response = await postSampleStatusArray(newSampleStatus);
         console.log('postSampleStatusArray:', response);
       }
 
-      // อัปเดตสถานะ tracking
       if (submissionId && !values.received_by) {
         const trackingData = {
           status: 'in_processing',
@@ -214,24 +201,18 @@ const SampleReceivingModal = ({
         };
         const responseSampleTracking = await putSampleTracking(editData.tracking_id, trackingData);
         console.log('responseSampleTracking:', responseSampleTracking);
-        handleTracking(true);
         setShowEditModal(false);
       }
 
-      // เรียก checkAndUpdateStatus เพื่อตรวจสอบและอัปเดตสถานะ
+      // เรียก checkAndUpdateStatus และรอให้เสร็จก่อน
       await checkAndUpdateStatus();
+      // เรียก handleReload หลังจาก checkAndUpdateStatus เสร็จ
+      handleReload(true);
     } catch (error) {
       console.error('Error updating tracking data:', error);
       setErrors({ submit: 'เกิดข้อผิดพลาดในการแก้ไขข้อมูล กรุณาลองใหม่' });
       setSubmitting(false);
     }
-  };
-
-  const handleEdit = (id) => {
-    const dataToEdit = deliveryData.find((item) => item.tracking_id === id);
-    console.log('dataToEdit:', dataToEdit);
-    setEditData(dataToEdit);
-    setShowEditModal(true);
   };
 
   const handleCancelTracking = async (id) => {
@@ -252,15 +233,23 @@ const SampleReceivingModal = ({
         const response = await putSampleTracking(id, trackingData);
         if (response) {
           toast.success('ยกเลิกการรับตัวอย่างสำเร็จ!', { autoClose: 3000 });
-          handleTracking(true);
         }
 
-        // เรียก checkAndUpdateStatus หลังจากยกเลิก
+        // เรียก checkAndUpdateStatus และรอให้เสร็จก่อน
         await checkAndUpdateStatus();
+        // เรียก handleReload หลังจาก checkAndUpdateStatus เสร็จ
+        handleReload(true);
       } catch (error) {
         toast.error('ยกเลิกการรับตัวอย่างไม่สำเร็จ! :' + error, { autoClose: 3000 });
       }
     }
+  };
+
+  const handleEdit = (id) => {
+    const dataToEdit = deliveryData.find((item) => item.tracking_id === id);
+    console.log('dataToEdit:', dataToEdit);
+    setEditData(dataToEdit);
+    setShowEditModal(true);
   };
 
   return (
@@ -322,14 +311,15 @@ const SampleReceivingModal = ({
                   <ButtonGroup>
                     {!data.received_by ? (
                       <Tooltip title="รับตัวอย่าง" placement="bottom" arrow>
-                        <Button variant="success" size="sm" onClick={() => handleEdit(data.tracking_id)}>
-                          <MdOutlineAddHome className="me-2" style={{ fontSize: 16 }} /> รับตัวอย่าง
+                        <Button variant="success" size="sm" style={{ fontSize: 15 }} onClick={() => handleEdit(data.tracking_id)}>
+                          <MdOutlineAddHome className="me-2" style={{ fontSize: 15 }} /> รับตัวอย่าง
                         </Button>
                       </Tooltip>
                     ) : (
                       <Tooltip title="ยกเลิกรับตัวอย่าง" placement="bottom" arrow>
-                        <Button variant="danger" size="sm" onClick={() => handleCancelTracking(data.tracking_id)}>
-                          <MdOutlineCancel /> ยกเลิกรับตัวอย่าง
+                        <Button variant="danger" size="sm" style={{ fontSize: 15 }} onClick={() => handleCancelTracking(data.tracking_id)}>
+                          <i className="feather icon-x-circle" />
+                          ยกเลิกรับตัวอย่าง
                         </Button>
                       </Tooltip>
                     )}
@@ -347,12 +337,11 @@ const SampleReceivingModal = ({
         </tbody>
       </Table>
 
-      {/* Modal สำหรับแก้ไขข้อมูล */}
       {editData && (
         <Modal show={showEditModal} onHide={() => setShowEditModal(false)} centered>
           <Modal.Header closeButton>
             <Modal.Title>
-              <h6>ยืนยันการรับตัวอย่าง</h6>
+              <h6 className="mb-0">ยืนยันการรับตัวอย่าง</h6>
             </Modal.Title>
           </Modal.Header>
           <Formik
@@ -430,7 +419,6 @@ const SampleReceivingModal = ({
                     <Form.Control.Feedback type="invalid">{errors.proof_image}</Form.Control.Feedback>
                   </Form.Group>
 
-                  {/* Checkbox: ตัวอย่างจัดส่งถึงแลป */}
                   <Form.Group className="mb-3">
                     <Form.Check
                       type="checkbox"
@@ -444,7 +432,6 @@ const SampleReceivingModal = ({
                     <Form.Control.Feedback type="invalid">{errors.deliveredToLab}</Form.Control.Feedback>
                   </Form.Group>
 
-                  {/* Radio Buttons: รับตัวอย่างเข้าระบบ */}
                   <Form.Group className="mb-3">
                     <Form.Label>รับตัวอย่างเข้าระบบ</Form.Label>
                     <div>
@@ -469,11 +456,13 @@ const SampleReceivingModal = ({
                     </div>
                   </Form.Group>
                 </Modal.Body>
-                <Modal.Footer>
+                <Modal.Footer className="justify-content-center">
                   <Button variant="success" type="submit" disabled={isSubmitting}>
-                    ยืนยัน
+                    <i className="feather icon-save" />
+                    บันทึก
                   </Button>
-                  <Button variant="secondary" onClick={() => setShowEditModal(false)} disabled={isSubmitting}>
+                  <Button variant="danger" onClick={() => setShowEditModal(false)} disabled={isSubmitting}>
+                    <i className="feather icon-corner-up-left" />
                     ยกเลิก
                   </Button>
                 </Modal.Footer>

@@ -49,7 +49,7 @@ const UsersList = () => {
           role_name: user.role_name,
           dept_id: user.dept_id,
           dept_name: user.dept_name,
-          createdAt: new Date(user.created_at).toLocaleString(),
+          createdAt: new Date(user.created_at).toLocaleDateString('th-TH'),
           status: user.status
         }));
         setData(rows);

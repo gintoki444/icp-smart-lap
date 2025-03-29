@@ -59,6 +59,7 @@ const StepForm = ({
     reportMethod: [],
     email: '',
     sameAddress: true,
+    sameReportCompany: true,
     mail_delivery_location: '',
     phone: '',
     other_requirements: '',
@@ -72,7 +73,9 @@ const StepForm = ({
     test_all_items: true,
     submitted_by: '',
     submitted_date: new Date().toISOString().split('T')[0],
-    submitted_phone: ''
+    submitted_phone: '',
+    report_company_name: company?.company_name || '',
+    report_company_address: company?.company_address || ''
   });
 
   const analysisMethodOptions = [
@@ -109,7 +112,6 @@ const StepForm = ({
           value: item.formula_id,
           label: item.formula_code
         }));
-        console.log('formattedOptions', formattedOptions);
         setFerFormulasByMain(formattedOptions);
       } else {
         const result = await getAllFertilizerFormulas();
@@ -175,7 +177,6 @@ const StepForm = ({
   };
 
   const handleFertilizerFormulasChange = (field, selectedOption) => {
-    console.log('selectedOption:', selectedOption);
     setFormData({
       ...formData,
       [field]: selectedOption ? selectedOption.value : null,
@@ -185,7 +186,6 @@ const StepForm = ({
 
   const handleAddOrUpdateData = async () => {
     try {
-      console.log('formData before validation:', formData);
       await formDataSchema.validate(formData, { abortEarly: false, context: { sample_type_id: sampleType } });
       if (editIndex !== null) {
         const updatedRecords = [...values.fertilizerRecords];
@@ -221,6 +221,7 @@ const StepForm = ({
         reportMethod: [],
         email: '',
         sameAddress: true,
+        sameReportCompany: true,
         mail_delivery_location: company?.document_address || '',
         phone: '',
         other_requirements: '',
@@ -228,7 +229,9 @@ const StepForm = ({
         test_all_items: 1,
         submitted_by: '',
         submitted_date: '',
-        submitted_phone: ''
+        submitted_phone: '',
+        report_company_name: company?.company_name || '',
+        report_company_address: company?.company_address || ''
       });
       setFormErrors({});
     } catch (err) {
@@ -346,6 +349,7 @@ const StepForm = ({
       return true;
     }),
     sameAddress: Yup.boolean(),
+    sameReportCompany: Yup.boolean(),
     mail_delivery_location: Yup.string().test('address-required', 'กรุณาระบุที่อยู่จัดส่ง', function (value) {
       const { reportMethod, sameAddress } = this.parent;
       if (Array.isArray(reportMethod) && reportMethod.includes('is_mail_delivery') && !sameAddress) {
@@ -360,10 +364,24 @@ const StepForm = ({
       }
       return true;
     }),
+    report_company_name: Yup.string().test('report-company-required', 'กรุณาระบุชื่อบริษัท', function (value) {
+      const { sameReportCompany } = this.parent;
+      if (!sameReportCompany) {
+        return value && value.trim() !== '';
+      }
+      return true;
+    }),
+    report_company_address: Yup.string().test('report-company-address-required', 'กรุณาระบุที่อยู่บริษัท', function (value) {
+      const { sameReportCompany } = this.parent;
+      if (!sameReportCompany) {
+        return value && value.trim() !== '';
+      }
+      return true;
+    }),
     sampleDisposal: Yup.string()
       .required('กรุณาเลือกวิธีการจำหน่ายตัวอย่าง')
       .oneOf(['is_lab_dispose_sample', 'is_collect_within_3_months', 'is_return_sample'], 'วิธีการจำหน่ายตัวอย่างไม่ถูกต้อง'),
-    test_all_items: Yup.boolean().required('กรุณาเลือกขอบเขตการทดสอบ'),
+    // test_all_items: Yup.boolean().required('กรุณาเลือกขอบเขตการทดสอบ'),
     submitted_by: Yup.string().required('กรุณาระบุชื่อผู้ส่งตัวอย่าง'),
     submitted_phone: Yup.string()
       .required('กรุณาระบุเบอร์โทรศัพท์ผู้ส่งตัวอย่าง')
@@ -454,7 +472,6 @@ const StepForm = ({
 
   const handleEdit = (index) => {
     const checkData = values.fertilizerRecords[index];
-    console.log('values.fertilizerRecords[index]:', values.fertilizerRecords[index]);
 
     if (checkData.fertilizer_main_id) getFerFormulasByMain(checkData.fertilizer_main_id);
     setFormData({
@@ -533,6 +550,20 @@ const StepForm = ({
     setFieldValue('sameAddress', isSameAddress);
     if (isSameAddress) {
       setFieldValue('mail_delivery_location', company?.document_address || '');
+    }
+  };
+
+  const handleSameReportCompanyChange = (isSameAddress) => {
+    setFormData({
+      ...formData,
+      sameReportCompany: isSameAddress,
+      report_company_name: isSameAddress && company?.company_name ? company.company_name : formData.report_company_name,
+      report_company_address: isSameAddress && company?.company_address ? company.company_address : formData.report_company_address
+    });
+    setFieldValue('sameReportCompany', isSameAddress);
+    if (isSameAddress) {
+      setFieldValue('report_company_name', company?.company_name || '');
+      setFieldValue('report_company_address', company?.company_address || '');
     }
   };
 
@@ -710,25 +741,13 @@ const StepForm = ({
                         <Col md={6} className="mb-2">
                           <p className="mb-0">
                             ผู้ผลิต (บริษัท/ห้าง/ร้าน) : <strong className="text-dark">{sample.manufacturer || '-'}</strong> ประเทศ :{' '}
-                            <CountrySelect
-                              name="country"
-                              label="ประเทศ"
-                              value={sample.manufacturer_country || '-'}
-                              onChange={(name, value) => console.log(name, value)}
-                              showText={true}
-                            />
+                            <CountrySelect name="country" label="ประเทศ" value={sample.manufacturer_country || '-'} showText={true} />
                           </p>
                         </Col>
                         <Col md={6} className="mb-2">
                           <p className="mb-0">
                             สั่งจาก (บริษัท/ห้าง/ร้าน) : <strong className="text-dark">{sample.supplier || '-'}</strong> ประเทศ :{' '}
-                            <CountrySelect
-                              name="country"
-                              label="ประเทศ"
-                              value={sample.supplier_country || '-'}
-                              onChange={(name, value) => console.log(name, value)}
-                              showText={true}
-                            />
+                            <CountrySelect name="country" label="ประเทศ" value={sample.supplier_country || '-'} showText={true} />
                           </p>
                         </Col>
                         <Col md={6} className="mb-2">
@@ -847,7 +866,7 @@ const StepForm = ({
               <i className="feather icon-plus" /> เพิ่ม
             </Button>
 
-            <Form.Group className="mb-3">
+            {/* <Form.Group className="mb-3">
               <Form.Label className="text-dark">
                 ขอบเขตการทดสอบ<span className="text-danger"> *</span>
               </Form.Label>
@@ -885,14 +904,15 @@ const StepForm = ({
                   {formErrors.test_all_items}
                 </Form.Control.Feedback>
               )}
-            </Form.Group>
+            </Form.Group> */}
+
             <Row className="mt-3">
               <Col md={12}>
                 <h6 className="mb-2">
                   เอกสารประกอบ<span className="text-danger"> *</span>
                 </h6>
                 <Form.Group className="mb-3 mt-2">
-                  <Form.Label>อัพโหลดเอกสาร :</Form.Label>
+                  <Form.Label>อัปโหลดเอกสาร :</Form.Label>
                   <div
                     {...getRootProps()}
                     style={{
@@ -915,7 +935,7 @@ const StepForm = ({
                       values.files.map((file, index) => (
                         <li key={index} style={{ display: 'flex', alignItems: 'center' }}>
                           <i className="feather icon-file" style={{ marginRight: 12 }} />
-                          {file.name}
+                          {'เอกสารรับรองปุ๋ย - ' + file.name}
                           <Button
                             variant="link"
                             size="sm"
@@ -969,19 +989,11 @@ const StepForm = ({
               </h5>
             </Modal.Title>
           </Modal.Header>
-          <Modal.Body
-          // style={{
-          //   flex: '1 1 auto',
-          //   overflowY: 'auto'
-          //   maxHeight: 'calc(90vh - 100px)' // ปรับตามความสูงของ Header และ Footer
-          // }}
-          >
-            <div
-            // style={{ height: '1500px' }}
-            >
+          <Modal.Body>
+            <div>
               <Form>
                 <Row className="d-flex align-items-start ps-3 pe-3">
-                  <Col md={12}>
+                  <Col md={12} className="mb-0">
                     <Row className="mb-2">
                       <Col md={6} className="mb-2">
                         <p className="mb-0">
@@ -1012,6 +1024,94 @@ const StepForm = ({
                               : '-'}
                           </strong>
                         </p>
+                      </Col>
+
+                      <Col md={12} className="mt-3">
+                        <Form.Group>
+                          <h6 className="mb-3">
+                            สำหรับออกรายงานผลการทดสอบ (บริษัทที่ขอขึ้นทะเบียน)<span className="text-danger"> *</span>
+                          </h6>
+                          <Col md={12} className="mt-1">
+                            <Form.Check
+                              inline
+                              type="radio"
+                              name="sameReportCompany"
+                              label="บริษัทเดียวกับที่ลงทะเบียน"
+                              checked={formData.sameReportCompany}
+                              onChange={() => handleSameReportCompanyChange(true)}
+                              id="sameReportCompanyCheck1"
+                            />
+                            <Form.Check
+                              inline
+                              type="radio"
+                              name="sameReportCompany"
+                              label="บริษัทต่างจากที่ลงทะเบียน"
+                              checked={!formData.sameReportCompany}
+                              onChange={() => handleSameReportCompanyChange(false)}
+                              id="sameReportCompanyCheck2"
+                            />
+                          </Col>
+
+                          {formData.sameReportCompany ? (
+                            <Row className="ps-3 pe-3">
+                              <Col md={6}>
+                                <Form.Group className="mb-3">
+                                  <Form.Label>ชื่อบริษัท :</Form.Label>
+                                  <Form.Control type="text" name="report_company_name" value={company?.company_name || ''} readOnly />
+                                </Form.Group>
+                              </Col>
+                              <Col md={6}>
+                                <Form.Group>
+                                  <Form.Label>ที่อยู่บริษัท :</Form.Label>
+                                  <Form.Control type="text" name="report_company_address" value={company?.company_address || ''} readOnly />
+                                </Form.Group>
+                              </Col>
+                            </Row>
+                          ) : (
+                            <Row className="mb-3 ps-3 pe-3">
+                              <Col md={6} className="mb-3">
+                                <Form.Group>
+                                  <Form.Label>
+                                    ชื่อบริษัท <span className="text-danger"> *</span>
+                                  </Form.Label>
+                                  <Form.Control
+                                    type="text"
+                                    name="report_company_name"
+                                    placeholder="ระบุชื่อบริษัท"
+                                    value={formData.report_company_name}
+                                    onChange={(e) => {
+                                      setFormData({ ...formData, report_company_name: e.target.value });
+                                      setFieldValue('report_company_name', e.target.value);
+                                    }}
+                                    onBlur={handleBlur}
+                                    isInvalid={!!formErrors.report_company_name}
+                                  />
+                                  <Form.Control.Feedback type="invalid">{formErrors.report_company_name}</Form.Control.Feedback>
+                                </Form.Group>
+                              </Col>
+                              <Col md={6} className="mb-3">
+                                <Form.Group>
+                                  <Form.Label>
+                                    ที่อยู่บริษัท <span className="text-danger"> *</span>
+                                  </Form.Label>
+                                  <Form.Control
+                                    type="text"
+                                    name="report_company_address"
+                                    placeholder="ระบุที่อยู่บริษัท"
+                                    value={formData.report_company_address}
+                                    onChange={(e) => {
+                                      setFormData({ ...formData, report_company_address: e.target.value });
+                                      setFieldValue('report_company_address', e.target.value);
+                                    }}
+                                    onBlur={handleBlur}
+                                    isInvalid={!!formErrors.report_company_address}
+                                  />
+                                  <Form.Control.Feedback type="invalid">{formErrors.report_company_address}</Form.Control.Feedback>
+                                </Form.Group>
+                              </Col>
+                            </Row>
+                          )}
+                        </Form.Group>
                       </Col>
                     </Row>
                   </Col>
@@ -1494,7 +1594,7 @@ const StepForm = ({
                       </Row>
                     </Form.Group>
                   </Col> */}
-                  <Col md={12}>
+                  <Col md={12} className="mt-2">
                     <Form.Group className="mb-2">
                       <h6 className="mb-3">
                         การรับรายงานผล<span className="text-danger"> *</span>
@@ -1533,38 +1633,51 @@ const StepForm = ({
                               </Col>
                             )}
                             {option.value === 'is_mail_delivery' && formData.reportMethod.includes('is_mail_delivery') && (
-                              <Col md={6} className="mt-1 ps-4 pe-4">
-                                <Form.Check
-                                  inline
-                                  type="radio"
-                                  name="sameAddress"
-                                  label="ที่อยู่เดียวกับบริษัทที่ลงทะเบียน"
-                                  checked={formData.sameAddress}
-                                  onChange={() => handleSameAddressChange(true)}
-                                  id="sameAddressCheck1"
-                                />
-                                <Form.Check
-                                  inline
-                                  type="radio"
-                                  name="sameAddress"
-                                  label="ที่อยู่ต่างจากบริษัทที่ลงทะเบียน"
-                                  checked={!formData.sameAddress}
-                                  onChange={() => handleSameAddressChange(false)}
-                                  id="sameAddressCheck2"
-                                />
+                              <>
+                                <Col md={6} className="mt-1 ps-4 pe-4">
+                                  <Form.Check
+                                    inline
+                                    type="radio"
+                                    name="sameAddress"
+                                    label="ที่อยู่เดียวกับบริษัทที่ลงทะเบียน"
+                                    checked={formData.sameAddress}
+                                    onChange={() => handleSameAddressChange(true)}
+                                    id="sameAddressCheck1"
+                                  />
+                                  <Form.Check
+                                    inline
+                                    type="radio"
+                                    name="sameAddress"
+                                    label="ที่อยู่ต่างจากบริษัทที่ลงทะเบียน"
+                                    checked={!formData.sameAddress}
+                                    onChange={() => handleSameAddressChange(false)}
+                                    id="sameAddressCheck2"
+                                  />
+                                </Col>
+
                                 {formData.sameAddress ? (
-                                  <Form.Group md={6} className="mb-3">
-                                    <Form.Label>ที่อยู่จัดส่งเอกสาร :</Form.Label>
-                                    <Form.Control
-                                      type="text"
-                                      name="mail_delivery_location"
-                                      value={company?.document_address || ''}
-                                      readOnly
-                                    />
-                                  </Form.Group>
+                                  <Row className="mb-3 ps-4 pe-4">
+                                    <Col md={6}>
+                                      <Form.Group>
+                                        <Form.Label>ที่อยู่จัดส่งเอกสาร :</Form.Label>
+                                        <Form.Control
+                                          type="text"
+                                          name="mail_delivery_location"
+                                          value={company?.document_address || ''}
+                                          readOnly
+                                        />
+                                      </Form.Group>
+                                    </Col>
+                                    <Col md={6}>
+                                      <Form.Group>
+                                        <Form.Label>เบอร์โทรศัพท์ :</Form.Label>
+                                        <Form.Control type="text" name="phone" value={company?.phone || ''} readOnly />
+                                      </Form.Group>
+                                    </Col>
+                                  </Row>
                                 ) : (
-                                  <Row className="mb-3">
-                                    <Col md={12}>
+                                  <Row className="mb-3 ps-4 pe-4">
+                                    <Col md={6}>
                                       <Form.Group>
                                         <Form.Label>
                                           ที่อยู่จัดส่งเอกสาร <span className="text-danger"> *</span>
@@ -1584,8 +1697,8 @@ const StepForm = ({
                                         <Form.Control.Feedback type="invalid">{formErrors.mail_delivery_location}</Form.Control.Feedback>
                                       </Form.Group>
                                     </Col>
-                                    <Col md={12}>
-                                      <Form.Group className="mt-3">
+                                    <Col md={6}>
+                                      <Form.Group>
                                         <Form.Label>
                                           เบอร์โทรศัพท์ <span className="text-danger"> *</span>
                                         </Form.Label>
@@ -1606,14 +1719,14 @@ const StepForm = ({
                                     </Col>
                                   </Row>
                                 )}
-                              </Col>
+                              </>
                             )}
                           </Stack>
                         ))}
                       </div>
-                      {formErrors.reportMethod && (
+                      {formErrors.sameReportCompany && (
                         <Form.Control.Feedback type="invalid" style={{ display: 'block' }}>
-                          {formErrors.reportMethod}
+                          {formErrors.sameReportCompany}
                         </Form.Control.Feedback>
                       )}
                     </Form.Group>

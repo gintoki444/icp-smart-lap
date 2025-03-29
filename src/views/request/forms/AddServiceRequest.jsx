@@ -49,7 +49,6 @@ const AddServiceRequest = () => {
   const getCustomersByID = async (companyId) => {
     try {
       const response = await getCustomerByID(companyId);
-      console.log('getCustomerByID:', response);
       setCustomer(response);
     } catch (error) {
       console.error(error);
@@ -60,7 +59,6 @@ const AddServiceRequest = () => {
   const handleGetCusSpacialCon = async (companyId) => {
     try {
       const response = await getCustomerSpecialConditionsByID(companyId);
-      console.log('handleGetCusSpacialCon:', response);
       setSpacialCon(Array.isArray(response) ? response : []);
     } catch (error) {
       console.error(error);
@@ -83,7 +81,7 @@ const AddServiceRequest = () => {
       notes: data.notes
     };
 
-    console.log(step1);
+    console.log('step1:', step1);
     let sampleSubmissionsData = [];
     data.fertilizerRecords.forEach((record) => {
       const step2 = {
@@ -121,28 +119,27 @@ const AddServiceRequest = () => {
         test_items: record.test_items,
         formula_id: record.formula_id,
         fertilizer_main_id: record.fertilizer_main_id,
-        other_requirements: record.other_requirements
+        other_requirements: record.other_requirements,
+        report_company_name: record.report_company_name || '',
+        report_company_address: record.report_company_address || ''
       };
       sampleSubmissionsData.push(step2);
     });
-    console.log(sampleSubmissionsData);
+    console.log('sampleSubmissionsData:', sampleSubmissionsData);
 
     const fileData = data.files;
     try {
-      console.log('step1:', step1);
       const responseService = await postServiceRequests(step1);
       if (responseService.request_id) {
         for (const record of sampleSubmissionsData) {
           record.request_id = responseService.request_id;
           const responseSample = await postSampleSubmissions(record);
-          console.log('responseSample:', responseSample);
           if (responseSample.submission_id) {
             const sampleDataDetail = {
               submission_id: responseSample.submission_id,
               test_items: record.test_items
             };
             const responseTestItem = await postSampleSubmisDetail(sampleDataDetail);
-            console.log('responseTestItem:', responseTestItem);
           }
         }
 
@@ -152,6 +149,7 @@ const AddServiceRequest = () => {
           const documentData = {
             request_id: responseService.request_id,
             uploaded_by: user.user_id,
+            document_name: 'เอกสารรับรองปุ๋ย',
             file_name: extractedFileName,
             file_path: `/${fileResult.fileName}`
           };

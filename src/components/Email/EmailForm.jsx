@@ -249,12 +249,18 @@ const EmailForm = ({ buttonTitle = 'ส่งอีเมล', icon, serviceData
             </Card.Body>
           </Card>
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)} disabled={loading}>
-            ปิด
+        <Modal.Footer className="d-flex justify-content-center" style={{ flexShrink: 0 }}>
+          <Button variant="primary" type="submit" onClick={handleSubmit} disabled={loading}>
+            {loading ? (
+              'กำลังส่ง...'
+            ) : (
+              <>
+                <i className="feather icon-mail" /> ส่งอีเมล
+              </>
+            )}
           </Button>
-          <Button variant="primary" onClick={handleSubmit} disabled={loading}>
-            {loading ? 'กำลังส่ง...' : 'ส่งอีเมล'}
+          <Button variant="danger" onClick={() => setShowModal(false)} disabled={loading}>
+            <i className="feather icon-corner-up-left" /> ยกเลิก
           </Button>
         </Modal.Footer>
       </Modal>

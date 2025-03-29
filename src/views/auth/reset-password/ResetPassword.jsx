@@ -16,7 +16,7 @@ const ResetPassword = () => {
       email: ''
     },
     validationSchema: Yup.object({
-      email: Yup.string().email('รูปแบบอีเมล์ไม่ถูกต้อง').required('กรุณากรอกอีเมล์')
+      email: Yup.string().email('รูปแบบอีเมลไม่ถูกต้อง').required('กรุณากรอกอีเมล')
     }),
     onSubmit: (values) => {
       console.log('Reset Password:', values);

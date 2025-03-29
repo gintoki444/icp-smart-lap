@@ -7,13 +7,14 @@ import { getAllFertilicerType } from 'services/_api/fertilizerTypesRequest';
 import { DataGrid } from '@mui/x-data-grid';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import AddTestTracking from './AddTestTracking';
+// import AddTestTracking from './AddTestTracking';
 import { getAllFertilizerMain } from 'services/_api/fertilizerMainRequest';
 import { getCustomerByID } from 'services/_api/customerRequest';
 import { getCustomerSpecialConditionsByID } from 'services/_api/specialConditionsRequest';
 import CountrySelect from 'components/Selector/CountrySelect';
+import AddBilling from './AddBilling';
 
-const ServiceStepContent = ({ serviceId, handleReload }) => {
+const QuotationStepContent = ({ serviceId, handleReload }) => {
   const navigate = useNavigate();
   const [customer, setCustomer] = useState({});
   const [spacialCon, setSpacialCon] = useState({});
@@ -202,7 +203,7 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
                 เลขที่คำขอรับบริการ : <span style={{ fontSize: 18 }}>{serviceData.request_no || '-'}</span>
               </h5>
             </Col>
-            {/* เพิ่มเนื้อหาอื่นๆ ที่ต้องการใน ServiceStepContent ตามต้องการ */}
+            {/* เพิ่มเนื้อหาอื่นๆ ที่ต้องการใน QuotationStepContent ตามต้องการ */}
             <Col md={12}>
               <h6 className="mb-3">ข้อมูลผู้ขอขึ้นทะเบียน</h6>
             </Col>
@@ -258,7 +259,7 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
             </Col>
           </Row>
 
-          {/* ข้อมูลปุ๋ยและส่วนอื่นๆ จะยังคงอยู่นอก ServiceStepContent */}
+          {/* ข้อมูลปุ๋ยและส่วนอื่นๆ จะยังคงอยู่นอก QuotationStepContent */}
           <h6 className="mt-3 mb-2">ข้อมูลตัวอย่างปุ๋ย</h6>
           {sampleList.map((sample, index) => (
             <>
@@ -455,14 +456,15 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
                     </Accordion>
                     <Col style={{ padding: '0 16px 16px' }}>
                       <Col>
-                        <AddTestTracking
+                        {/* <AddBilling /> */}
+                        {/* <AddTestTracking
                           submissionId={sample.submission_id}
                           handleTracking={handleReload}
                           trackingData={sample.sample_tracking}
                           serviceRequestId={serviceId}
                           serviceData={serviceData}
                           sampleSubmissions={sampleList}
-                        />
+                        /> */}
                       </Col>
                     </Col>
                   </Col>
@@ -478,4 +480,4 @@ const ServiceStepContent = ({ serviceId, handleReload }) => {
   );
 };
 
-export default ServiceStepContent;
+export default QuotationStepContent;

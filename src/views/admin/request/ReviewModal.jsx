@@ -177,7 +177,7 @@ const ReviewModal = ({ sampleSubmissions, onSubmitReview, serviceRequestId }) =>
       <Modal show={show} onHide={() => setShow(false)} size="lg" centered>
         <Modal.Header closeButton>
           <Modal.Title>
-            <h6>การทวนคำขอรับบริการ</h6>
+            <h6 className="mb-0">การทวนคำขอรับบริการ</h6>
           </Modal.Title>
         </Modal.Header>
         <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleSubmit}>
@@ -436,15 +436,18 @@ const ReviewModal = ({ sampleSubmissions, onSubmitReview, serviceRequestId }) =>
               </Modal.Body>
               <Modal.Footer className="justify-content-center">
                 {sampleSubmissions.verification_status === 'Yes' && (
-                  <Button variant="danger" onClick={handleCancelReview} disabled={isSubmitting}>
+                  <Button variant="outline-danger" onClick={handleCancelReview} disabled={isSubmitting}>
+                    <i className="feather icon-x-circle" />
                     ยกเลิกการทบทวน
                   </Button>
                 )}
-                <Button variant="secondary" onClick={() => setShow(false)} disabled={isSubmitting}>
-                  ปิด
-                </Button>
                 <Button variant="primary" type="submit" disabled={isSubmitting}>
+                  <i className="feather icon-save" />
                   บันทึกการทบทวน
+                </Button>
+                <Button variant="danger" onClick={() => setShow(false)} disabled={isSubmitting}>
+                  <i className="feather icon-corner-up-left" />
+                  ปิด
                 </Button>
               </Modal.Footer>
             </Form>

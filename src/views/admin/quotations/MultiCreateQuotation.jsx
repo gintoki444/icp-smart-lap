@@ -5,10 +5,12 @@ import { Card, Button, Form, Table, Row, Col } from 'react-bootstrap';
 import { TbInvoice } from 'react-icons/tb';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getCustomerByID } from 'services/_api/customerRequest';
-import { postMultiQuotations, getSampleRemainQuatity, getQuotationHeaderRemain } from 'services/_api/quotationRequest';
+import { postMultiQuotations, getSampleRemainQuatity, getQuotationHeaderRemain, getQuotationsByID } from 'services/_api/quotationRequest';
 import { FaPlus } from 'react-icons/fa';
 import { TbScriptPlus } from 'react-icons/tb';
 import { toast } from 'react-toastify';
+import { putServiceRequestStatusTracking } from 'services/_api/serviceRequest';
+import { createQuotationNotify } from 'components/Notify/CreateQuotationNotify';
 
 const MultiCreateQuotation = () => {
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ const MultiCreateQuotation = () => {
   const [discountValue, setDiscountValue] = useState(0);
   const [discountUnit, setDiscountUnit] = useState('percentage');
   const [sampleRemain, setSampleRemain] = useState([]);
+  const [requestId, setRequestId] = useState([]);
   const [items, setItems] = useState([]);
   const [customer, setCustomer] = useState({});
   const [quotationTypeId, setQuotationTypeId] = useState('');
@@ -24,6 +27,7 @@ const MultiCreateQuotation = () => {
   const [documentDate, setDocumentDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentTerms, setPaymentTerms] = useState('30 วัน');
   const [validUntil, setValidUntil] = useState('2025-12-31');
+  const serviceRequest = location.state?.serviceData || null;
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -33,6 +37,7 @@ const MultiCreateQuotation = () => {
     const createdBy = parseInt(searchParams.get('created_by')) || null;
 
     setDiscountValue(discount);
+    setRequestId(requestIds);
 
     const fetchQuotationData = async () => {
       try {
@@ -238,10 +243,18 @@ const MultiCreateQuotation = () => {
     try {
       const response = await postMultiQuotations(quotationPayload);
       if (response && response.quotation_id) {
+        const quotationData = await getQuotationsByID(response.quotation_id);
+
+        requestId.map((service) => {
+          const reqStatusTracking = { newStatusTracking: 'quotation_issued' };
+          putServiceRequestStatusTracking(service, reqStatusTracking);
+        });
+        await createQuotationNotify(quotationData, window.location.origin);
+
         toast.success('สร้างใบเสนอราคาสำเร็จ!', {
           autoClose: 3000
         });
-        navigate('/admin/issue-quotation/detail', { state: { id: response.quotation_id } });
+        navigate('/admin/issue-quotation/detail', { state: { id: requestId } });
       } else {
         toast.error('สร้างใบเสนอราคาไม่สำเร็จ! :', {
           autoClose: 3000
@@ -265,7 +278,16 @@ const MultiCreateQuotation = () => {
           <Card.Header>
             <Row>
               <Col>
-                <Card.Title as="h5">สร้างใบเสนอราคา</Card.Title>
+                <Card.Title as="h5" className="mb-2">
+                  สร้างใบเสนอราคา{' '}
+                </Card.Title>
+                <p className="mb-0">
+                  (เลขที่คำขอ:{' '}
+                  <span className="text-dark" style={{ fontWeight: 'bold' }}>
+                    {serviceRequest.map((x) => x.request_no).join(', ')}
+                  </span>
+                  )
+                </p>
               </Col>
             </Row>
           </Card.Header>
@@ -380,10 +402,10 @@ const MultiCreateQuotation = () => {
                     <QuotationTypeSelect name="quotation_type_id" value={quotationTypeId} onSelect={(e) => setQuotationTypeId(e)} />
                   </Col>
                 </Row>
-                <Table striped bordered hover>
+                <Table striped bordered hover size="sm">
                   <thead>
                     <tr>
-                      <th width={80} className="text-center">
+                      <th width={80} className="text-center p-3">
                         เลือก
                       </th>
                       <th>ชื่อตัวอย่าง</th>

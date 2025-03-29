@@ -9,6 +9,7 @@ import { VscGroupByRefType } from 'react-icons/vsc';
 import { LiaObjectGroup } from 'react-icons/lia';
 import { PiCertificate } from 'react-icons/pi';
 import { MdOutlineRequestQuote } from 'react-icons/md';
+import { GoChecklist } from 'react-icons/go';
 // สร้าง Mapping ระหว่างชื่อไอคอนกับ React Components
 
 const iconMap = {
@@ -20,7 +21,8 @@ const iconMap = {
   'vsc group-by-reftype': VscGroupByRefType,
   'lia object-group': LiaObjectGroup,
   'pi certificate': PiCertificate,
-  'mb outline-request-quote': MdOutlineRequestQuote
+  'mb outline-request-quote': MdOutlineRequestQuote,
+  'go check-list': GoChecklist
 };
 
 const NavIcon = ({ items }) => {

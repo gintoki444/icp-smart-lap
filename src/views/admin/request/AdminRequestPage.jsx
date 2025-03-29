@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Badge, Row, Col, Form, Button, ButtonGroup } from 'react-bootstrap';
-import { Stack, Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
+import { Stack, Accordion, AccordionSummary, AccordionDetails, Typography, Tooltip } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useNavigate } from 'react-router-dom';
 import { IoWarningOutline, IoReload } from 'react-icons/io5';
@@ -9,9 +9,10 @@ import { RiDeleteBin5Line } from 'react-icons/ri';
 import * as userRequest from 'services/_api/usersRequest';
 import { toast } from 'react-toastify';
 import { authenUser } from 'services/_api/authentication';
-import { deleteServiceRequests, getAllServiceRequests } from 'services/_api/serviceRequest';
+import { deleteServiceRequests, getAllServiceRequests, getAllServiceRequestByUser } from 'services/_api/serviceRequest';
 import { getAllCustomer } from 'services/_api/customerRequest';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { getNextPendingStatus } from 'components/Utility/statusRequestUtilis';
 
 const AdminRequestPage = () => {
   const [user, setUser] = useState(null);
@@ -44,7 +45,8 @@ const AdminRequestPage = () => {
 
   const fetchData = async () => {
     try {
-      const [customerResult, serviceResult] = await Promise.all([getAllCustomer(), getAllServiceRequests()]);
+      const [customerResult, initialServiceResult] = await Promise.all([getAllCustomer(), getAllServiceRequests()]);
+
       if (customerResult) {
         const formattedCustomers = customerResult.map((cust, index) => ({
           id: cust.company_id,
@@ -55,35 +57,102 @@ const AdminRequestPage = () => {
           company_address: cust.company_address
         }));
         setCustomer(formattedCustomers);
-        console.log('Formatted Customers:', formattedCustomers); // Debug
       }
-      if (serviceResult) {
-        const formattedRows = serviceResult.map((service, index) => ({
-          id: service.request_id,
-          No: index + 1,
-          request_date: new Date(service.request_date).toLocaleString(),
-          request_date_raw: service.request_date,
-          request_no: service.request_no || '-',
-          user_id: service.user_id,
-          user_name: service.user_name,
-          customer_id: service.customer_id,
-          customer_name: service.customer_name,
-          sample_type_name: service.sample_type_name,
-          status: service.status,
-          notes: service.notes || '-',
-          created_at: new Date(service.created_at).toLocaleString(),
-          sample_submissions: service.sample_submissions,
-          count_sample_submissions: service.sample_submissions.length,
-          service_request_documents: service.service_request_documents
+
+      if (initialServiceResult) {
+        const uniqueUserIds = [...new Set(initialServiceResult.map((service) => service.user_id))];
+        console.log('uniqueUserIds', uniqueUserIds);
+
+        const detailedServiceResults = await Promise.all(
+          uniqueUserIds.map((userId) =>
+            getAllServiceRequestByUser(userId)
+              .then((services) => ({
+                userId,
+                services: services.data || []
+              }))
+              .catch((error) => {
+                console.error(`Error fetching services for user ${userId}:`, error);
+                return { userId, services: [] };
+              })
+          )
+        );
+
+        console.log('detailedServiceResults:', detailedServiceResults);
+
+        const allServices = detailedServiceResults.flatMap((result) =>
+          result.services.map((service, index) => ({
+            id: service.request_id,
+            No: index + 1,
+            request_date: new Date(service.request_date).toLocaleString(),
+            request_date_raw: service.request_date,
+            request_no: service.request_no || '-',
+            user_id: service.user_id,
+            user_name: service.user_name,
+            customer_id: service.customer_id,
+            customer_name:
+              customerResult?.find((cust) => cust.company_id === service.customer_id)?.company_name || service.customer_name || '-',
+            sample_type_name: service.sample_type_name,
+            status: service.status,
+            notes: service.notes || '-',
+            created_at: new Date(service.created_at).toLocaleString(),
+            sample_submissions: service.sample_submissions,
+            count_sample_submissions: service.sample_submissions?.length || 0,
+            request_id_list_by_quotation: service.request_id_list_by_quotation,
+            quotation_id: service.quotation_id,
+            quotation_no: service.quotation_no || '-',
+            quotation_date: service.quotation_date,
+            service_request_documents: service.service_request_documents,
+            service_status_logs: service.service_status_logs
+          }))
+        );
+
+        console.log('allServices:', allServices);
+        const combinedServices = [
+          ...detailedServiceResults.map((service, index) => ({
+            id: service.request_id,
+            No: index + 1,
+            request_date: new Date(service.request_date).toLocaleString(),
+            request_date_raw: service.request_date,
+            request_no: service.request_no || '-',
+            user_id: service.user_id,
+            user_name: service.user_name,
+            customer_id: service.customer_id,
+            customer_name:
+              customerResult?.find((cust) => cust.company_id === service.customer_id)?.company_name || service.customer_name || '-',
+            sample_type_name: service.sample_type_name,
+            status: service.status,
+            notes: service.notes || '-',
+            created_at: new Date(service.created_at).toLocaleString(),
+            sample_submissions: service.sample_submissions,
+            count_sample_submissions: service.sample_submissions?.length || 0,
+            request_id_list_by_quotation: service.request_id_list_by_quotation || [],
+            quotation_no: service.quotation_no || '-',
+            quotation_date: service.quotation_date || null,
+            service_request_documents: service.service_request_documents || [],
+            service_status_logs: service.service_status_logs || []
+          })),
+          ...allServices
+        ].reduce((acc, service) => {
+          acc[service.id] = service;
+          return acc;
+        }, {});
+        console.log('combinedServices:', combinedServices);
+
+        // ลบการกรอง request_no ออก และกำหนด No ใหม่
+        const finalServiceRequests = Object.values(combinedServices).map((service, index) => ({
+          ...service,
+          No: index + 1
         }));
-        setServiceRequests(formattedRows);
-        console.log('Formatted Service Requests:', formattedRows); // Debug
+
+        console.log('finalServiceRequests', finalServiceRequests);
+        setServiceRequests(finalServiceRequests.length > 0 ? finalServiceRequests.filter((x) => x.id) : []);
       } else {
         setServiceRequests([]);
       }
     } catch (error) {
       toast.error('เกิดข้อผิดพลาดในการดึงข้อมูล');
       console.error(error);
+      setServiceRequests([]);
     }
   };
 
@@ -96,13 +165,21 @@ const AdminRequestPage = () => {
     {
       field: 'status',
       headerName: 'สถานะ',
-      width: 120,
+      width: 150,
       headerAlign: 'center',
       align: 'center',
       renderCell: (params) => (
-        <Badge pill bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
-          {params.row.status === 'pending' ? 'กำลังดำเนินการ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
-        </Badge>
+        <>
+          <Tooltip title={getNextPendingStatus(params.row.service_status_logs)}>
+            <Badge
+              pill
+              bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}
+              className="status-service"
+            >
+              {getNextPendingStatus(params.row.service_status_logs)}
+            </Badge>
+          </Tooltip>
+        </>
       )
     },
     {
@@ -260,8 +337,6 @@ const AdminRequestPage = () => {
       }
     });
   };
-
-  console.log('Filtered Groups:', filterData); // Debug filteredGroups
 
   return (
     <Card>

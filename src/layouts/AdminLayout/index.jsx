@@ -14,8 +14,8 @@ import * as actionType from '../../store/actions';
 const AdminLayout = ({ children }) => {
   const navigate = useNavigate();
   useEffect(() => {
-      const token = localStorage.getItem('authToken'); // ตรวจสอบ Token
-      if (!token) {
+    const token = localStorage.getItem('authToken'); // ตรวจสอบ Token
+    if (!token) {
       navigate('/login'); // Redirect ไปหน้า Login
     }
   }, []);

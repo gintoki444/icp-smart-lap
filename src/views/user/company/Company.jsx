@@ -49,7 +49,7 @@ const Company = () => {
           company_email: customer.company_email,
           company_phone: customer.company_phone,
           special_conditions: customer.special_conditions,
-          created_at: new Date(customer.created_at).toLocaleString(),
+          created_at: new Date(customer.created_at).toLocaleDateString('th-TH'),
           status: customer.status,
           customer_contacts: customer.customer_contacts
         }));
@@ -66,7 +66,7 @@ const Company = () => {
     // { field: 'tax_id', headerName: 'เลขที่ผู้เสียภาษี', flex: 1 },
     { field: 'company_address', headerName: 'ที่อยู่บริษัท', flex: 1 },
     // { field: 'document_address', headerName: 'ที่อยู่จัดส่งเอกสาร', flex: 1 },
-    { field: 'company_email', headerName: 'อีเมล์', flex: 1 },
+    { field: 'company_email', headerName: 'อีเมล', flex: 1 },
     { field: 'company_phone', headerName: 'เบอร์โทรศัพท์', flex: 1 },
     // { field: 'special_conditions', headerName: 'Roles', flex: 0.7 },
     { field: 'created_at', headerName: 'วันที่สร้าง', flex: 1 },

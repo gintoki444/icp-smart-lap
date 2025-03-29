@@ -562,7 +562,7 @@ const Step2 = ({ values, errors, touched, setFieldValue, fertilizerTypes, compan
               <Col md={12}>
                 <h6 className="mb-2">ข้อมูลเอกสาร</h6>
                 <Form.Group className="mb-3 mt-2">
-                  <Form.Label>อัพโหลดเอกสาร :</Form.Label>
+                  <Form.Label>อัปโหลดเอกสาร :</Form.Label>
                   <div
                     {...getRootProps()}
                     style={{

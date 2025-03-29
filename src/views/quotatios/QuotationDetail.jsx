@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Row, Col, Spinner, Badge } from 'react-bootstrap';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { getServiceRequestsByID } from 'services/_api/serviceRequest';
 import { getAllSampleReceiving } from 'services/_api/sampleReceivingRequest';
 import { getAllPackagingType } from 'services/_api/packageingTypeRequest';
 import { getAllFertilicerType } from 'services/_api/fertilizerTypesRequest';
 import { DataGrid } from '@mui/x-data-grid';
 import { FiEdit } from 'react-icons/fi';
-import SampleSubmissionModal from './SampleSubmissionModal';
+import { HiOutlineDocumentCurrencyDollar } from 'react-icons/hi2';
+import SampleSubmissionModal from '../request/details/SampleSubmissionModal';
 import { Stepper, Step, StepLabel, StepContent } from '@mui/material';
-import ServiceStepContent from './StepContent';
-import AddTestTracking from './AddTestTracking';
+import QuotationStepContent from './QuotationStepContent';
+import AddTestTracking from '../request/details/AddTestTracking';
 
-const FertilizerDetails = ({ title }) => {
+const RequestDetailPage = ({ title }) => {
   const location = useLocation();
-  const id = location.state?.id || null;
+  const { id: paramId } = useParams();
+  const id = paramId || location.state?.id || null;
   console.log('id', id);
   const navigate = useNavigate();
   const [step, setStep] = useState(2);
@@ -47,6 +49,7 @@ const FertilizerDetails = ({ title }) => {
     try {
       setIsLoading(true); // เริ่มโหลด
       const response = await getServiceRequestsByID(id);
+      console.log('response', response);
       setSampleList(response.sample_submissions || []);
       setServiceData(response);
       updateActiveStep(response, {});
@@ -215,7 +218,7 @@ const FertilizerDetails = ({ title }) => {
                       <StepLabel>{step.label}</StepLabel>
                       {orientation === 'vertical' && (
                         <StepContent>
-                          <ServiceStepContent serviceId={id} handleReload={handleReload} />
+                          <QuotationStepContent serviceId={id} handleReload={handleReload} />
                         </StepContent>
                       )}
                     </Step>
@@ -246,7 +249,7 @@ const FertilizerDetails = ({ title }) => {
                     </Stepper>
                   </Card.Body>
                 </Card>
-                <ServiceStepContent serviceId={id} handleReload={handleReload} />
+                <QuotationStepContent serviceId={id} handleReload={handleReload} />
               </>
             )}
           </div>
@@ -270,7 +273,7 @@ const FertilizerDetails = ({ title }) => {
                     <StepLabel>{step.label}</StepLabel>
                     {orientation === 'vertical' && (
                       <StepContent>
-                        <ServiceStepContent serviceId={id} handleReload={handleReload} />
+                        <QuotationStepContent serviceId={id} handleReload={handleReload} />
                       </StepContent>
                     )}
                   </Step>
@@ -294,7 +297,7 @@ const FertilizerDetails = ({ title }) => {
                     </Stepper>
                   </Card.Body>
                 </Card>
-                <ServiceStepContent serviceId={id} handleReload={handleReload} />
+                <QuotationStepContent serviceId={id} handleReload={handleReload} />
               </>
             )}
           </div>
@@ -307,22 +310,18 @@ const FertilizerDetails = ({ title }) => {
             )}
           <Button
             variant="primary"
-            disabled={serviceData.service_status_logs?.quotation_issued || serviceData.status === 'rejected'}
+            // disabled={serviceData.service_status_logs?.quotation_issued || serviceData.status === 'rejected'}
             onClick={() => handleEdit(id)}
           >
-            <FiEdit style={{ marginRight: 8 }} /> แก้ไขข้อมูล
+            <HiOutlineDocumentCurrencyDollar style={{ fontSize: 16, marginRight: 8 }} /> ขอใบแจ้งหนี้
           </Button>
-          <Button variant="danger" onClick={() => navigate('/request/')}>
+          <Button variant="danger" onClick={() => navigate('/quotations/')}>
             <i className="feather icon-corner-up-left" /> กลับหน้าหลัก
           </Button>
         </Card.Footer>
       </Card>
     </div>
   );
-};
-
-const RequestDetailPage = () => {
-  return <FertilizerDetails title="รายละเอียดข้อมูลนำส่งตัวอย่างปุ๋ย" />;
 };
 
 export default RequestDetailPage;

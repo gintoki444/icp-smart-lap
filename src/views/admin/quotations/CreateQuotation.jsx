@@ -227,7 +227,7 @@ const CreateQuotation = ({ handleBilling, testItems = [], serviceData, createdBy
       >
         <Modal.Header closeButton>
           <Modal.Title>
-            <h5>สร้างใบเสนอราคา</h5>
+            <h6 className="mb-0">สร้างใบเสนอราคา</h6>
           </Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ overflowX: 'auto' }}>

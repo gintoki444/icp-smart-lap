@@ -129,11 +129,11 @@ function AddEdit() {
                   </Col>
                   <Col md={6}>
                     <Form.Group className="mb-2">
-                      <Form.Label>อีเมล์ :</Form.Label>
+                      <Form.Label>อีเมล :</Form.Label>
                       <Form.Control
                         type="email"
                         className="form-control"
-                        placeholder="อีเมล์"
+                        placeholder="อีเมล"
                         name="email"
                         value={values.email}
                         onBlur={handleBlur}

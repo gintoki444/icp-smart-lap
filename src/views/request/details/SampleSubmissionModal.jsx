@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { Modal, Button, Form, Table, Row, Col, Alert } from 'react-bootstrap';
+import { LuListTodo } from 'react-icons/lu';
+import { toast } from 'react-toastify';
+import { putSampleSubmisDetail } from 'services/_api/sampleSubmissionsRequest';
+import { putServiceRequests, putServiceRequestStatusTracking } from 'services/_api/serviceRequest';
 
-const SampleSubmissionModal = ({ service }) => {
+const SampleSubmissionModal = ({ service, handleReload }) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState('');
   const [selectedDetails, setSelectedDetails] = useState([]); // เก็บ detail_id ที่เลือก
@@ -103,64 +107,47 @@ const SampleSubmissionModal = ({ service }) => {
   };
 
   // การ submit
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedSubmissionData || selectedDetails.length === 0) {
       alert('กรุณาเลือก Sample Submission และอย่างน้อยหนึ่งรายการทดสอบ');
       return;
     }
+    try {
+      for (const item of selectedDetails) {
+        const submissionDetails = {
+          is_partial_test: true
+        };
+        const reposnse = await putSampleSubmisDetail(submissionDetails, item);
+        console.log('putSampleSubmisDetail', reposnse);
+      }
 
-    let newSampleStatus = [];
-    const validUntil = new Date();
-    validUntil.setDate(validUntil.getDate() + 30);
-    const quotationData = {
-      customer_id: service.customer_id,
-      request_id: service.request_id,
-      valid_until: validUntil.toISOString().split('T')[0],
-      total_amount: parseFloat(totalAmount.toFixed(2)),
-      discount_percentage: parseFloat(discountPercentage.toFixed(2)),
-      discount_amount: parseFloat(discountAmount.toFixed(2)),
-      net_total: parseFloat(netTotal.toFixed(2)),
-      vat_amount: parseFloat(vatAmount.toFixed(2)),
-      grand_total: parseFloat(grandTotal.toFixed(2)),
-      payment_terms: '30 วัน',
-      status: 'pending',
-      created_by: createdBy,
-      quotation_type_id: quotationTypeId,
-      approved_by: null
-    };
+      // if (service.request_id === 99999) {
+      const statusRequest = {
+        is_partial_test: true
+      };
+      const response = await putServiceRequests(statusRequest, service.request_id);
+      if (response) {
+        const reqStatusTracking = {
+          newStatusTracking: 'partial_testing'
+        };
+        await putServiceRequestStatusTracking(service.request_id, reqStatusTracking);
 
-    const penddingStatus = {
-      submission_id: selectedSubmission,
-      status: 'pending_test',
-      notes: 'รอทดสอบบางรายการ'
-    };
-    newSampleStatus.push({ ...penddingStatus, id: newSampleStatus.length + 1 });
-    // service.sample_submissions.map((service) => {
-    //   const penddingStatus = {
-    //     submission_id: service.submission_id,
-    //     status: 'pending_test',
-    //     notes: 'รอทดสอบบางรายการ'
-    //   };
-    //   if (selectedItems.length !== sampleRemain.length) {
-    //     newSampleStatus.push({ ...penddingStatus, id: newSampleStatus.length + 1 });
-    //   } else {
-    //     penddingStatus.status = 'quotation_issued';
-    //     penddingStatus.notes = 'ออกใบเสนอราคา';
-    //     newSampleStatus.push({ ...penddingStatus, id: newSampleStatus.length + 1 });
-    //   }
-    // });
-    console.log('newSampleStatus:', newSampleStatus);
-    console.log('selectedItems:', selectedItems);
-    console.log('Selected Submission:', selectedSubmissionData);
-    console.log('Selected Details:', selectedDetails);
-    // ทำอะไรต่อ เช่น ส่งไป backend
-    setShowModal(false);
+        toast.success('บันทึกคำขอทดสอบบางรายการสำเร็จ!', { autoClose: 3000 });
+        handleReload(true);
+        setShowModal(false);
+      }
+      // }
+    } catch (error) {
+      toast.error('บันทึกคำขอทดสอบบางรายการไม่สำเร็จ!', { autoClose: 3000 });
+      console.error(error);
+    }
   };
 
   return (
     <>
       <Button variant="success" onClick={() => setShowModal(true)} disabled={!service || !service.sample_submissions}>
-        เลือกรายการทดสอบ
+        <LuListTodo style={{ fontSize: 16, marginRight: 8 }} />
+        แจ้งทดสอบบางรายการ
       </Button>
 
       <Modal
@@ -185,10 +172,11 @@ const SampleSubmissionModal = ({ service }) => {
                   <Form.Group controlId="submissionSelect">
                     <Form.Label className="text-dark">เลือกตัวอย่างปุ๋ย</Form.Label>
                     <Form.Select value={selectedSubmission} onChange={handleSubmissionChange}>
-                      <option>เลือกตัวอย่างปุ๋ย</option>
-                      {service.sample_submissions.map((submission) => (
+                      <option value="">เลือกตัวอย่างปุ๋ย</option>
+                      {service.sample_submissions.map((submission, index) => (
                         <option key={submission.submission_id} value={submission.submission_id}>
-                          {submission.common_name} ({submission.fertilizer_formula})
+                          ตัวอย่างที่ {index + 1}
+                          {submission.common_name && ` (${submission.common_name}-${submission.fertilizer_formula})`}
                         </option>
                       ))}
                     </Form.Select>
@@ -223,6 +211,7 @@ const SampleSubmissionModal = ({ service }) => {
                                   <Form.Check
                                     type="checkbox"
                                     checked={selectedDetails.includes(detail.detail_id)}
+                                    disabled={detail.is_partial_test === 1}
                                     onChange={() => {
                                       handleDetailChange(detail.detail_id);
                                       handleItemSelection(
@@ -231,7 +220,10 @@ const SampleSubmissionModal = ({ service }) => {
                                     }}
                                   />
                                 </td>
-                                <td className="text-center">{detail.test_code}</td>
+                                <td className="text-center">
+                                  {detail.test_code}
+                                  {detail.is_partial_test}
+                                </td>
                                 <td>{getNameQuotation(detail.test_item_id)}</td>
                                 <td className="text-center">{detail.test_percentage ? detail.test_percentage + '  %' : '-'}</td>
                               </tr>
@@ -250,18 +242,18 @@ const SampleSubmissionModal = ({ service }) => {
             </>
           )}
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="success" onClick={handleSubmit} disabled={!selectedSubmission || selectedDetails.length === 0}>
-            บันทึก
+        <Modal.Footer className="justify-content-center">
+          <Button variant="primary" type="submit" onClick={handleSubmit} disabled={!selectedSubmission || selectedDetails.length === 0}>
+            <i className="feather icon-save" /> บันทึก
           </Button>
           <Button
-            variant="secondary"
+            variant="danger"
             onClick={() => {
               setShowModal(false);
               setSelectedDetails([]);
             }}
           >
-            ยกเลิก
+            <i className="feather icon-corner-up-left" /> ยกเลิก
           </Button>
         </Modal.Footer>
       </Modal>

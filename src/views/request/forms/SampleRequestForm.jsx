@@ -91,9 +91,6 @@ export const SampleRequestForm = ({ onHandleSave, userId, sampleType, company, s
       validationContext={{ sample_type_id: sampleType }}
     >
       {({ values, errors, touched, handleChange, handleBlur, setFieldValue, handleSubmit: formikHandleSubmit, validateForm }) => {
-        console.log('Formik values:', values);
-        console.log('Formik Errors:', errors);
-
         return (
           <Form onSubmit={formikHandleSubmit}>
             <Card>

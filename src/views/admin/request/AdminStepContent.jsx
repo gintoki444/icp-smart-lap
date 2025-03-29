@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Badge } from 'react-bootstrap';
+import { Card, Row, Col, Badge, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { getServiceRequestsByID, getServiceRequestsStatusByID } from 'services/_api/serviceRequest';
 // import { getAllSampleReceiving } from 'services/_api/testItemsRequest';
@@ -151,7 +151,7 @@ const AdminStepContent = ({ serviceId, handleReload, handleSetCustomer }) => {
       flex: 1,
       renderCell: (params) => (
         <Badge pill bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
-          {params.row.status === 'pending' ? 'รออนุมัติ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
+          {params.row.status === 'pending' ? 'รอการทดสอบ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
         </Badge>
       )
     },
@@ -203,10 +203,16 @@ const AdminStepContent = ({ serviceId, handleReload, handleSetCustomer }) => {
     { value: 'pdf_email', label: 'ต้องการไฟล์ pdf เพิ่มเติมทาง E-mail' },
     { value: 'is_mail_delivery', label: 'ส่งทางไปรษณีย์' }
   ];
+
   const getReportMethodLabels = (methods) => {
     return methods.map((method) => reportMethodOptions.find((opt) => opt.value === method)?.label || method).join(', ');
   };
 
+  const handlePrint = (request, submissionId) => {
+    navigate('/admin/request/print-qr-sample', {
+      state: { request: request, submissionId: submissionId, link: '/admin/request/verify/' + request.request_id }
+    });
+  };
   return (
     <div>
       <Card style={{ borderRadius: 10, marginBottom: 0 }}>
@@ -266,11 +272,6 @@ const AdminStepContent = ({ serviceId, handleReload, handleSetCustomer }) => {
                 ประเภทคำขอ : <strong className="text-dark">{serviceData.sample_type_name}</strong>
               </p>
             </Col>
-            {/* <Col md={6} className="mb-2">
-              <p className="mb-0">
-                คำขอเพิ่มเติม : <strong className="text-dark">{serviceData.notes}</strong>
-              </p>
-            </Col> */}
           </Row>
 
           {/* ข้อมูลปุ๋ยและส่วนอื่นๆ จะยังคงอยู่นอก StepContent */}
@@ -459,7 +460,7 @@ const AdminStepContent = ({ serviceId, handleReload, handleSetCustomer }) => {
                       <SampleReceivingModal
                         serviceData={serviceData}
                         submissionId={sample.submission_id}
-                        handleTracking={handleReload}
+                        handleReload={handleReload}
                         trackingData={sample.sample_tracking}
                         reviewBy={user.user_id}
                         sampleNo={sample.submission_no}
@@ -471,6 +472,12 @@ const AdminStepContent = ({ serviceId, handleReload, handleSetCustomer }) => {
                     {serviceData.service_status_logs?.sample_arrived_lab && (
                       <Col style={{ padding: '0px 16px 16px' }}>
                         <ReviewModal sampleSubmissions={sample} onSubmitReview={handleReload} serviceRequestId={serviceData.request_id} />
+                        {serviceData.service_status_logs?.request_reviewed && (
+                          <Button variant="info" onClick={() => handlePrint(serviceData, sample.submission_id)}>
+                            <i className="feather icon-printer" />
+                            ฉลากปิดภาชนะบรรจุตัวอย่าง
+                          </Button>
+                        )}
                       </Col>
                     )}
                   </Col>

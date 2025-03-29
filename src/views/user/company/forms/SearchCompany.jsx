@@ -84,7 +84,7 @@ const SearchCompany = () => {
       renderCell: (params) => (
         <ButtonGroup>
           <Button variant="info" size="sm" onClick={() => handleSave(params.row)}>
-            เลือก
+            <i className="feather icon-plus-circle" /> เลือก
           </Button>
         </ButtonGroup>
       )

@@ -167,7 +167,7 @@ const FertilizerDetails = ({ title }) => {
       flex: 1,
       renderCell: (params) => (
         <Badge pill style={{}} bg={params.row.status === 'pending' ? 'warning' : params.row.status === 'rejected' ? 'danger' : 'success'}>
-          {params.row.status === 'pending' ? 'รออนุมัติ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
+          {params.row.status === 'pending' ? 'รอการทดสอบ' : params.row.status === 'rejected' ? 'ไม่อนุมัติ' : 'อนุมัติ'}
         </Badge>
       )
     },

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Button, ListGroup, Spinner } from 'react-bootstrap';
 import { ref, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../services/_api/firebaseConfig';
+import { LuView } from 'react-icons/lu';
+import { MdOutlineSimCardDownload } from 'react-icons/md';
+import { RiDeleteBin5Line } from 'react-icons/ri';
 
 const FirebaseFile = ({ filePath, fileName, onDelete }) => {
   const [fileUrl, setFileUrl] = useState(null);
@@ -41,10 +44,12 @@ const FirebaseFile = ({ filePath, fileName, onDelete }) => {
     if (fileUrl) {
       const link = document.createElement('a');
       link.href = fileUrl;
-      link.download = displayName;
+      link.download = displayName || 'downloaded_file'; // ตั้งชื่อไฟล์ fallback ถ้า displayName ว่าง
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    } else {
+      console.log('No file URL provided');
     }
   };
 
@@ -85,13 +90,15 @@ const FirebaseFile = ({ filePath, fileName, onDelete }) => {
         <span>{displayName}</span>
         <div className="d-flex justify-content align-items-center mt-2">
           <Button variant="outline-primary" size="sm" onClick={handlePreview} className="me-2">
+            <LuView style={{ fontSize: 16, marginRight: 8 }} />
             Preview
           </Button>
-          <Button variant="outline-success" size="sm" onClick={handleDownload} className="me-2">
+          <Button variant="outline-success" size="sm" onClick={handlePreview} className="me-2">
+            <MdOutlineSimCardDownload style={{ fontSize: 16, marginRight: 8 }} />
             Download
           </Button>
           <Button variant="outline-danger" size="sm" onClick={handleDelete}>
-            Delete
+            <RiDeleteBin5Line style={{ fontSize: 16, marginRight: 8 }} /> Delete
           </Button>
         </div>
       </ListGroup.Item>

@@ -390,3 +390,45 @@ export const getAllServiceRequestByCustomer = async (id) => {
     };
   }
 };
+
+export const getAllServiceRequestByUserQuotation = async (id) => {
+  const myHeaders = new Headers();
+  myHeaders.append('Content-Type', 'application/json');
+
+  const requestOptions = {
+    method: 'GET',
+    headers: myHeaders,
+    redirect: 'follow'
+  };
+
+  try {
+    const response = await fetch(API_BASE_URL + '/service-requests/user-quotation/' + id, requestOptions);
+
+    // ตรวจสอบสถานะของ response
+    if (!response.ok) {
+      if (response.status === 404) {
+        return {
+          success: false,
+          message: 'ไม่พบคำขอรับบริการสำหรับผู้ใช้นี้',
+          data: []
+        };
+      }
+      // กรณี error อื่นๆ
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      data: data,
+      message: 'ดึงข้อมูลสำเร็จ'
+    };
+  } catch (error) {
+    console.error('Error fetching service requests:', error);
+    return {
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการดึงข้อมูล กรุณาลองใหม่',
+      data: []
+    };
+  }
+};
